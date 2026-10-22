@@ -130,15 +130,18 @@ class ReportServiceExtraTest {
 	}
 
 	@Test
-	void dinhDangTepKhongHopLeBiChan() {
+	void chapNhanMoiDinhDangTep() {
 		MockMultipartFile txtFile = new MockMultipartFile("file", "bc.txt", "text/plain", "abc".getBytes());
-		assertThrows(InvalidReportException.class, () -> reportService.submit(team.getId(), sv1, txtFile));
+		Report txtReport = reportService.submit(team.getId(), sv1, txtFile);
+		assertEquals("bc.txt", txtReport.getOriginalFileName());
+		assertTrue(Files.exists(reportService.loadFile(txtReport)));
 
 		MockMultipartFile zipFile = new MockMultipartFile("file", "bc.zip", "application/zip", "abc".getBytes());
-		assertThrows(InvalidReportException.class, () -> reportService.submit(team.getId(), sv1, zipFile));
+		assertEquals("bc.zip", reportService.submit(team.getId(), sv1, zipFile).getOriginalFileName());
 
-		MockMultipartFile noExtFile = new MockMultipartFile("file", "bc", "application/octet-stream", "abc".getBytes());
-		assertThrows(InvalidReportException.class, () -> reportService.submit(team.getId(), sv1, noExtFile));
+		MockMultipartFile noExtFile = new MockMultipartFile("file", "bc", "application/octet-stream",
+				"abc".getBytes());
+		assertEquals("bc", reportService.submit(team.getId(), sv1, noExtFile).getOriginalFileName());
 	}
 
 	@Test

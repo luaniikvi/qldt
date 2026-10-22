@@ -15,6 +15,7 @@ import project.qldt.exception.TopicNotFoundException;
 import project.qldt.model.AdvisorInvitation;
 import project.qldt.model.InvitationStatus;
 import project.qldt.model.Lecturer;
+import project.qldt.model.NotificationType;
 import project.qldt.model.RegistrationPeriod;
 import project.qldt.model.Topic;
 import project.qldt.model.TopicAvailability;
@@ -28,12 +29,14 @@ public class TopicService {
 	private final TopicRepository topicRepository;
 	private final AccountService accountService;
 	private final RegistrationPeriodService periodService;
+	private final NotificationService notificationService;
 
 	public TopicService(TopicRepository topicRepository, AccountService accountService,
-			RegistrationPeriodService periodService) {
+			RegistrationPeriodService periodService, NotificationService notificationService) {
 		this.topicRepository = topicRepository;
 		this.accountService = accountService;
 		this.periodService = periodService;
+		this.notificationService = notificationService;
 	}
 
 	@Transactional(readOnly = true)
@@ -139,6 +142,9 @@ public class TopicService {
 		AdvisorInvitation invitation = new AdvisorInvitation();
 		invitation.setLecturer(invited);
 		topic.setInvitation(invitation);
+		notificationService.send(invited, NotificationType.INVITATION, "Lời mời làm giảng viên hướng dẫn",
+				topic.getPrimaryAdvisor().getFullName() + " mời bạn hướng dẫn đề tài \"" + topic.getName() + "\"",
+				"/topics");
 		return topic;
 	}
 

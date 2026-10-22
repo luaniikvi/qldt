@@ -82,7 +82,7 @@
         <td th:text="${v.council.topic.name}">Đề tài</td>
         <td>
             <div th:each="m : ${v.council.members}"
-                 th:text="|${m.lecturer.fullName} (${m.role.label}): ${m.score != null ? m.score : 'chưa chấm'}|"></div>
+                 th:text="|${m.lecturer.fullName} - ${m.lecturer.lecturerCode} (${m.role.label}): ${m.score != null ? m.score : ''}|"></div>
         </td>
         <td th:text="${v.result != null ? v.result.averageScore : ''}"></td>
         <td>

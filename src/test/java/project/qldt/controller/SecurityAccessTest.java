@@ -189,7 +189,8 @@ class SecurityAccessTest {
 				.param("code", "SV888")
 				.param("fullName", "Sinh Vien Csrf")
 				.param("email", "sv888@qldt.local")
-				.param("password", "123456"))
+				.param("password", "123456")
+				.param("confirmPassword", "123456"))
 				.andExpect(status().is3xxRedirection())
 				.andExpect(redirectedUrlPattern("/admin/accounts*"));
 	}

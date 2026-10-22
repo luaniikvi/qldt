@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +18,7 @@ import project.qldt.config.AppProperties;
 import project.qldt.exception.InvalidReportException;
 import project.qldt.exception.ReportNotFoundException;
 import project.qldt.model.Lecturer;
+import project.qldt.model.NotificationType;
 import project.qldt.model.Report;
 import project.qldt.model.Student;
 import project.qldt.model.Team;
@@ -29,16 +29,19 @@ import project.qldt.repository.ReportRepository;
 @Transactional
 public class ReportService {
 
-	private static final long MAX_SIZE = 10L * 1024 * 1024;
-	private static final Set<String> ALLOWED_EXTENSIONS = Set.of("pdf", "doc", "docx");
+	public static final long MAX_SIZE_MB = 10;
+	private static final long MAX_SIZE_B = MAX_SIZE_MB * 1024 * 1024;
 
 	private final ReportRepository reportRepository;
 	private final TeamService teamService;
+	private final NotificationService notificationService;
 	private final Path uploadDir;
 
-	public ReportService(ReportRepository reportRepository, TeamService teamService, AppProperties appProperties) {
+	public ReportService(ReportRepository reportRepository, TeamService teamService,
+			NotificationService notificationService, AppProperties appProperties) {
 		this.reportRepository = reportRepository;
 		this.teamService = teamService;
+		this.notificationService = notificationService;
 		this.uploadDir = appProperties.uploadPath();
 	}
 
@@ -72,7 +75,18 @@ public class ReportService {
 		report.setStoredFileName(storedFileName);
 		report.setSize(file.getSize());
 		report.setSubmittedAt(LocalDateTime.now());
-		return reportRepository.save(report);
+		for (Lecturer advisor : team.getTopic().getAdvisors()) {
+			notificationService.send(advisor, NotificationType.APPROVAL, "Báo cáo mới được nộp",
+					"Nhóm của " + team.getLeader().getFullName() + " đã nộp báo cáo \""
+							+ file.getOriginalFilename() + "\"",
+					"/reports");
+		}
+		Report saved = reportRepository.save(report);
+		reportRepository.flush();
+		if (reportRepository.findByTeamId(team.getId()).isEmpty()) {
+			throw new InvalidReportException("Không lưu được thông tin báo cáo, vui lòng thử lại");
+		}
+		return saved;
 	}
 
 	@Transactional(readOnly = true)
@@ -121,11 +135,8 @@ public class ReportService {
 		if (file == null || file.isEmpty()) {
 			throw new InvalidReportException("Vui lòng chọn tệp báo cáo");
 		}
-		if (file.getSize() > MAX_SIZE) {
+		if (file.getSize() > MAX_SIZE_B) {
 			throw new InvalidReportException("Tệp báo cáo tối đa 10MB");
-		}
-		if (!ALLOWED_EXTENSIONS.contains(extensionOf(file.getOriginalFilename()))) {
-			throw new InvalidReportException("Chỉ chấp nhận tệp PDF, DOC hoặc DOCX");
 		}
 	}
 

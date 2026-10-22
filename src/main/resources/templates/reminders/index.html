@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Nhắc hạn</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 24px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+        .ok { color: #1b5e20; background: #e8f5e9; padding: 8px 12px; }
+        .error { color: #b00020; background: #fdecea; padding: 8px 12px; }
+        .hint { color: #555; }
+    </style>
+</head>
+<body>
+<h1>Gửi nhắc hạn cho các đợt</h1>
+<p><a th:href="@{/home}">Về trang chủ</a></p>
+
+<p class="ok" th:if="${message}" th:text="${message}"></p>
+<p class="error" th:if="${error}" th:text="${error}"></p>
+<p class="hint">Nhắc hạn nộp báo cáo gửi cho thành viên các nhóm chưa nộp; nhắc lịch báo cáo hội đồng gửi cho thành viên hội đồng. Mỗi người chỉ nhận một thông báo cho mỗi đợt.</p>
+
+<table>
+    <thead>
+    <tr>
+        <th>Đợt</th>
+        <th>Loại</th>
+        <th>Hạn nộp báo cáo</th>
+        <th>Ngày báo cáo hội đồng</th>
+        <th>Nhắc hạn nộp báo cáo</th>
+        <th>Nhắc lịch báo cáo hội đồng</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="p : ${periods}">
+        <td th:text="${p.name}">Đợt</td>
+        <td th:text="${p.type.label}">Loại</td>
+        <td th:text="${p.reportDeadline}">31/12/2026</td>
+        <td th:text="${p.councilReportDate}"></td>
+        <td>
+            <form th:action="@{/dean/reminders/{id}/report-deadline(id=${p.id})}" method="post">
+                <button type="submit">Gửi nhắc nộp báo cáo</button>
+            </form>
+        </td>
+        <td>
+            <form th:if="${p.councilReportDate != null}"
+                  th:action="@{/dean/reminders/{id}/council-date(id=${p.id})}" method="post">
+                <button type="submit">Gửi nhắc lịch hội đồng</button>
+            </form>
+            <span th:if="${p.councilReportDate == null}" class="hint">Đợt chưa có ngày báo cáo hội đồng</span>
+        </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(periods)}">
+        <td colspan="6">Chưa có đợt đăng ký nào.</td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

@@ -1,5 +1,6 @@
 package project.qldt.controller;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -61,10 +62,25 @@ public class ReportController {
 			throw new ReportNotFoundException("Tệp báo cáo không còn trên máy chủ");
 		}
 		return ResponseEntity.ok()
-				.header(HttpHeaders.CONTENT_DISPOSITION,
-						ContentDisposition.attachment().filename(report.getOriginalFileName()).build().toString())
+				.header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+						.filename(downloadFileName(report), StandardCharsets.UTF_8).build().toString())
 				.contentType(MediaType.APPLICATION_OCTET_STREAM)
 				.body(new FileSystemResource(path));
+	}
+
+	private String downloadFileName(Report report) {
+		String originalFileName = report.getOriginalFileName();
+		if (originalFileName == null || originalFileName.isBlank()) {
+			return "bao-cao-" + report.getId() + extensionOf(report.getStoredFileName());
+		}
+		return originalFileName;
+	}
+
+	private String extensionOf(String fileName) {
+		if (fileName == null || !fileName.contains(".")) {
+			return "";
+		}
+		return fileName.substring(fileName.lastIndexOf('.'));
 	}
 
 	@ExceptionHandler({ReportNotFoundException.class, AccessDeniedException.class})

@@ -83,6 +83,7 @@ public class AccountService {
 	}
 
 	public Account createAccount(AccountRequest request) {
+		validatePasswords(request);
 		return switch (request.getType()) {
 			case ADMIN ->
 				createAdmin(request.getCode(), request.getPassword(), request.getFullName(), request.getEmail());
@@ -176,6 +177,23 @@ public class AccountService {
 	private void validateDepartment(String department) {
 		if (department == null || department.isBlank()) {
 			throw new InvalidAccountException("Bộ môn của giảng viên không được để trống");
+		}
+	}
+
+	private void validatePasswords(AccountRequest request) {
+		String password = request.getPassword();
+		String confirmPassword = request.getConfirmPassword();
+		if (password == null || password.isBlank()) {
+			throw new InvalidAccountException("Mật khẩu không được để trống");
+		}
+		if (password.length() < 6) {
+			throw new InvalidAccountException("Mật khẩu phải có ít nhất 6 ký tự");
+		}
+		if (confirmPassword == null || confirmPassword.isBlank()) {
+			throw new InvalidAccountException("Vui lòng xác nhận mật khẩu");
+		}
+		if (!password.equals(confirmPassword)) {
+			throw new InvalidAccountException("Mật khẩu xác nhận không khớp");
 		}
 	}
 }

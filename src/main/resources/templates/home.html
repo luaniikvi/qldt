@@ -49,6 +49,15 @@
     <li sec:authorize="hasRole('DEAN')">
         <a th:href="@{/dean/councils}">Lập hội đồng và công bố điểm</a>
     </li>
+    <li sec:authorize="isAuthenticated()">
+        <a th:href="@{/notifications}">Thông báo (<span th:text="${unreadNotifications}">0</span>)</a>
+    </li>
+    <li sec:authorize="hasRole('DEAN')">
+        <a th:href="@{/dean/registrations}">Hủy đăng ký đề tài</a>
+    </li>
+    <li sec:authorize="hasRole('DEAN')">
+        <a th:href="@{/dean/reminders}">Gửi nhắc hạn</a>
+    </li>
     <li sec:authorize="hasRole('DEAN')">
         <a th:href="@{/dean/statistics}">Thống kê &amp; xuất kết quả</a>
     </li>

@@ -240,7 +240,10 @@ Phương án thay thế (chưa áp dụng): chuyển 5 rule liên trường sang
 - **Bước 7 đã xong** — xem mục 19.
 - **Bước 8 (JPA + MySQL) đã xong** — xem mục 21.
 - **Bước 9 đã xong** — xem mục 22.
-- Đề xuất **Bước 10 — Thông báo & nhắc hạn**: thông báo trong hệ thống khi có lời mời vào nhóm/mời GVHD, khi đề tài/đăng ký được duyệt hoặc bị từ chối, khi công bố điểm; nhắc hạn nộp báo cáo và lịch báo cáo hội đồng.
+- **Bước 10 đã xong** — xem mục 24.
+- **Bước 11 đã xong (rút gọn)** — chỉ xuất Excel, bỏ email theo yêu cầu — xem mục 25.
+- **Bước 12 (phần biểu đồ) đã xong** — xem mục 26.
+- Phần **đóng gói deploy** (profile `prod`, Dockerfile) sẽ làm khi bạn yêu cầu.
 
 ## 11. Bước 1 — Tài khoản & Spring Security (in-memory)
 
@@ -424,6 +427,20 @@ public abstract class Account { ... }
 | 19 | **Bước 7**: DEAN lập hội đồng 3–5 GV cho đề tài `REGISTERED` (đúng 1 chủ tịch, 1 thư ký, không có GVHD); mỗi thành viên chấm 0–10 (1 chữ số thập phân); chủ tịch tổng hợp điểm trung bình; DEAN công bố; SV trong nhóm + GVHD xem kết quả đã công bố | Đã làm (mục 19) |
 | 20 | **Bước 8**: dữ liệu lưu trong **MySQL** qua JPA (`@Entity` + `JpaRepository`), dùng **instance MySQL riêng (port 3307)** với tài khoản `qldt_app` (không dùng root); test chạy trên H2 `MODE=MySQL` | Đã làm (mục 21) |
 | 21 | **Bước 9**: DEAN xem thống kê theo đợt (số đề tài, nhóm, báo cáo, hội đồng, điểm trung bình), xuất CSV và API JSON `/api/statistics`; code được format tự động bằng `formatter-maven-plugin` | Đã làm (mục 22) |
+| 22 | **Bước 10**: thông báo trong hệ thống khi mời nhóm/mời GVHD, duyệt-từ chối đăng ký, nộp báo cáo, công bố điểm; nhắc hạn nộp báo cáo & nhắc lịch hội đồng (chống trùng), badge số chưa đọc trên menu | Đã làm (mục 24) |
+| 23 | **Bước 11**: xuất bảng thống kê ra **.xlsx** (Apache POI) — bỏ email theo yêu cầu; JDBC thêm `createDatabaseIfNotExist`, `useSSL=false`, `serverTimezone=UTC`; xóa thư mục `db`, thay bằng `scripts/start-db.ps1` + `scripts/reset-db.ps1` | Đã làm (mục 25) |
+| 24 | **Bước 12 (phần 1)**: biểu đồ thống kê theo đợt (trạng thái đề tài, tiến độ, điểm theo hội đồng) render server-side bằng HTML/CSS, không phụ thuộc CDN | Đã làm (mục 26) |
+| 25 | **Xác nhận mật khẩu**: `AccountRequest.confirmPassword`, service kiểm tra khớp mật khẩu khi tạo tài khoản, form admin có ô xác nhận | Đã làm (mục 27) |
+| 26 | **DEAN hủy đăng ký đề tài** (`/dean/registrations`, kèm lý do, gửi thông báo) và **nộp báo cáo mọi định dạng** (bỏ `accept` + bỏ whitelist, vẫn giới hạn 10MB) | Đã làm (mục 28) |
+| 27 | **Sửa hiển thị báo cáo**: khối báo cáo luôn hiển thị, flash kèm tên tệp + phiên bản, `no-store`, service flush + kiểm tra lại bản ghi | Đã làm (mục 29) |
+| 28 | **Sửa tải báo cáo**: `Content-Disposition` theo chuẩn RFC 5987 (`filename*=UTF-8'...`) để trình duyệt lưu đúng tên tiếng Việt thay vì `download` | Đã làm (mục 30) |
+
+
+
+
+
+
+
 
 
 
@@ -982,4 +999,299 @@ Lịch sử lời mời **không bị xóa** — chỉ đổi trạng thái, nê
 - `pom.xml` thêm `spring-boot-configuration-processor` (optional) để sinh `META-INF/spring-configuration-metadata.json`.
 - Kết quả: file metadata có `"name": "app.upload-dir"` gắn với `project.qldt.config.AppProperties` → IDE hết cảnh báo.
 - Đã kiểm tra: `mvn formatter:format` + `mvn clean package` → **236 test pass**, app khởi động bình thường.
+
+
+## 24. Bước 10 — Thông báo & nhắc hạn
+
+### 24.1. File mới/cập nhật
+
+| File | Vai trò |
+|---|---|
+| `model/Notification.java` | Thông báo: người nhận, loại, tiêu đề, nội dung, liên kết, thời điểm, đã đọc |
+| `model/NotificationType.java` | `INVITATION`, `APPROVAL`, `REJECTION`, `RESULT`, `REMINDER` |
+| `repository/NotificationRepository.java` | Truy vấn theo người nhận, đếm chưa đọc, chống trùng tiêu đề |
+| `service/NotificationService.java` | Gửi, danh sách, đếm chưa đọc, đánh dấu đã đọc (kiểm tra đúng chủ) |
+| `service/ReminderService.java` | Nhắc hạn nộp báo cáo, nhắc lịch báo cáo hội đồng, chống gửi trùng |
+| `controller/NotificationController.java` | `/notifications`, `POST /{id}/read`, `POST /read-all` |
+| `controller/ReminderAdminController.java` | `/dean/reminders` + 2 nút gửi nhắc (DEAN) |
+| `controller/NotificationAdvice.java` | Thêm `unreadNotifications` cho mọi trang (badge ở menu) |
+| `templates/notifications/list.html`, `templates/reminders/index.html` | Giao diện |
+| `templates/home.html` | Menu "Thông báo (N)" + "Gửi nhắc hạn" |
+| `exception/InvalidNotificationException.java`, `NotificationNotFoundException.java` | Lỗi nghiệp vụ |
+| `TeamService`, `TopicService`, `TopicRegistrationService`, `ReportService`, `CouncilService` | Gửi thông báo tại các mốc nghiệp vụ |
+| `src/test/.../NotificationServiceTest.java` | 10 test |
+
+### 24.2. Nghiệp vụ
+
+| Sự kiện | Người nhận |
+|---|---|
+| Mời vào nhóm | Sinh viên được mời |
+| Phản hồi lời mời nhóm | Nhóm trưởng |
+| Mời làm GVHD | Giảng viên được mời |
+| Nhóm đăng ký đề tài | Các GVHD của đề tài |
+| Duyệt / từ chối đăng ký | Nhóm trưởng |
+| Nộp báo cáo | Các GVHD |
+| Công bố điểm bảo vệ | Thành viên nhóm + GVHD |
+| Nhắc hạn nộp báo cáo | Thành viên nhóm chưa nộp |
+| Nhắc lịch báo cáo hội đồng | Thành viên hội đồng |
+
+- Mỗi người chỉ nhận **1 thông báo cho mỗi tiêu đề** (chống trùng khi bấm nhắc nhiều lần).
+- Chỉ chủ sở hữu mới đánh dấu đã đọc được thông báo của mình.
+- Menu hiển thị số thông báo chưa đọc cho mọi tài khoản đã đăng nhập.
+
+### 24.3. Kiểm thử
+
+- `mvn clean package`: BUILD SUCCESS, **246 test** pass (10 test mới).
+- Chạy thật trên MySQL:
+
+| Ca | Kết quả |
+|---|---|
+| SV001 mời SV002 vào nhóm | SV002 vào `/notifications` thấy "Lời mời vào nhóm", chưa đọc = 1 |
+| GVHD duyệt đăng ký | SV001 thấy "Đăng ký đề tài được duyệt" |
+| DEAN gửi nhắc hạn nộp báo cáo | SV001 thấy "Nhắc hạn nộp báo cáo đợt Dot Thong Bao", chưa đọc = 2 |
+| Bấm gửi nhắc lần 2 | không sinh thêm thông báo (chống trùng) |
+| Menu trang chủ | hiện "Thông báo (2)" |
+
+### 24.4. Giả định & giới hạn
+
+1. Thông báo **trong hệ thống**, chưa gửi email/SMS.
+2. Nhắc hạn do DEAN bấm gửi, chưa có lịch tự động (`@Scheduled`).
+3. Bảng `notification` mới được thêm nên các sự kiện cũ trước Bước 10 không có thông báo.
+4. Instance MySQL local dùng chứng chỉ tự ký nên cấu hình `useSSL=false` cho kết nối nội bộ (xem mục 25).
+
+
+## 25. Cấu hình JDBC, dọn thư mục `db`, xuất Excel
+
+### 25.1. Cấu hình kết nối
+
+`spring.datasource.url=jdbc:mysql://127.0.0.1:3307/qldt?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC`
+
+- `createDatabaseIfNotExist=true`: ứng dụng **tự tạo database** nếu chưa có (đã test: drop database → chạy app → database + 17 bảng + dữ liệu mẫu tự sinh).
+- `useSSL=false`: instance MySQL local dùng chứng chỉ tự ký nên tắt SSL cho kết nối nội bộ.
+- `serverTimezone=UTC`.
+
+### 25.2. Dọn thư mục `db` và script reset
+
+- **Đã xóa** thư mục `db` (init.sql, start-db.ps1, stop-db.ps1, logs, data).
+- Thư mục dữ liệu MySQL chuyển ra ngoài project: `%LOCALAPPDATA%\qldt-mysql\data` (không commit vào source).
+- `scripts/start-db.ps1`: bật instance MySQL port 3307 với datadir mới.
+- `scripts/reset-db.ps1`: `DROP DATABASE` + tạo lại database `qldt` (utf8mb4), xóa các tệp trong `uploads`; sau đó chạy lại app để tạo bảng và seed.
+
+Cách dùng:
+
+```powershell
+.\scripts\start-db.ps1
+.\scripts\reset-db.ps1
+mvn spring-boot:run
+```
+
+### 25.3. Xuất Excel (thay cho email)
+
+- **Bỏ email/SMTP** theo yêu cầu (không cần cấu hình server, phù hợp deploy cloud).
+- Thêm `org.apache.poi:poi-ooxml:5.3.0`.
+- `StatisticsService.exportXlsx(periodId)`: tạo workbook với tiêu đề in đậm, tự giãn cột, ghi điểm dạng số.
+- `GET /dean/statistics/export-xlsx?periodId=...` trả tệp `.xlsx`; trang thống kê có thêm link **Xuất Excel** (giữ nguyên Xuất CSV).
+
+### 25.4. Kiểm thử
+
+- `mvn clean package`: BUILD SUCCESS, **247 test** pass (thêm 1 test đọc lại file `.xlsx` để kiểm tra tiêu đề và điểm).
+- Chạy thật:
+
+| Ca | Kết quả |
+|---|---|
+| `/dean/statistics?periodId=1` | 200, có link `export-xlsx` |
+| `/dean/statistics/export-xlsx?periodId=1` | 200, `Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, 3639 bytes, magic bytes `PK` (file zip hợp lệ) |
+| `/dean/statistics/export?periodId=1` | 200 (CSV vẫn hoạt động) |
+
+### 25.5. Lưu ý khi deploy
+
+1. Đổi `spring.datasource.*` bằng biến môi trường (`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`).
+2. Nếu DB cloud yêu cầu SSL, bỏ `useSSL=false` (hoặc đặt `sslMode=REQUIRED`).
+3. `ddl-auto=update` phù hợp demo; môi trường thật nên dùng migration (Flyway/Liquibase).
+
+
+## 26. Bước 12 (phần 1) — Biểu đồ thống kê
+
+### 26.1. File mới/cập nhật
+
+| File | Vai trò |
+|---|---|
+| `dto/StatisticsChart.java` | Một thanh biểu đồ: nhãn, giá trị, phần trăm |
+| `dto/StatisticsCharts.java` | 3 nhóm: trạng thái, tiến độ, điểm theo hội đồng |
+| `service/StatisticsService.java` | Thêm `charts(periodId)` và `percent(value, total)` |
+| `controller/StatisticsController.java` | Đưa `charts` vào model |
+| `templates/statistics/index.html` | 3 khối biểu đồ + CSS thanh ngang |
+| `src/test/.../StatisticsServiceTest.java` | Thêm test biểu đồ |
+
+### 26.2. Cách làm
+
+- Biểu đồ **render phía server bằng HTML/CSS** (thanh ngang, `width: %`), **không dùng Chart.js/CDN** → chạy được offline và khi deploy cloud không phụ thuộc mạng ngoài.
+- **Biểu đồ 1 — Đề tài theo trạng thái**: 4 trạng thái (`Chờ duyệt`, `Đã duyệt`, `Bị từ chối`, `Đã công bố`), phần trăm trên tổng đề tài của đợt.
+- **Biểu đồ 2 — Tiến độ trong đợt**: đề tài đã công bố, đã có nhóm, số nhóm, báo cáo đã nộp, hội đồng, kết quả đã công bố; phần trăm trên giá trị lớn nhất.
+- **Biểu đồ 3 — Điểm trung bình theo hội đồng** (thang 10): độ dài thanh = điểm × 10, màu xanh lá.
+
+### 26.3. Kiểm thử
+
+- `mvn clean package`: BUILD SUCCESS, **248 test** pass.
+- Chạy thật (đợt có 1 đề tài đã công bố):
+
+| Ca | Kết quả |
+|---|---|
+| `GET /dean/statistics?periodId=1` | 200, có khối `charts`, **3 biểu đồ**, **10 thanh** (4 trạng thái + 6 tiến độ), có thanh **100.0%** |
+| `GET /dean/statistics/export-xlsx?periodId=1` | 200, 3718 bytes |
+
+### 26.4. Giới hạn
+
+1. Chưa có biểu đồ theo thời gian (theo tuần/tháng) hay so sánh nhiều đợt.
+2. Chưa xuất biểu đồ thành ảnh/PDF.
+3. Màu và kích thước cố định trong CSS, chưa có bộ lọc tuỳ chọn.
+4. Số liệu tính lại mỗi lần mở trang, chưa cache.
+
+
+## 27. Xác nhận mật khẩu khi tạo tài khoản
+
+### 27.1. Thay đổi
+
+| File | Nội dung |
+|---|---|
+| `dto/AccountRequest.java` | Thêm `confirmPassword` với `@NotBlank(message = "Vui lòng xác nhận mật khẩu")` và `@Size(max = 50)` |
+| `service/AccountService.java` | `createAccount()` gọi `validatePasswords()`: mật khẩu không trống, ≥ 6 ký tự, có xác nhận, và **phải khớp** (không khớp → `InvalidAccountException("Mật khẩu xác nhận không khớp")`) |
+| `templates/admin/accounts/form.html` | Thêm ô **Xác nhận mật khẩu** (`type=password`, `th:field="*{confirmPassword}"`, `th:errors`) |
+| `AccountServiceExtraTest` | +3 test: không khớp, thiếu xác nhận, khớp thì tạo được |
+| `AccountAdminControllerTest`, `SecurityAccessTest` | Bổ sung param `confirmPassword` cho các POST tạo tài khoản |
+
+### 27.2. Kiểm chứng
+
+- `mvn clean package`: BUILD SUCCESS, **251 test** pass.
+- Chạy thật:
+
+| Ca | Kết quả |
+|---|---|
+| `GET /admin/accounts/new` | 200, form có ô `confirmPassword` |
+| POST tạo tài khoản với mật khẩu `123456`, xác nhận `654321` | 200 (ở lại form), hiện lỗi, **không tạo** tài khoản |
+| POST với xác nhận `123456` | Tạo thành công, chuyển về `/admin/accounts`, tài khoản xuất hiện trong danh sách |
+
+### 27.3. Lưu ý
+
+1. Chỉ luồng **tạo tài khoản qua form admin** yêu cầu xác nhận; các hàm nội bộ `createAdmin/createLecturer/createStudent` (seed dữ liệu mẫu, test) không yêu cầu.
+2. Kiểm tra khớp mật khẩu nằm ở **service** (không chỉ ở form) để tránh bypass.
+3. `confirmPassword` không lưu vào DB.
+
+
+## 28. DEAN hủy đăng ký đề tài + nộp báo cáo mọi định dạng
+
+### 28.1. DEAN hủy đăng ký đề tài (xử lý ngoại lệ)
+
+| File | Nội dung |
+|---|---|
+| `service/TopicRegistrationService.java` | Thêm `cancelByDean(topicId, reason)`: bắt buộc lý do, phải có nhóm đăng ký, đưa đề tài về `AVAILABLE`, gỡ đề tài khỏi nhóm, lưu lý do, gửi thông báo cho sinh viên + GVHD |
+| `controller/DeanRegistrationController.java` | `/dean/registrations` (danh sách đăng ký) và `POST /{topicId}/cancel`, chỉ DEAN |
+| `templates/registrations/dean.html` | Bảng đăng ký + ô nhập lý do + nút **Hủy đăng ký** |
+| `templates/home.html` | Menu **Hủy đăng ký đề tài** cho DEAN |
+| `src/test/.../RegistrationCancelTest.java` | 5 test: hủy khi chờ duyệt, hủy khi đã duyệt, thông báo, thiếu lý do, đề tài chưa có nhóm |
+
+### 28.2. Nộp báo cáo mọi định dạng
+
+- **Nguyên nhân lỗi** "đã chọn file mà vẫn báo chưa chọn tệp": input file có `accept=".pdf,.doc,.docx"` nên trình duyệt **loại bỏ** các tệp khác → form gửi lên rỗng → service báo *"Vui lòng chọn tệp báo cáo"*.
+- Bỏ `accept` trong `templates/teams/list.html`, thêm gợi ý "Chấp nhận mọi định dạng tệp, tối đa 10MB".
+- `ReportService`: bỏ whitelist `ALLOWED_EXTENSIONS`; vẫn chặn tệp rỗng và tệp > 10MB.
+- Cập nhật test: `nopDuocTepBatKyDinhDang` (`.txt`), `chapNhanMoiDinhDangTep` (`txt`, `zip`, không phần mở rộng).
+
+### 28.3. Kiểm chứng
+
+- `mvn clean package`: BUILD SUCCESS, **256 test** pass.
+- Chạy thật trên MySQL:
+
+| Ca | Kết quả |
+|---|---|
+| Trang nhóm | không còn `accept`, có gợi ý định dạng |
+| Nộp tệp `.txt` | 302, trang nhóm hiện tên tệp vừa nộp |
+| `GET /dean/registrations` | 200, có ô nhập lý do + nút hủy |
+| DEAN hủy đăng ký | 200, đề tài về **AVAILABLE**, `team.topic = NULL`, lưu lý do, **3 thông báo** cho 2 SV + GVHD |
+| Khôi phục dữ liệu sau kiểm thử | đặt lại `REGISTERED`, `team.topic_id = 1`, xóa báo cáo test |
+
+### 28.4. Lưu ý
+
+1. Hủy đăng ký **không xóa nhóm**; nhóm có thể đăng ký lại đề tài khác nếu còn trong thời gian sinh viên đăng ký.
+2. DEAN hủy được cả đăng ký **đang chờ duyệt** và **đã duyệt**.
+3. Tệp báo cáo vẫn giới hạn **10MB**, lưu tên gốc và tệp `team-{id}.{ext}` trên đĩa.
+4. File `.zip/.rar`… nộp được nhưng người tải về cần phần mềm tương ứng để mở.
+
+
+## 29. Sửa hiển thị báo cáo sau khi nộp
+
+### 29.1. Nguyên nhân
+
+1. `input type="file"` có `accept=".pdf,.doc,.docx"` → trình duyệt **loại bỏ** tệp khác, form gửi lên rỗng, service báo *"Vui lòng chọn tệp báo cáo"*.
+2. Khối hiển thị báo cáo nằm **bên trong** điều kiện `availability == REGISTERED`, nên khi trạng thái đổi (hoặc trình duyệt hiển thị trang cũ) thì không thấy `v.report`.
+3. Trang `/teams` không chặn cache trình duyệt → bấm upload xong quay lại trang cũ (vẫn `v.report = null`).
+
+### 29.2. Đã sửa
+
+| File | Thay đổi |
+|---|---|
+| `templates/teams/list.html` | Bỏ `accept`; khối **Báo cáo** chuyển ra ngoài điều kiện `REGISTERED` (chỉ cần có đề tài); thêm `title="Mã báo cáo: ..."` để đối chiếu DB; thêm `<meta http-equiv="Cache-Control" content="no-store">` |
+| `controller/TeamController.java` | Sau khi nộp, flash message kèm **tên tệp + phiên bản**: *"Đã nộp báo cáo: <tên> (phiên bản N)"* |
+| `service/ReportService.java` | Sau `save` gọi `flush()` và **kiểm tra lại** `findByTeamId`; nếu không thấy bản ghi thì ném lỗi rõ ràng thay vì im lặng |
+
+### 29.3. Kiểm chứng (chạy thật trên MySQL)
+
+| Ca | Kết quả |
+|---|---|
+| Nộp `bao-cao-v3.txt` | 302; DB `report` có `original_file_name = bao-cao-v3.txt`, `version = 3` |
+| Trang `/teams` sau khi nộp | hiện **Báo cáo: bao-cao-v3.txt (v3)**, kèm tooltip "Mã báo cáo: …" |
+| Flash message | "Đã nộp báo cáo: bao-cao-v3.txt (phiên bản 3)" |
+| Header trang | có `Cache-Control: no-store` |
+| `mvn clean package` | BUILD SUCCESS, **256 test** pass |
+
+### 29.4. Cách kiểm tra nếu vẫn thấy null
+
+1. **Dừng app cũ** (port 8080) rồi chạy lại bản mới: `mvn spring-boot:run` hoặc `java -jar target\qldt-0.0.1-SNAPSHOT.jar`.
+2. Nhấn `Ctrl+F5` để bỏ cache trang `/teams`.
+3. Kiểm tra DB: `select * from report;` (phải có dòng với `team_id` của nhóm).
+4. Nếu DB có dòng mà trang vẫn trống: xem tooltip "Mã báo cáo" — nếu không có tooltip nghĩa là trang đang là bản cũ.
+
+
+## 30. Sửa lỗi tải báo cáo bị đặt tên "download"
+
+### 30.1. Nguyên nhân
+
+- `Content-Disposition` chỉ gửi `filename="<tên gốc>"` dạng thô. Khi tên tệp có **ký tự ngoài ASCII (tiếng Việt)**, giá trị header không hợp lệ theo chuẩn HTTP → trình duyệt bỏ qua tên, lấy đoạn cuối URL (`/reports/{id}/download`) làm tên tệp → lưu thành **`download`**.
+- Đã kiểm chứng: tên ASCII (`bao-cao-nhom.pdf`) cho header đúng; tên `Báo cáo nhóm 1.pdf` trước khi sửa chỉ có `filename="..."` (không có `filename*`).
+
+### 30.2. Đã sửa
+
+| File | Thay đổi |
+|---|---|
+| `controller/ReportController.java` | Dùng `ContentDisposition.attachment().filename(name, StandardCharsets.UTF_8)` → header chuẩn **RFC 5987**: `filename="..."; filename*=UTF-8%27%27...`; thêm `downloadFileName()` trả `bao-cao-{id}{ext}` khi tên gốc rỗng |
+| `ReportControllerTest` | Test tải báo cáo kiểm tra header chứa `attachment`, `filename*=UTF-8'` và đúng tên tệp |
+
+### 30.3. Kiểm chứng
+
+Header sau khi sửa (tệp `Báo cáo nhóm 1.pdf`):
+
+```
+HTTP/1.1 200
+Content-Disposition: attachment; filename="Bao cao nhom 1.pdf";
+  filename*=UTF-8%27%27B%C3%A1o%20c%C3%A1o%20nh%C3%B3m%201.pdf
+Content-Type: application/octet-stream
+Content-Length: 11
+```
+
+- `mvn clean package`: BUILD SUCCESS, **256 test** pass.
+- Trình duyệt sẽ lưu đúng tên **Báo cáo nhóm 1.pdf** (nhờ `filename*`).
+
+### 30.4. Lưu ý
+
+1. Chỉ **giảng viên hướng dẫn** của đề tài được tải báo cáo; người khác bị chặn kèm thông báo.
+2. Nếu tệp trên đĩa bị xoá, hệ thống báo *"Tệp báo cáo không còn trên máy chủ"*.
+3. Nếu vẫn nhận tệp tên `download`: **dừng app cũ trên port 8080** và chạy lại bản mới, sau đó `Ctrl+F5` trang `/reports`.
+
+
+## 31. Hiển thị thành viên hội đồng gộp vai trò và điểm
+
+- `templates/councils/list.html`: ô "Giảng viên" đổi thành `|${m.lecturer.fullName} - ${m.lecturer.lecturerCode} (${m.role.label}): ${m.score != null ? m.score : '}|`.
+- Kiểm chứng trên dữ liệu thật (hội đồng 1): hiển thị `Giảng viên CNTT - GV002 (Chủ tịch): 10`; thành viên chưa chấm hiển thị `Giảng viên 3 - GV003 (Thư ký):` (điểm để trống).
+- Hai cột "Vai trò" và "Điểm" phía sau vẫn giữ nguyên (nếu muốn bỏ để tránh trùng lặp thì báo để sửa).
+- Sửa luôn `templates/councils/dean.html`: biểu thức cũ bị sai (`${m.lecturerCode}`, thiếu `m.lecturer.`) làm trang `/dean/councils` lỗi 500 — nay dùng cùng định dạng `Họ tên - Mã (Vai trò): Điểm`; đã kiểm tra `/dean/councils` và `/councils` đều hiển thị đúng.
 

@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import project.qldt.exception.InvalidTeamException;
 import project.qldt.exception.TeamNotFoundException;
 import project.qldt.model.InvitationStatus;
+import project.qldt.model.NotificationType;
 import project.qldt.model.RegistrationPeriod;
 import project.qldt.model.Student;
 import project.qldt.model.Team;
@@ -24,12 +25,14 @@ public class TeamService {
 	private final TeamRepository teamRepository;
 	private final AccountService accountService;
 	private final RegistrationPeriodService periodService;
+	private final NotificationService notificationService;
 
 	public TeamService(TeamRepository teamRepository, AccountService accountService,
-			RegistrationPeriodService periodService) {
+			RegistrationPeriodService periodService, NotificationService notificationService) {
 		this.teamRepository = teamRepository;
 		this.accountService = accountService;
 		this.periodService = periodService;
+		this.notificationService = notificationService;
 	}
 
 	@Transactional(readOnly = true)
@@ -90,6 +93,8 @@ public class TeamService {
 		invitation.setTeam(team);
 		invitation.setStudent(invited);
 		team.getInvitations().add(invitation);
+		notificationService.send(invited, NotificationType.INVITATION, "Lời mời vào nhóm",
+				actor.getFullName() + " mời bạn vào nhóm của " + team.getLeader().getFullName(), "/teams");
 		return team;
 	}
 
@@ -113,6 +118,9 @@ public class TeamService {
 			invitation.setStatus(InvitationStatus.REJECTED);
 			invitation.setResponseReason(reason);
 		}
+		notificationService.send(team.getLeader(), NotificationType.INVITATION,
+				accept ? "Lời mời vào nhóm đã được chấp nhận" : "Lời mời vào nhóm bị từ chối",
+				actor.getFullName() + (accept ? " đã đồng ý" : " đã từ chối") + " lời mời vào nhóm", "/teams");
 		return team;
 	}
 

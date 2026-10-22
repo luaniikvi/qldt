@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Hủy đăng ký đề tài</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 24px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+        .ok { color: #1b5e20; background: #e8f5e9; padding: 8px 12px; }
+        .error { color: #b00020; background: #fdecea; padding: 8px 12px; }
+        .hint { color: #555; }
+        input[type=text] { width: 220px; }
+    </style>
+</head>
+<body>
+<h1>Hủy đăng ký đề tài (xử lý ngoại lệ)</h1>
+<p><a th:href="@{/home}">Về trang chủ</a></p>
+
+<p class="ok" th:if="${message}" th:text="${message}"></p>
+<p class="error" th:if="${error}" th:text="${error}"></p>
+<p class="hint">Dùng khi cần can thiệp: đăng ký của nhóm sẽ bị hủy, đề tài trở về trạng thái chưa có nhóm và nhóm có thể đăng ký lại.</p>
+
+<table>
+    <thead>
+    <tr>
+        <th>Đề tài</th>
+        <th>Trạng thái</th>
+        <th>Nhóm trưởng</th>
+        <th>Thành viên</th>
+        <th>Giảng viên hướng dẫn</th>
+        <th>Hủy đăng ký</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="r : ${registrations}">
+        <td th:text="${r.topic.name}">Đề tài</td>
+        <td th:text="${r.topic.availability.label}">Đã duyệt</td>
+        <td th:text="|${r.team.leader.fullName} (${r.team.leader.studentCode})|">Nhóm trưởng</td>
+        <td>
+            <div th:each="member : ${r.team.members}"
+                 th:text="|${member.fullName} (${member.studentCode})|"></div>
+        </td>
+        <td>
+            <div th:each="advisor : ${r.topic.advisors}" th:text="${advisor.fullName}"></div>
+        </td>
+        <td>
+            <form th:action="@{/dean/registrations/{id}/cancel(id=${r.topic.id})}" method="post">
+                <input type="text" name="reason" placeholder="Lý do hủy" required/>
+                <button type="submit">Hủy đăng ký</button>
+            </form>
+        </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(registrations)}">
+        <td colspan="6">Chưa có nhóm nào đăng ký đề tài.</td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

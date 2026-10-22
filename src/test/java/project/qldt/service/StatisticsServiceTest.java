@@ -4,9 +4,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import project.qldt.dto.PeriodStatistics;
 import project.qldt.dto.RegistrationPeriodRequest;
+import project.qldt.dto.StatisticsChart;
+import project.qldt.dto.StatisticsCharts;
 import project.qldt.dto.TopicRequest;
 import project.qldt.dto.TopicStatisticsRow;
 import project.qldt.model.CouncilRole;
@@ -152,6 +158,38 @@ class StatisticsServiceTest {
 		assertEquals(0, statistics.topicCount());
 		assertEquals(0, statistics.teamCount());
 		assertEquals(0.0, statistics.averageScore());
+	}
+
+	@Test
+	void xuatXlsxCoTieuDeVaDuLieu() throws IOException {
+		byte[] content = statisticsService.exportXlsx(period.getId());
+
+		try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(content))) {
+			Sheet sheet = workbook.getSheetAt(0);
+			assertEquals("Đề tài", sheet.getRow(0).getCell(0).getStringCellValue());
+			assertEquals("De tai mot", sheet.getRow(1).getCell(0).getStringCellValue());
+			assertEquals(8.0, sheet.getRow(1).getCell(6).getNumericCellValue());
+		}
+	}
+
+	@Test
+	void bieuDoTrangThaiTienDoVaDiem() {
+		StatisticsCharts charts = statisticsService.charts(period.getId());
+
+		StatisticsChart published = charts.statusBars().stream()
+				.filter(bar -> bar.label().equals("Đã công bố")).findFirst().orElseThrow();
+		assertEquals(1.0, published.value());
+		assertEquals(50.0, published.percent());
+
+		StatisticsChart reports = charts.progressBars().stream()
+				.filter(bar -> bar.label().equals("Báo cáo đã nộp")).findFirst().orElseThrow();
+		assertEquals(1.0, reports.value());
+
+		assertEquals(1, charts.scoreBars().size());
+		StatisticsChart score = charts.scoreBars().get(0);
+		assertEquals("Hoi dong thong ke", score.label());
+		assertEquals(8.0, score.value());
+		assertEquals(80.0, score.percent());
 	}
 
 	private void moveToStudentPhase(RegistrationPeriod target) {

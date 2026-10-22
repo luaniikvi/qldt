@@ -40,8 +40,19 @@ public class StatisticsController {
 			model.addAttribute("selectedPeriodId", selected);
 			model.addAttribute("statistics", statisticsService.summarize(selected));
 			model.addAttribute("rows", statisticsService.rows(selected));
+			model.addAttribute("charts", statisticsService.charts(selected));
 		}
 		return "statistics/index";
+	}
+
+	@GetMapping("/export-xlsx")
+	public ResponseEntity<byte[]> exportXlsx(@RequestParam Long periodId) {
+		return ResponseEntity.ok()
+				.header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+						.filename("thong-ke-dot-" + periodId + ".xlsx").build().toString())
+				.contentType(MediaType
+						.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+				.body(statisticsService.exportXlsx(periodId));
 	}
 
 	@GetMapping("/export")

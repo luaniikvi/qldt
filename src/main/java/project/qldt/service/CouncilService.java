@@ -13,6 +13,7 @@ import project.qldt.model.Council;
 import project.qldt.model.CouncilMember;
 import project.qldt.model.CouncilRole;
 import project.qldt.model.Lecturer;
+import project.qldt.model.NotificationType;
 import project.qldt.model.Student;
 import project.qldt.model.Team;
 import project.qldt.model.Topic;
@@ -30,14 +31,17 @@ public class CouncilService {
 	private final AccountService accountService;
 	private final TopicService topicService;
 	private final TeamService teamService;
+	private final NotificationService notificationService;
 
 	public CouncilService(CouncilRepository councilRepository, TopicResultRepository resultRepository,
-			AccountService accountService, TopicService topicService, TeamService teamService) {
+			AccountService accountService, TopicService topicService, TeamService teamService,
+			NotificationService notificationService) {
 		this.councilRepository = councilRepository;
 		this.resultRepository = resultRepository;
 		this.accountService = accountService;
 		this.topicService = topicService;
 		this.teamService = teamService;
+		this.notificationService = notificationService;
 	}
 
 	@Transactional(readOnly = true)
@@ -185,6 +189,20 @@ public class CouncilService {
 		}
 		result.setPublished(true);
 		result.setPublishedAt(LocalDateTime.now());
+		Council council = result.getCouncil();
+		Team team = teamService.findByTopicId(council.getTopic().getId());
+		if (team != null) {
+			for (Student member : team.getMembers()) {
+				notificationService.send(member, NotificationType.RESULT, "Đã công bố điểm bảo vệ",
+						"Đề tài \"" + council.getTopic().getName() + "\" đạt " + result.getAverageScore() + " điểm",
+						"/results");
+			}
+		}
+		for (Lecturer advisor : council.getTopic().getAdvisors()) {
+			notificationService.send(advisor, NotificationType.RESULT, "Đã công bố điểm bảo vệ",
+					"Đề tài \"" + council.getTopic().getName() + "\" đạt " + result.getAverageScore() + " điểm",
+					"/results");
+		}
 		return resultRepository.save(result);
 	}
 

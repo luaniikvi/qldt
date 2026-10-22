@@ -122,6 +122,7 @@ class AccountServiceExtraTest {
 		adminReq.setFullName("Admin 2");
 		adminReq.setEmail("admin2@qldt.local");
 		adminReq.setPassword("123456");
+		adminReq.setConfirmPassword("123456");
 
 		Account admin = accountService.createAccount(adminReq);
 		assertTrue(admin instanceof Admin);
@@ -133,6 +134,7 @@ class AccountServiceExtraTest {
 		svReq.setFullName("Sinh viên 2");
 		svReq.setEmail("sv2@qldt.local");
 		svReq.setPassword("123456");
+		svReq.setConfirmPassword("123456");
 
 		Account sv = accountService.createAccount(svReq);
 		assertTrue(sv instanceof Student);
@@ -153,4 +155,48 @@ class AccountServiceExtraTest {
 		assertTrue(students.stream().anyMatch(student -> "SV01".equals(student.getStudentCode())));
 		assertTrue(lecturers.stream().anyMatch(lecturer -> "GV01".equals(lecturer.getLecturerCode())));
 	}
+
+	@Test
+	void xacNhanMatKhauKhongKhopBiChan() {
+		AccountRequest request = new AccountRequest();
+		request.setType(AccountType.STUDENT);
+		request.setCode("SV903");
+		request.setFullName("SV 903");
+		request.setEmail("sv903@qldt.local");
+		request.setPassword("123456");
+		request.setConfirmPassword("654321");
+
+		InvalidAccountException error = assertThrows(InvalidAccountException.class,
+				() -> accountService.createAccount(request));
+		assertTrue(error.getMessage().contains("không khớp"));
+	}
+
+	@Test
+	void thieuXacNhanMatKhauBiChan() {
+		AccountRequest request = new AccountRequest();
+		request.setType(AccountType.STUDENT);
+		request.setCode("SV904");
+		request.setFullName("SV 904");
+		request.setEmail("sv904@qldt.local");
+		request.setPassword("123456");
+
+		assertThrows(InvalidAccountException.class, () -> accountService.createAccount(request));
+	}
+
+	@Test
+	void xacNhanMatKhauKhopTaoDuocTaiKhoan() {
+		AccountRequest request = new AccountRequest();
+		request.setType(AccountType.STUDENT);
+		request.setCode("SV905");
+		request.setFullName("SV 905");
+		request.setEmail("sv905@qldt.local");
+		request.setPassword("123456");
+		request.setConfirmPassword("123456");
+
+		Account created = accountService.createAccount(request);
+
+		assertEquals("SV905", created.getUsername());
+		assertTrue(created instanceof Student);
+	}
+
 }

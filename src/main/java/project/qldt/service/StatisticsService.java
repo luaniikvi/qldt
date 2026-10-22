@@ -1,13 +1,24 @@
 package project.qldt.service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import project.qldt.dto.PeriodStatistics;
+import project.qldt.dto.StatisticsChart;
+import project.qldt.dto.StatisticsCharts;
 import project.qldt.dto.TopicStatisticsRow;
 import project.qldt.model.Council;
 import project.qldt.model.Lecturer;
@@ -87,6 +98,92 @@ public class StatisticsService {
 					.append(row.published() ? "Đã công bố" : "Chưa công bố").append('\n');
 		}
 		return csv.toString();
+	}
+
+	public byte[] exportXlsx(Long periodId) {
+		List<TopicStatisticsRow> data = rows(periodId);
+		try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+			Sheet sheet = workbook.createSheet("Thong ke");
+			CellStyle headerStyle = workbook.createCellStyle();
+			Font headerFont = workbook.createFont();
+			headerFont.setBold(true);
+			headerStyle.setFont(headerFont);
+			String[] headers = {"Đề tài", "Giảng viên hướng dẫn", "Nhóm trưởng", "Số thành viên", "Báo cáo",
+					"Hội đồng", "Điểm trung bình", "Công bố"};
+			Row header = sheet.createRow(0);
+			for (int i = 0; i < headers.length; i++) {
+				Cell cell = header.createCell(i);
+				cell.setCellValue(headers[i]);
+				cell.setCellStyle(headerStyle);
+			}
+			int rowIndex = 1;
+			for (TopicStatisticsRow item : data) {
+				Row row = sheet.createRow(rowIndex++);
+				row.createCell(0).setCellValue(item.topic().getName());
+				row.createCell(1).setCellValue(item.advisorNames());
+				row.createCell(2).setCellValue(item.teamLeader());
+				row.createCell(3).setCellValue(item.memberCount());
+				row.createCell(4).setCellValue(item.reportFileName());
+				row.createCell(5).setCellValue(item.councilName());
+				Cell scoreCell = row.createCell(6);
+				if (item.score() != null) {
+					scoreCell.setCellValue(item.score());
+				}
+				row.createCell(7).setCellValue(item.published() ? "Đã công bố" : "Chưa công bố");
+			}
+			for (int i = 0; i < headers.length; i++) {
+				sheet.autoSizeColumn(i);
+			}
+			workbook.write(out);
+			return out.toByteArray();
+		} catch (IOException ex) {
+			throw new UncheckedIOException("Không tạo được tệp Excel", ex);
+		}
+	}
+
+	public StatisticsCharts charts(Long periodId) {
+		List<Topic> topics = topicsOf(periodId);
+		List<Team> teams = teamsOf(periodId);
+		List<Council> councils = councilsOf(periodId);
+		List<TopicResult> results = resultsOf(councils);
+
+		List<StatisticsChart> statusBars = new ArrayList<>();
+		for (TopicStatus status : TopicStatus.values()) {
+			long count = topics.stream().filter(topic -> topic.getStatus() == status).count();
+			statusBars.add(new StatisticsChart(status.getLabel(), count, percent(count, topics.size())));
+		}
+
+		long publishedTopics = topics.stream().filter(topic -> topic.getStatus() == TopicStatus.PUBLISHED)
+				.count();
+		long registeredTopics = topics.stream()
+				.filter(topic -> topic.getAvailability() == TopicAvailability.REGISTERED).count();
+		long reports = teams.stream().filter(team -> reportService.findByTeam(team) != null).count();
+		long publishedResults = results.stream().filter(TopicResult::isPublished).count();
+		long max = Math.max(1, Math.max(topics.size(), Math.max(teams.size(), councils.size())));
+		List<StatisticsChart> progressBars = List.of(
+				new StatisticsChart("Đề tài đã công bố", publishedTopics, percent(publishedTopics, max)),
+				new StatisticsChart("Đề tài đã có nhóm", registeredTopics, percent(registeredTopics, max)),
+				new StatisticsChart("Nhóm sinh viên", teams.size(), percent(teams.size(), max)),
+				new StatisticsChart("Báo cáo đã nộp", reports, percent(reports, max)),
+				new StatisticsChart("Hội đồng", councils.size(), percent(councils.size(), max)),
+				new StatisticsChart("Kết quả đã công bố", publishedResults, percent(publishedResults, max)));
+
+		List<StatisticsChart> scoreBars = new ArrayList<>();
+		for (Council council : councils) {
+			TopicResult result = councilService.findResultByCouncilId(council.getId());
+			if (result != null) {
+				double score = Math.round(result.getAverageScore() * 100) / 100.0;
+				scoreBars.add(new StatisticsChart(council.getName(), score, Math.min(100, score * 10)));
+			}
+		}
+		return new StatisticsCharts(statusBars, progressBars, scoreBars);
+	}
+
+	private double percent(long value, long total) {
+		if (total <= 0) {
+			return 0;
+		}
+		return Math.round(value * 1000.0 / total) / 10.0;
 	}
 
 	private String advisorNames(Topic topic) {

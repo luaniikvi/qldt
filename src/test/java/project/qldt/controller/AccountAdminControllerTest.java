@@ -69,6 +69,7 @@ class AccountAdminControllerTest {
 				.param("fullName", "Giang Vien Mock")
 				.param("email", "gvmock@qldt.local")
 				.param("password", "123456")
+				.param("confirmPassword", "123456")
 				.param("department", "Khoa học máy tính"))
 				.andExpect(status().is3xxRedirection())
 				.andExpect(redirectedUrl("/admin/accounts"));

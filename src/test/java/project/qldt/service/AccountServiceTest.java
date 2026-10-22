@@ -158,6 +158,7 @@ class AccountServiceTest {
 		request.setFullName("Giảng viên 9");
 		request.setEmail("gv9@qldt.local");
 		request.setPassword("123456");
+		request.setConfirmPassword("123456");
 		request.setDepartment("Công nghệ phần mềm");
 
 		Account account = accountService.createAccount(request);

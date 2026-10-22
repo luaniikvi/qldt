@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import project.qldt.dto.RegistrationView;
 import project.qldt.exception.InvalidRegistrationException;
 import project.qldt.model.Lecturer;
+import project.qldt.model.NotificationType;
 import project.qldt.model.RegistrationPeriod;
 import project.qldt.model.Student;
 import project.qldt.model.Team;
@@ -23,10 +24,13 @@ public class TopicRegistrationService {
 
 	private final TeamService teamService;
 	private final TopicService topicService;
+	private final NotificationService notificationService;
 
-	public TopicRegistrationService(TeamService teamService, TopicService topicService) {
+	public TopicRegistrationService(TeamService teamService, TopicService topicService,
+			NotificationService notificationService) {
 		this.teamService = teamService;
 		this.topicService = topicService;
+		this.notificationService = notificationService;
 	}
 
 	public List<Topic> findAvailableTopicsFor(Team team) {
@@ -59,6 +63,11 @@ public class TopicRegistrationService {
 		topic.setAvailability(TopicAvailability.PENDING);
 		team.setTopic(topic);
 		team.setRegistrationRejectionReason(null);
+		for (Lecturer advisor : topic.getAdvisors()) {
+			notificationService.send(advisor, NotificationType.APPROVAL, "Đăng ký đề tài mới",
+					"Nhóm của " + team.getLeader().getFullName() + " đã đăng ký đề tài \"" + topic.getName() + "\"",
+					"/registrations");
+		}
 		return team;
 	}
 
@@ -85,6 +94,10 @@ public class TopicRegistrationService {
 		}
 		Team team = teamService.findByTopicId(topicId);
 		topic.setAvailability(TopicAvailability.REGISTERED);
+		if (team != null) {
+			notificationService.send(team.getLeader(), NotificationType.APPROVAL, "Đăng ký đề tài được duyệt",
+					"Đề tài \"" + topic.getName() + "\" đã được duyệt đăng ký", "/teams");
+		}
 		return team;
 	}
 
@@ -102,6 +115,31 @@ public class TopicRegistrationService {
 		if (team != null) {
 			team.setTopic(null);
 			team.setRegistrationRejectionReason(reason);
+			notificationService.send(team.getLeader(), NotificationType.REJECTION, "Đăng ký đề tài bị từ chối",
+					"Đề tài \"" + topic.getName() + "\" bị từ chối: " + reason, "/teams");
+		}
+		return team;
+	}
+
+	public Team cancelByDean(Long topicId, String reason) {
+		Topic topic = topicService.findById(topicId);
+		if (reason == null || reason.isBlank()) {
+			throw new InvalidRegistrationException("Vui lòng nhập lý do hủy đăng ký");
+		}
+		Team team = teamService.findByTopicId(topicId);
+		if (team == null) {
+			throw new InvalidRegistrationException("Đề tài này chưa có nhóm đăng ký");
+		}
+		topic.setAvailability(TopicAvailability.AVAILABLE);
+		team.setTopic(null);
+		team.setRegistrationRejectionReason(reason);
+		for (Student member : team.getMembers()) {
+			notificationService.send(member, NotificationType.REJECTION, "Trưởng khoa hủy đăng ký đề tài",
+					"Đăng ký đề tài \"" + topic.getName() + "\" đã bị hủy: " + reason, "/teams");
+		}
+		for (Lecturer advisor : topic.getAdvisors()) {
+			notificationService.send(advisor, NotificationType.REJECTION, "Trưởng khoa hủy đăng ký đề tài",
+					"Đăng ký đề tài \"" + topic.getName() + "\" đã bị hủy: " + reason, "/registrations");
 		}
 		return team;
 	}

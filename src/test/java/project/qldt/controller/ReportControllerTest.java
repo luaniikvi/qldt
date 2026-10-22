@@ -121,7 +121,10 @@ class ReportControllerTest {
 	void giangVienHuongDanTaiBaoCao() throws Exception {
 		mockMvc.perform(get("/reports/" + report.getId() + "/download"))
 				.andExpect(status().isOk())
-				.andExpect(header().exists("Content-Disposition"));
+				.andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.allOf(
+						org.hamcrest.Matchers.containsString("attachment"),
+						org.hamcrest.Matchers.containsString("filename*=UTF-8''"),
+						org.hamcrest.Matchers.containsString("baocao_download.pdf"))));
 	}
 
 	@Test

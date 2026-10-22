@@ -116,9 +116,11 @@ class ReportServiceTest {
 	}
 
 	@Test
-	void saiDinhDangBiChan() {
-		assertThrows(InvalidReportException.class,
-				() -> reportService.submit(team.getId(), sv1, file("baocao.txt", "noi dung")));
+	void nopDuocTepBatKyDinhDang() {
+		Report report = reportService.submit(team.getId(), sv1, file("baocao.txt", "noi dung"));
+
+		assertEquals("baocao.txt", report.getOriginalFileName());
+		assertTrue(Files.exists(reportService.loadFile(report)));
 	}
 
 	@Test

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -224,6 +225,12 @@ public class TeamController {
 		return "redirect:/teams";
 	}
 
+	@ExceptionHandler(MaxUploadSizeExceededException.class)
+	public String handleMaxSize(MaxUploadSizeExceededException ex, RedirectAttributes redirectAttributes) {
+		redirectAttributes.addFlashAttribute("error",String.format("Tệp báo cáo vượt quá dung lượng cho phép (tối đa %dMB)", ReportService.MAX_SIZE_MB));
+		return "redirect:/teams";
+	}
+
 	private String form(Model model, TeamRequest request) {
 		model.addAttribute("team", request);
 		model.addAttribute("periods", periodService.findAll());
@@ -244,8 +251,9 @@ public class TeamController {
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			reportService.submit(id, currentStudent(authentication), file);
-			redirectAttributes.addFlashAttribute("message", "Đã nộp báo cáo");
+			Report report = reportService.submit(id, currentStudent(authentication), file);
+			redirectAttributes.addFlashAttribute("message",
+					"Đã nộp báo cáo: " + report.getOriginalFileName() + " (phiên bản " + report.getVersion() + ")");
 		} catch (InvalidReportException | TeamNotFoundException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
 		}

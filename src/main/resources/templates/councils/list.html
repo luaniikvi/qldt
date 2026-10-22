@@ -36,7 +36,7 @@
         </thead>
         <tbody>
         <tr th:each="m : ${v.council.members}">
-            <td th:text="|${m.lecturer.fullName} (${m.lecturer.lecturerCode})|">Giảng viên</td>
+            <td th:text="|${m.lecturer.fullName} - ${m.lecturer.lecturerCode} (${m.role.label}): ${m.score != null ? m.score : ''}|">Giảng viên</td>
             <td th:text="${m.role.label}">Thành viên</td>
             <td th:text="${m.score != null ? m.score : 'Chưa chấm'}">0</td>
             <td th:text="${m.comment}">Nhận xét</td>

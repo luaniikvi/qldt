@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8"/>
+    <meta http-equiv="Cache-Control" content="no-store"/>
     <title>Nhóm của tôi</title>
     <style>
         body { font-family: Segoe UI, sans-serif; margin: 24px; }
@@ -71,18 +72,20 @@
             <div th:if="${v.team.topic != null}">
                 <div th:text="${v.team.topic.name}">Tên đề tài</div>
                 <div class="hint" th:text="${v.team.topic.availability.label}">Chờ duyệt</div>
+                <div th:if="${v.report != null}">
+                    <div class="ok" th:title="|Mã báo cáo: ${v.report.id}|"
+                         th:text="|Báo cáo: ${v.report.originalFileName} (v${v.report.version})|"></div>
+                    <div class="hint" th:text="|Nộp lúc: ${#temporals.format(v.report.submittedAt, 'dd/MM/yyyy HH:mm')}|"></div>
+                </div>
                 <form th:if="${v.leader and v.team.topic.availability.name() == 'PENDING'}"
                       th:action="@{/teams/{id}/registration/cancel(id=${v.team.id})}" method="post">
                     <button type="submit">Hủy đăng ký</button>
                 </form>
                 <div th:if="${v.team.topic.availability.name() == 'REGISTERED'}">
                     <div class="hint" th:text="|Hạn nộp báo cáo: ${#temporals.format(v.team.period.reportDeadline, 'dd/MM/yyyy')}|"></div>
-                    <div th:if="${v.report != null}">
-                        <div th:text="|Báo cáo: ${v.report.originalFileName} (v${v.report.version})|"></div>
-                        <div class="hint" th:text="|Nộp lúc: ${#temporals.format(v.report.submittedAt, 'dd/MM/yyyy HH:mm')}|"></div>
-                    </div>
                     <form th:if="${v.leader}" th:action="@{/teams/{id}/report(id=${v.team.id})}" method="post" enctype="multipart/form-data">
-                        <input type="file" name="file" accept=".pdf,.doc,.docx" required/>
+                        <input type="file" name="file" required/>
+                        <div class="hint">Chấp nhận mọi định dạng tệp, tối đa 10MB.</div>
                         <button type="submit" th:text="${v.report != null} ? 'Nộp lại báo cáo' : 'Nộp báo cáo'"></button>
                     </form>
                 </div>

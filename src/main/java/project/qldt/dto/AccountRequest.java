@@ -31,6 +31,10 @@ public class AccountRequest {
 	@Size(min = 6, max = 50, message = "Mật khẩu phải từ 6 đến 50 ký tự")
 	private String password;
 
+	@NotBlank(message = "Vui lòng xác nhận mật khẩu")
+	@Size(max = 50, message = "Mật khẩu xác nhận tối đa 50 ký tự")
+	private String confirmPassword;
+
 	@Size(max = 100, message = "Bộ môn tối đa 100 ký tự")
 	private String department;
 }

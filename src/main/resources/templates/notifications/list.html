@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Thông báo</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 24px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+        .ok { color: #1b5e20; background: #e8f5e9; padding: 8px 12px; }
+        .error { color: #b00020; background: #fdecea; padding: 8px 12px; }
+        .unread { font-weight: 600; }
+        .bar { display: flex; gap: 16px; align-items: center; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+<h1>Thông báo của tôi</h1>
+<p><a th:href="@{/home}">Về trang chủ</a></p>
+
+<p class="ok" th:if="${message}" th:text="${message}"></p>
+<p class="error" th:if="${error}" th:text="${error}"></p>
+
+<div class="bar">
+    <span>Số thông báo chưa đọc: <strong th:text="${unreadCount}">0</strong></span>
+    <form th:if="${unreadCount > 0}" th:action="@{/notifications/read-all}" method="post">
+        <button type="submit">Đánh dấu tất cả đã đọc</button>
+    </form>
+</div>
+
+<table>
+    <thead>
+    <tr>
+        <th>Loại</th>
+        <th>Tiêu đề</th>
+        <th>Nội dung</th>
+        <th>Thời điểm</th>
+        <th>Liên kết</th>
+        <th>Trạng thái</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="n : ${notifications}" th:classappend="${n.read ? '' : 'unread'}">
+        <td th:text="${n.type.label}">Nhắc hạn</td>
+        <td th:text="${n.title}">Tiêu đề</td>
+        <td th:text="${n.content}">Nội dung</td>
+        <td th:text="${#temporals.format(n.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2026 08:00</td>
+        <td><a th:if="${n.link != null}" th:href="@{${n.link}}">Mở</a></td>
+        <td th:text="${n.read ? 'Đã đọc' : 'Chưa đọc'}">Chưa đọc</td>
+        <td>
+            <form th:if="${!n.read}" th:action="@{/notifications/{id}/read(id=${n.id})}" method="post">
+                <button type="submit">Đã đọc</button>
+            </form>
+        </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(notifications)}">
+        <td colspan="7">Bạn chưa có thông báo nào.</td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

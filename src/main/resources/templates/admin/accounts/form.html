@@ -68,6 +68,10 @@
         <input type="password" th:field="*{password}" />
         <div class="err" th:errors="*{password}"></div>
 
+        <label>Xác nhận mật khẩu</label>
+        <input type="password" th:field="*{confirmPassword}" />
+        <div class="err" th:errors="*{confirmPassword}"></div>
+
         <div id="departmentBlock">
             <label>Bộ môn <span class="hint">(Bắt buộc với giảng viên)</span></label>
             <select th:field="*{department}">
