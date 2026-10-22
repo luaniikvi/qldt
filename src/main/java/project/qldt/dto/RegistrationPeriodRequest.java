@@ -8,9 +8,13 @@ import org.springframework.format.annotation.DateTimeFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 import project.qldt.model.PeriodType;
 import project.qldt.model.RegistrationPeriod;
 
+@Getter
+@Setter
 public class RegistrationPeriodRequest {
 
 	@NotBlank(message = "Tên đợt đăng ký không được để trống")
@@ -42,6 +46,10 @@ public class RegistrationPeriodRequest {
 	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
 	private LocalDate councilReportDate;
 
+	@NotNull(message = "Hạn nộp không được để trống")
+	@DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+	private LocalDate reportDeadline;
+
 	public static RegistrationPeriodRequest from(RegistrationPeriod period) {
 		RegistrationPeriodRequest request = new RegistrationPeriodRequest();
 		request.setName(period.getName());
@@ -52,70 +60,7 @@ public class RegistrationPeriodRequest {
 		request.setStudentRegisterEnd(period.getStudentRegisterEnd());
 		request.setReviewerScoreDeadline(period.getReviewerScoreDeadline());
 		request.setCouncilReportDate(period.getCouncilReportDate());
+		request.setReportDeadline(period.getReportDeadline());
 		return request;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public PeriodType getType() {
-		return type;
-	}
-
-	public void setType(PeriodType type) {
-		this.type = type;
-	}
-
-	public LocalDateTime getTeacherRegisterStart() {
-		return teacherRegisterStart;
-	}
-
-	public void setTeacherRegisterStart(LocalDateTime teacherRegisterStart) {
-		this.teacherRegisterStart = teacherRegisterStart;
-	}
-
-	public LocalDateTime getTeacherRegisterEnd() {
-		return teacherRegisterEnd;
-	}
-
-	public void setTeacherRegisterEnd(LocalDateTime teacherRegisterEnd) {
-		this.teacherRegisterEnd = teacherRegisterEnd;
-	}
-
-	public LocalDateTime getStudentRegisterStart() {
-		return studentRegisterStart;
-	}
-
-	public void setStudentRegisterStart(LocalDateTime studentRegisterStart) {
-		this.studentRegisterStart = studentRegisterStart;
-	}
-
-	public LocalDateTime getStudentRegisterEnd() {
-		return studentRegisterEnd;
-	}
-
-	public void setStudentRegisterEnd(LocalDateTime studentRegisterEnd) {
-		this.studentRegisterEnd = studentRegisterEnd;
-	}
-
-	public LocalDate getReviewerScoreDeadline() {
-		return reviewerScoreDeadline;
-	}
-
-	public void setReviewerScoreDeadline(LocalDate reviewerScoreDeadline) {
-		this.reviewerScoreDeadline = reviewerScoreDeadline;
-	}
-
-	public LocalDate getCouncilReportDate() {
-		return councilReportDate;
-	}
-
-	public void setCouncilReportDate(LocalDate councilReportDate) {
-		this.councilReportDate = councilReportDate;
 	}
 }

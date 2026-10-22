@@ -1,0 +1,9 @@
+2026-10-23T16:58:09.885478Z 0 [System] [MY-010116] [Server] C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqld.exe (mysqld 8.0.45) starting as process 28784
+2026-10-23T16:58:09.914680Z 1 [System] [MY-013576] [InnoDB] InnoDB initialization has started.
+2026-10-23T16:58:10.241753Z 1 [System] [MY-013577] [InnoDB] InnoDB initialization has ended.
+2026-10-23T16:58:10.553945Z 0 [Warning] [MY-010068] [Server] CA certificate ca.pem is self signed.
+2026-10-23T16:58:10.555018Z 0 [System] [MY-013602] [Server] Channel mysql_main configured to support TLS. Encrypted connections are now supported for this channel.
+2026-10-23T16:58:10.630124Z 0 [System] [MY-010931] [Server] C:\Program Files\MySQL\MySQL Server 8.0\bin\mysqld.exe: ready for connections. Version: '8.0.45'  socket: ''  port: 3307  MySQL Community Server - GPL.
+2026-10-23T16:58:45.504727Z 10 [Warning] [MY-013360] [Server] Plugin sha256_password reported: ''sha256_password' is deprecated and will be removed in a future release. Please use caching_sha2_password instead'
+2026-10-23T17:14:20.826228Z 23 [ERROR] [MY-012611] [InnoDB] Operating system error number 32 in a file operation.
+2026-10-23T17:14:20.826710Z 23 [ERROR] [MY-012615] [InnoDB] The error means that another program is using InnoDB's files. This might be a backup or antivirus software or another instance of MySQL. Please close it to get rid of this error.

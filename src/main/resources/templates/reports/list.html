@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Báo cáo đề tài</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 24px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+        .ok { color: #1b5e20; background: #e8f5e9; padding: 8px 12px; }
+        .error { color: #b00020; background: #fdecea; padding: 8px 12px; }
+    </style>
+</head>
+<body>
+<h1>Báo cáo đề tài</h1>
+<p><a th:href="@{/home}">Về trang chủ</a></p>
+
+<p class="ok" th:if="${message}" th:text="${message}"></p>
+<p class="error" th:if="${error}" th:text="${error}"></p>
+
+<table>
+    <thead>
+    <tr>
+        <th>Đề tài</th>
+        <th>Nhóm</th>
+        <th>Nhóm trưởng</th>
+        <th>Tệp báo cáo</th>
+        <th>Phiên bản</th>
+        <th>Nộp lúc</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="r : ${reports}">
+        <td th:text="${r.team.topic.name}">Tên đề tài</td>
+        <td th:text="|Nhóm của ${r.team.leader.fullName}|">Nhóm</td>
+        <td th:text="|${r.team.leader.fullName} (${r.team.leader.studentCode})|">Trưởng nhóm</td>
+        <td th:text="${r.originalFileName}">baocao.pdf</td>
+        <td th:text="${r.version}">1</td>
+        <td th:text="${#temporals.format(r.submittedAt, 'dd/MM/yyyy HH:mm')}">01/01/2026 08:00</td>
+        <td><a th:href="@{/reports/{id}/download(id=${r.id})}">Tải</a></td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(reports)}">
+        <td colspan="7">Chưa có báo cáo nào.</td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

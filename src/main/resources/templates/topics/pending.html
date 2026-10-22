@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Duyệt đề tài</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 24px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+        form { margin: 4px 0; }
+        input[type=text] { padding: 4px; width: 190px; }
+        .ok { color: #1b5e20; background: #e8f5e9; padding: 8px 12px; }
+        .error { color: #b00020; background: #fdecea; padding: 8px 12px; }
+        .hint { color: #666; font-size: 0.9rem; }
+        h2 { margin-top: 28px; }
+    </style>
+</head>
+<body>
+<h1>Duyệt đề tài</h1>
+<p><a th:href="@{/home}">Về trang chủ</a></p>
+
+<p class="ok" th:if="${message}" th:text="${message}"></p>
+<p class="error" th:if="${error}" th:text="${error}"></p>
+
+<h2>Đề tài chờ duyệt</h2>
+<table>
+    <thead>
+    <tr>
+        <th>Tên đề tài</th>
+        <th>Đợt</th>
+        <th>Bộ môn</th>
+        <th>Giảng viên hướng dẫn</th>
+        <th>Duyệt</th>
+        <th>Từ chối</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="topic : ${topics}">
+        <td>
+            <div th:text="${topic.name}">Tên đề tài</div>
+            <div class="hint" th:text="${topic.description}">Nội dung</div>
+        </td>
+        <td th:text="${topic.period.name}">Đợt 1</td>
+        <td th:text="${topic.department}">Công nghệ phần mềm</td>
+        <td>
+            <div th:each="advisor : ${topic.advisors}"
+                 th:text="|${advisor.fullName} (${advisor.lecturerCode})|"></div>
+        </td>
+        <td>
+            <form th:action="@{/dean/topics/{id}/approve(id=${topic.id})}" method="post">
+                <button type="submit">Duyệt</button>
+            </form>
+        </td>
+        <td>
+            <form th:action="@{/dean/topics/{id}/reject(id=${topic.id})}" method="post">
+                <input type="text" name="reason" placeholder="Lý do từ chối" required/>
+                <button type="submit">Từ chối</button>
+            </form>
+        </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(topics)}">
+        <td colspan="6">Không có đề tài nào đang chờ duyệt.</td>
+    </tr>
+    </tbody>
+</table>
+
+<h2>Công bố danh sách đề tài</h2>
+<table>
+    <thead>
+    <tr>
+        <th>Đợt</th>
+        <th>Loại</th>
+        <th>Công bố</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="period : ${periods}">
+        <td th:text="${period.name}">Đợt 1</td>
+        <td th:text="${period.type.label}">KLTN</td>
+        <td>
+            <form th:action="@{/dean/topics/publish/{id}(id=${period.id})}" method="post">
+                <button type="submit">Công bố đề tài của đợt</button>
+            </form>
+        </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(periods)}">
+        <td colspan="3">Chưa có đề tài nào đã duyệt để công bố.</td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

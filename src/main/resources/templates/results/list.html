@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Kết quả đề tài</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 24px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+    </style>
+</head>
+<body>
+<h1>Kết quả bảo vệ đề tài</h1>
+<p><a th:href="@{/home}">Về trang chủ</a></p>
+
+<table>
+    <thead>
+    <tr>
+        <th>Đề tài</th>
+        <th>Hội đồng</th>
+        <th>Điểm trung bình</th>
+        <th>Công bố lúc</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="r : ${results}">
+        <td th:text="${r.council.topic.name}">Đề tài</td>
+        <td th:text="${r.council.name}">Hội đồng</td>
+        <td th:text="${r.averageScore}">0</td>
+        <td th:text="${#temporals.format(r.publishedAt, 'dd/MM/yyyy HH:mm')}">01/01/2026 08:00</td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(results)}">
+        <td colspan="4">Chưa có kết quả nào được công bố.</td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

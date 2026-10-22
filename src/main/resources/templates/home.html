@@ -31,18 +31,42 @@
     <li sec:authorize="hasRole('DEAN')">
         <a th:href="@{/periods/new}">Tạo đợt đăng ký</a>
     </li>
-    <li sec:authorize="hasRole('ADMIN')">
-        Quản trị tài khoản (sẽ triển khai ở bước tiếp theo)
+    <li sec:authorize="hasRole('DEAN')">
+        <a th:href="@{/dean/topics}">Duyệt và công bố đề tài</a>
     </li>
-    <li sec:authorize="hasRole('LECTURER') and !hasRole('DEAN')">
-        Khu vực giảng viên (sẽ triển khai ở bước tiếp theo)
+    <li sec:authorize="hasRole('ADMIN')">
+        <a th:href="@{/admin/accounts}">Quản trị tài khoản</a>
+    </li>
+    <li sec:authorize="hasRole('LECTURER')">
+        <a th:href="@{/topics}">Đề tài của tôi</a>
+    </li>
+    <li sec:authorize="hasRole('LECTURER')">
+        <a th:href="@{/registrations}">Duyệt đăng ký đề tài</a>
+    </li>
+    <li sec:authorize="hasRole('LECTURER')">
+        <a th:href="@{/reports}">Báo cáo đề tài</a>
+    </li>
+    <li sec:authorize="hasRole('DEAN')">
+        <a th:href="@{/dean/councils}">Lập hội đồng và công bố điểm</a>
+    </li>
+    <li sec:authorize="hasRole('DEAN')">
+        <a th:href="@{/dean/statistics}">Thống kê &amp; xuất kết quả</a>
+    </li>
+    <li sec:authorize="hasRole('LECTURER')">
+        <a th:href="@{/councils}">Hội đồng của tôi</a>
+    </li>
+    <li sec:authorize="hasRole('LECTURER')">
+        <a th:href="@{/results}">Kết quả đề tài tôi hướng dẫn</a>
     </li>
     <li sec:authorize="hasRole('STUDENT')">
-        Khu vực sinh viên (sẽ triển khai ở bước tiếp theo)
+        <a th:href="@{/results}">Kết quả bảo vệ đề tài</a>
     </li>
-    <!-- <li sec:authorize="isAuthenticated()">
-        <a th:href="@{/api/v1/periods}">API đợt đăng ký (JSON)</a>
-    </li> -->
+    <li sec:authorize="hasRole('STUDENT')">
+        <a th:href="@{/teams}">Nhóm của tôi</a>
+    </li>
+    <li sec:authorize="hasRole('STUDENT')">
+        <a th:href="@{/published-topics}">Danh sách đề tài đã công bố</a>
+    </li>
 </ul>
 </body>
 </html>

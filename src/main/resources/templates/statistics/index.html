@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Thống kê theo đợt</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 24px; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 16px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+        .cards { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+        .card { border: 1px solid #bbb; border-radius: 6px; padding: 10px 16px; min-width: 160px; }
+        .card span { display: block; font-size: 24px; font-weight: 600; }
+        label { margin-right: 12px; }
+    </style>
+</head>
+<body>
+<h1>Thống kê theo đợt đăng ký</h1>
+<p><a th:href="@{/home}">Về trang chủ</a></p>
+
+<form method="get" th:action="@{/dean/statistics}">
+    <label>Chọn đợt
+        <select name="periodId" onchange="this.form.submit()">
+            <option th:each="p : ${periods}" th:value="${p.id}" th:text="|${p.name} (${p.type.label})|"
+                    th:selected="${selectedPeriodId != null and p.id == selectedPeriodId}"></option>
+        </select>
+    </label>
+    <a th:if="${selectedPeriodId != null}" th:href="@{/dean/statistics/export(periodId=${selectedPeriodId})}">Xuất CSV</a>
+</form>
+
+<p th:if="${#lists.isEmpty(periods)}">Chưa có đợt đăng ký nào.</p>
+
+<div th:if="${statistics != null}">
+    <div class="cards">
+        <div class="card">Đề tài<span th:text="${statistics.topicCount}">0</span></div>
+        <div class="card">Đề tài đã công bố<span th:text="${statistics.publishedTopicCount}">0</span></div>
+        <div class="card">Đề tài đã có nhóm<span th:text="${statistics.registeredTopicCount}">0</span></div>
+        <div class="card">Nhóm sinh viên<span th:text="${statistics.teamCount}">0</span></div>
+        <div class="card">Báo cáo đã nộp<span th:text="${statistics.reportCount}">0</span></div>
+        <div class="card">Hội đồng<span th:text="${statistics.councilCount}">0</span></div>
+        <div class="card">Kết quả đã công bố<span th:text="${statistics.publishedResultCount}">0</span></div>
+        <div class="card">Điểm trung bình<span th:text="${statistics.averageScore}">0</span></div>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Đề tài</th>
+            <th>Trạng thái</th>
+            <th>Giảng viên hướng dẫn</th>
+            <th>Nhóm trưởng</th>
+            <th>Số thành viên</th>
+            <th>Báo cáo</th>
+            <th>Hội đồng</th>
+            <th>Điểm trung bình</th>
+            <th>Công bố</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="r : ${rows}">
+            <td th:text="${r.topic.name}">Đề tài</td>
+            <td th:text="${r.topic.status.label}">Trạng thái</td>
+            <td th:text="${r.advisorNames}">GVHD</td>
+            <td th:text="${r.teamLeader}">Nhóm trưởng</td>
+            <td th:text="${r.memberCount}">0</td>
+            <td th:text="${r.reportFileName}">baocao.pdf</td>
+            <td th:text="${r.councilName}">Hội đồng</td>
+            <td th:text="${r.score}">0</td>
+            <td th:text="${r.published ? 'Đã công bố' : 'Chưa công bố'}">Chưa công bố</td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(rows)}">
+            <td colspan="9">Đợt này chưa có đề tài nào.</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

@@ -54,6 +54,10 @@
     <label>Ngày báo cáo hội đồng <span class="hint">(chỉ KLTN)</span></label>
     <input type="date" th:field="*{councilReportDate}"/>
 
+    <label>Hạn nộp báo cáo <span class="hint">(bắt buộc, phải sau ngày SV đăng ký kết thúc)</span></label>
+    <input type="date" th:field="*{reportDeadline}"/>
+    <div class="err" th:errors="*{reportDeadline}"></div>
+
     <p>
         <button type="submit">Lưu</button>
         <a th:href="@{/periods}">Hủy</a>

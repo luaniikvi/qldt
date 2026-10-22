@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Hội đồng của tôi</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 24px; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 12px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+        .card { border: 1px solid #bbb; border-radius: 6px; padding: 12px 16px; margin-bottom: 20px; }
+        .ok { color: #1b5e20; background: #e8f5e9; padding: 8px 12px; }
+        .error { color: #b00020; background: #fdecea; padding: 8px 12px; }
+        .hint { color: #555; }
+        label { display: block; margin: 8px 0; }
+    </style>
+</head>
+<body>
+<h1>Hội đồng của tôi</h1>
+<p><a th:href="@{/home}">Về trang chủ</a></p>
+
+<p class="ok" th:if="${message}" th:text="${message}"></p>
+<p class="error" th:if="${error}" th:text="${error}"></p>
+
+<div class="card" th:each="v : ${councils}">
+    <h2 th:text="|${v.council.name} — ${v.council.topic.name}|">Hội đồng</h2>
+    <p>Vai trò của bạn: <strong th:text="${v.myMember.role.label}">Thành viên</strong></p>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Giảng viên</th>
+            <th>Vai trò</th>
+            <th>Điểm</th>
+            <th>Nhận xét</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="m : ${v.council.members}">
+            <td th:text="|${m.lecturer.fullName} (${m.lecturer.lecturerCode})|">Giảng viên</td>
+            <td th:text="${m.role.label}">Thành viên</td>
+            <td th:text="${m.score != null ? m.score : 'Chưa chấm'}">0</td>
+            <td th:text="${m.comment}">Nhận xét</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p th:if="${v.result != null}">
+        Điểm trung bình: <strong th:text="${v.result.averageScore}">0</strong>
+        <span th:if="${v.result.published}"> — đã công bố</span>
+        <span th:unless="${v.result.published}"> — chờ trưởng khoa công bố</span>
+    </p>
+
+    <form th:unless="${v.result != null and v.result.published}"
+          th:action="@{/councils/{id}/score(id=${v.council.id})}" method="post">
+        <label>Điểm của bạn (0–10, tối đa 1 chữ số thập phân)
+            <input type="number" name="score" min="0" max="10" step="0.1" th:value="${v.myMember.score}" required/>
+        </label>
+        <label>Nhận xét
+            <input type="text" name="comment" size="60" th:value="${v.myMember.comment}"/>
+        </label>
+        <button type="submit">Lưu điểm</button>
+    </form>
+
+    <form th:if="${v.myMember.role.name() == 'CHAIR' and v.fullyScored and v.result == null}"
+          th:action="@{/councils/{id}/confirm(id=${v.council.id})}" method="post">
+        <button type="submit">Tổng hợp điểm</button>
+    </form>
+    <p class="hint" th:if="${v.myMember.role.name() == 'CHAIR' and !v.fullyScored}">
+        Chờ tất cả thành viên nhập điểm để tổng hợp.
+    </p>
+</div>
+
+<p th:if="${#lists.isEmpty(councils)}">Bạn chưa được phân công vào hội đồng nào.</p>
+</body>
+</html>

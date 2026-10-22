@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Tạo tài khoản</title>
+    <style>
+        body {
+            font-family: Segoe UI, sans-serif;
+            margin: 24px;
+            max-width: 560px;
+        }
+
+        label {
+            display: block;
+            margin-top: 12px;
+            font-weight: 600;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 6px;
+        }
+
+        .hint {
+            font-weight: 400;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .err {
+            color: #b00020;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Tạo tài khoản</h1>
+
+    <form th:object="${account}" method="post" th:action="@{/admin/accounts}">
+
+        <div class="err" th:if="${#fields.hasGlobalErrors()}">
+            <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+        </div>
+
+        <label>Loại tài khoản</label>
+        <select th:field="*{type}">
+            <option value="">-- Chọn loại --</option>
+            <option th:each="type : ${accountTypes}" th:value="${type}" th:text="${type.label}"></option>
+        </select>
+        <div class="err" th:errors="*{type}"></div>
+
+        <label>Mã đăng nhập <span class="hint">(GV dùng mã GV, SV dùng mã SV)</span></label>
+        <input type="text" th:field="*{code}" />
+        <div class="err" th:errors="*{code}"></div>
+
+        <label>Họ tên</label>
+        <input type="text" th:field="*{fullName}" />
+        <div class="err" th:errors="*{fullName}"></div>
+
+        <label>Email</label>
+        <input type="text" th:field="*{email}" />
+        <div class="err" th:errors="*{email}"></div>
+
+        <label>Mật khẩu</label>
+        <input type="password" th:field="*{password}" />
+        <div class="err" th:errors="*{password}"></div>
+
+        <div id="departmentBlock">
+            <label>Bộ môn <span class="hint">(Bắt buộc với giảng viên)</span></label>
+            <select th:field="*{department}">
+                <option value="">-- Chọn bộ môn --</option>
+                <option th:each="dept : ${departmentTypes}" th:value="${dept.label}" th:text="${dept.label}"></option>
+            </select>
+            <div class="err" th:errors="*{department}"></div>
+        </div>
+
+
+        <p>
+            <button type="submit">Tạo tài khoản</button>
+            <a th:href="@{/admin/accounts}">Hủy</a>
+        </p>
+    </form>
+
+    <script>
+        (function () {
+            var typeSelect = document.getElementById('type');
+            var block = document.getElementById('departmentBlock');
+            var department = document.getElementById('department');
+
+            function syncDepartment() {
+                var isLecturer = typeSelect.value === 'LECTURER';
+                block.style.display = isLecturer ? '' : 'none';
+                department.required = isLecturer;
+                if (!isLecturer) {
+                    department.value = '';
+                }
+            }
+
+            typeSelect.addEventListener('change', syncDepartment);
+            syncDepartment();
+        })();
+    </script>
+</body>
+
+</html>

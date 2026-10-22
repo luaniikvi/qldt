@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Đề tài</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 24px; max-width: 640px; }
+        label { display: block; margin-top: 12px; font-weight: 600; }
+        input, select, textarea { width: 100%; padding: 6px; box-sizing: border-box; }
+        .hint { font-weight: 400; color: #666; font-size: 0.9rem; }
+        .err { color: #b00020; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+<h1 th:text="${topicId == null} ? 'Đăng đề tài mới' : 'Sửa đề tài'">Đăng đề tài mới</h1>
+
+<form th:object="${topic}" method="post"
+      th:action="${topicId == null} ? @{/topics} : @{/topics/{id}(id=${topicId})}">
+
+    <div class="err" th:if="${#fields.hasGlobalErrors()}">
+        <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+    </div>
+
+    <label>Tên đề tài</label>
+    <input type="text" th:field="*{name}"/>
+    <div class="err" th:errors="*{name}"></div>
+
+    <label>Nội dung đề tài</label>
+    <textarea th:field="*{description}" rows="6"></textarea>
+    <div class="err" th:errors="*{description}"></div>
+
+    <label>Đợt đăng ký</label>
+    <select th:field="*{periodId}">
+        <option value="">-- Chọn đợt --</option>
+        <option th:each="period : ${periods}" th:value="${period.id}"
+                th:text="|${period.name} (${period.type.label})|"></option>
+    </select>
+    <div class="err" th:errors="*{periodId}"></div>
+
+    <p>
+        <button type="submit">Lưu</button>
+        <a th:href="@{/topics}">Hủy</a>
+    </p>
+</form>
+</body>
+</html>

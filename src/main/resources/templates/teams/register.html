@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Đăng ký đề tài</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 24px; max-width: 640px; }
+        table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        select { width: 100%; padding: 6px; margin: 8px 0; }
+        .hint { color: #666; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+<h1>Đăng ký đề tài</h1>
+<p><a th:href="@{/teams}">Quay lại nhóm</a></p>
+
+<p>
+    Nhóm: <strong th:text="|Nhóm của ${team.leader.fullName}|">Nhóm</strong> |
+    Đợt: <strong th:text="${team.period.name}">Đợt</strong>
+</p>
+
+<p class="hint" th:if="${#lists.isEmpty(topics)}">
+    Không còn đề tài nào đã công bố và chưa có nhóm đăng ký trong đợt này.
+</p>
+
+<form th:if="${not #lists.isEmpty(topics)}" method="post"
+      th:action="@{/teams/{id}/register(id=${team.id})}">
+    <label>Chọn đề tài</label>
+    <select name="topicId" required>
+        <option value="">-- Chọn đề tài --</option>
+        <option th:each="topic : ${topics}" th:value="${topic.id}"
+                th:text="|${topic.name} (${topic.department})|"></option>
+    </select>
+    <button type="submit">Đăng ký</button>
+</form>
+</body>
+</html>

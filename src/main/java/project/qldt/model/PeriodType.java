@@ -2,10 +2,7 @@ package project.qldt.model;
 
 public enum PeriodType {
 
-	COURSE("Môn học"),
-	RESEARCH("NCKH"),
-	SPECIALIZED_THESIS("TLCN"),
-	GRADUATION_THESIS("KLTN");
+	COURSE("Môn học"), RESEARCH("NCKH"), SPECIALIZED_THESIS("TLCN"), GRADUATION_THESIS("KLTN");
 
 	private final String label;
 

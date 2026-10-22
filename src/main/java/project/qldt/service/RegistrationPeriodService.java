@@ -1,50 +1,59 @@
 package project.qldt.service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import project.qldt.dto.RegistrationPeriodRequest;
 import project.qldt.exception.InvalidRegistrationPeriodException;
 import project.qldt.exception.RegistrationPeriodNotFoundException;
 import project.qldt.model.RegistrationPeriod;
+import project.qldt.repository.RegistrationPeriodRepository;
 
 @Service
+@Transactional
 public class RegistrationPeriodService {
 
-	private final List<RegistrationPeriod> store = new ArrayList<>();
-	private final AtomicLong sequence = new AtomicLong(1);
+	private final RegistrationPeriodRepository periodRepository;
 
-	public List<RegistrationPeriod> findAll() {
-		return new ArrayList<>(store);
+	public RegistrationPeriodService(RegistrationPeriodRepository periodRepository) {
+		this.periodRepository = periodRepository;
 	}
 
+	@Transactional(readOnly = true)
+	public List<RegistrationPeriod> findAll() {
+		return periodRepository.findAll();
+	}
+
+	@Transactional(readOnly = true)
 	public RegistrationPeriod findById(Long id) {
-		return store.stream()
-				.filter(period -> period.getId().equals(id))
-				.findFirst()
+		return periodRepository.findById(id)
 				.orElseThrow(() -> new RegistrationPeriodNotFoundException(id));
 	}
 
 	public RegistrationPeriod create(RegistrationPeriodRequest request) {
 		validate(request);
-		RegistrationPeriod period = new RegistrationPeriod(sequence.getAndIncrement());
+		RegistrationPeriod period = new RegistrationPeriod();
 		apply(period, request);
-		store.add(period);
-		return period;
+		return periodRepository.save(period);
 	}
 
 	public RegistrationPeriod update(Long id, RegistrationPeriodRequest request) {
 		validate(request);
 		RegistrationPeriod period = findById(id);
 		apply(period, request);
-		return period;
+		return periodRepository.save(period);
 	}
 
 	public void deleteById(Long id) {
-		store.remove(findById(id));
+		periodRepository.delete(findById(id));
+	}
+
+	public RegistrationPeriod setRegistrationLocked(Long id, boolean locked) {
+		RegistrationPeriod period = findById(id);
+		period.setRegistrationLocked(locked);
+		return periodRepository.save(period);
 	}
 
 	private void validate(RegistrationPeriodRequest request) {
@@ -52,7 +61,8 @@ public class RegistrationPeriodService {
 			throw new InvalidRegistrationPeriodException("Thời điểm kết thúc GV đăng ký phải sau thời điểm bắt đầu");
 		}
 		if (request.getStudentRegisterStart().isBefore(request.getTeacherRegisterEnd())) {
-			throw new InvalidRegistrationPeriodException("Thời điểm SV đăng ký phải bắt đầu sau khi GV đăng ký kết thúc");
+			throw new InvalidRegistrationPeriodException(
+					"Thời điểm SV đăng ký phải bắt đầu sau khi GV đăng ký kết thúc");
 		}
 		if (!request.getStudentRegisterEnd().isAfter(request.getStudentRegisterStart())) {
 			throw new InvalidRegistrationPeriodException("Thời điểm kết thúc SV đăng ký phải sau thời điểm bắt đầu");
@@ -62,6 +72,18 @@ public class RegistrationPeriodService {
 		}
 		if (request.getType().requiresCouncilReportDate()) {
 			validateCouncilReportDate(request);
+		}
+		if (request.getReportDeadline() != null) {
+			validateReportDeadline(request);
+		} else {
+			throw new InvalidRegistrationPeriodException("Hạn nộp báo cáo không được để trống");
+		}
+	}
+
+	private void validateReportDeadline(RegistrationPeriodRequest request) {
+		if (request.getReportDeadline().isBefore(request.getStudentRegisterEnd().toLocalDate())) {
+			throw new InvalidRegistrationPeriodException(
+					"Hạn nộp báo cáo phải sau thời điểm SV đăng ký kết thúc");
 		}
 	}
 
@@ -98,5 +120,6 @@ public class RegistrationPeriodService {
 				request.getType().requiresReviewerScoreDeadline() ? request.getReviewerScoreDeadline() : null);
 		period.setCouncilReportDate(
 				request.getType().requiresCouncilReportDate() ? request.getCouncilReportDate() : null);
+		period.setReportDeadline(request.getReportDeadline());
 	}
 }

@@ -90,6 +90,20 @@ public class RegistrationPeriodController {
 		return "redirect:/periods";
 	}
 
+	@PreAuthorize("hasRole('DEAN')")
+	@PostMapping("/{id}/lock")
+	public String lock(@PathVariable Long id) {
+		periodService.setRegistrationLocked(id, true);
+		return "redirect:/periods";
+	}
+
+	@PreAuthorize("hasRole('DEAN')")
+	@PostMapping("/{id}/unlock")
+	public String unlock(@PathVariable Long id) {
+		periodService.setRegistrationLocked(id, false);
+		return "redirect:/periods";
+	}
+
 	@ExceptionHandler(RegistrationPeriodNotFoundException.class)
 	public String handleNotFound(RegistrationPeriodNotFoundException ex, RedirectAttributes redirectAttributes) {
 		redirectAttributes.addFlashAttribute("error", ex.getMessage());

@@ -26,6 +26,8 @@
         <th>SV đăng ký</th>
         <th>Hạn nộp điểm GVPB</th>
         <th>Ngày báo cáo hội đồng</th>
+        <th>Hạn nộp báo cáo</th>
+        <th>Trạng thái</th>
         <th></th>
     </tr>
     </thead>
@@ -42,17 +44,27 @@
         </td>
         <td th:text="${period.reviewerScoreDeadline != null ? #temporals.format(period.reviewerScoreDeadline, 'dd/MM/yyyy') : '—'}">—</td>
         <td th:text="${period.councilReportDate != null ? #temporals.format(period.councilReportDate, 'dd/MM/yyyy') : '—'}">—</td>
+        <td th:text="${period.reportDeadline != null ? #temporals.format(period.reportDeadline, 'dd/MM/yyyy') : '—'}">—</td>
+        <td th:text="${period.registrationLocked} ? 'Đã khóa' : 'Đang mở'">Đang mở</td>
         <td>
             <span sec:authorize="hasRole('DEAN')">
                 <a th:href="@{/periods/{id}/edit(id=${period.id})}">Sửa</a>
                 <form th:action="@{/periods/{id}/delete(id=${period.id})}" method="post" style="display:inline">
                     <button type="submit">Xóa</button>
                 </form>
+                <form th:unless="${period.registrationLocked}"
+                      th:action="@{/periods/{id}/lock(id=${period.id})}" method="post" style="display:inline">
+                    <button type="submit">Khóa đăng ký</button>
+                </form>
+                <form th:if="${period.registrationLocked}"
+                      th:action="@{/periods/{id}/unlock(id=${period.id})}" method="post" style="display:inline">
+                    <button type="submit">Mở khóa</button>
+                </form>
             </span>
         </td>
     </tr>
     <tr th:if="${#lists.isEmpty(periods)}">
-        <td colspan="8">Chưa có đợt đăng ký nào.</td>
+        <td colspan="10">Chưa có đợt đăng ký nào.</td>
     </tr>
     </tbody>
 </table>

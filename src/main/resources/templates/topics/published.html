@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Đề tài đã công bố</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 24px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+        .hint { color: #666; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+<h1>Danh sách đề tài đã công bố</h1>
+<p><a th:href="@{/home}">Về trang chủ</a></p>
+
+<table>
+    <thead>
+    <tr>
+        <th>Tên đề tài</th>
+        <th>Đợt</th>
+        <th>Bộ môn</th>
+        <th>Giảng viên hướng dẫn</th>
+        <th>Trạng thái đăng ký</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="topic : ${topics}">
+        <td>
+            <div th:text="${topic.name}">Tên đề tài</div>
+            <div class="hint" th:text="${topic.description}">Nội dung</div>
+        </td>
+        <td th:text="${topic.period.name}">Đợt 1</td>
+        <td th:text="${topic.department}">Công nghệ phần mềm</td>
+        <td>
+            <div th:each="advisor : ${topic.advisors}"
+                 th:text="|${advisor.fullName} (${advisor.lecturerCode})|"></div>
+        </td>
+        <td th:text="${topic.availability.label}">Chưa có nhóm đăng ký</td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(topics)}">
+        <td colspan="5">Chưa có đề tài nào được công bố.</td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Hội đồng và kết quả</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 24px; }
+        table { border-collapse: collapse; width: 100%; margin-bottom: 12px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+        .ok { color: #1b5e20; background: #e8f5e9; padding: 8px 12px; }
+        .error { color: #b00020; background: #fdecea; padding: 8px 12px; }
+        .hint { color: #555; }
+        label { display: block; margin: 8px 0; }
+        fieldset { border: 1px solid #bbb; border-radius: 6px; padding: 12px 16px; margin-bottom: 24px; }
+    </style>
+</head>
+<body>
+<h1>Hội đồng và kết quả bảo vệ</h1>
+<p><a th:href="@{/home}">Về trang chủ</a></p>
+
+<p class="ok" th:if="${message}" th:text="${message}"></p>
+<p class="error" th:if="${error}" th:text="${error}"></p>
+
+<fieldset>
+    <legend>Lập hội đồng cho đề tài đã được duyệt đăng ký</legend>
+    <p class="hint" th:if="${#lists.isEmpty(topics)}">Không còn đề tài nào cần lập hội đồng.</p>
+    <form th:if="${not #lists.isEmpty(topics)}" th:action="@{/dean/councils}" method="post">
+        <label>Đề tài
+            <select name="topicId" required>
+                <option th:each="t : ${topics}" th:value="${t.id}"
+                        th:text="|${t.name} (${t.period.name})|"></option>
+            </select>
+        </label>
+        <label>Tên hội đồng
+            <input type="text" name="name" size="40" placeholder="Hội đồng 1"/>
+        </label>
+        <table>
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Mã giảng viên</th>
+                <th>Vai trò</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="i : ${#numbers.sequence(0, 4)}">
+                <td th:text="${i + 1}">1</td>
+                <td><input type="text" name="lecturerCode" list="lecturerCodes"/></td>
+                <td>
+                    <select name="role">
+                        <option th:each="r : ${roles}" th:value="${r}" th:text="${r.label}"
+                                th:selected="${r.name() == 'MEMBER'}"></option>
+                    </select>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <datalist id="lecturerCodes">
+            <option th:each="l : ${lecturers}" th:value="${l.lecturerCode}"
+                    th:text="|${l.lecturerCode} - ${l.fullName}|"></option>
+        </datalist>
+        <p class="hint">Bỏ trống những dòng không dùng. Hội đồng cần 3–5 giảng viên, đúng 1 chủ tịch và 1 thư ký; giảng viên hướng dẫn không được tham gia hội đồng của đề tài mình.</p>
+        <button type="submit">Lập hội đồng</button>
+    </form>
+</fieldset>
+
+<h2>Danh sách hội đồng</h2>
+<table>
+    <thead>
+    <tr>
+        <th>Hội đồng</th>
+        <th>Đề tài</th>
+        <th>Thành viên và điểm</th>
+        <th>Điểm trung bình</th>
+        <th>Trạng thái</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="v : ${councils}">
+        <td th:text="${v.council.name}">Hội đồng 1</td>
+        <td th:text="${v.council.topic.name}">Đề tài</td>
+        <td>
+            <div th:each="m : ${v.council.members}"
+                 th:text="|${m.lecturer.fullName} (${m.role.label}): ${m.score != null ? m.score : 'chưa chấm'}|"></div>
+        </td>
+        <td th:text="${v.result != null ? v.result.averageScore : ''}"></td>
+        <td>
+            <span th:if="${v.result == null}">Chưa tổng hợp</span>
+            <span th:if="${v.result != null and !v.result.published}">Chờ công bố</span>
+            <span th:if="${v.result != null and v.result.published}"
+                  th:text="|Đã công bố ${#temporals.format(v.result.publishedAt, 'dd/MM/yyyy HH:mm')}|"></span>
+        </td>
+        <td>
+            <form th:if="${v.result != null and !v.result.published}"
+                  th:action="@{/dean/councils/results/{id}/publish(id=${v.result.id})}" method="post">
+                <button type="submit">Công bố điểm</button>
+            </form>
+        </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(councils)}">
+        <td colspan="6">Chưa có hội đồng nào.</td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

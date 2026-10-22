@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Đăng nhập</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 0; display: flex; min-height: 100vh; align-items: center; justify-content: center; background: #f5f7fa; }
+        .card { background: #fff; padding: 28px 32px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); width: 360px; }
+        h1 { margin: 0 0 4px; font-size: 1.4rem; }
+        p.sub { margin: 0 0 20px; color: #666; font-size: 0.9rem; }
+        label { display: block; margin-top: 14px; font-weight: 600; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { margin-top: 20px; width: 100%; padding: 10px; }
+        .error { color: #b00020; background: #fdecea; padding: 8px 12px; border-radius: 4px; font-size: 0.9rem; }
+        .ok { color: #1b5e20; background: #e8f5e9; padding: 8px 12px; border-radius: 4px; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>Hệ thống quản lý đề tài</h1>
+
+    <p class="error" th:if="${param.error}">Sai mã đăng nhập hoặc mật khẩu.</p>
+    <p class="ok" th:if="${param.logout}">Bạn đã đăng xuất.</p>
+
+    <form th:action="@{/login}" method="post">
+        <label>Tài khoản</label>
+        <input type="text" name="username" required autofocus/>
+        <label>Mật khẩu</label>
+        <input type="password" name="password" required/>
+        <button type="submit">Đăng nhập</button>
+    </form>
+
+    <p><a th:href="@{/home}">Về trang chủ</a></p>
+</div>
+</body>
+</html>

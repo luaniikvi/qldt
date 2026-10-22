@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Tạo nhóm</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 24px; max-width: 560px; }
+        label { display: block; margin-top: 12px; font-weight: 600; }
+        select { width: 100%; padding: 6px; }
+        .hint { font-weight: 400; color: #666; font-size: 0.9rem; }
+        .err { color: #b00020; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+<h1>Tạo nhóm</h1>
+
+<form th:object="${team}" method="post" th:action="@{/teams}">
+
+    <div class="err" th:if="${#fields.hasGlobalErrors()}">
+        <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+    </div>
+
+    <label>Đợt đăng ký <span class="hint">(nhóm không phụ thuộc thời gian đăng ký đề tài)</span></label>
+    <select th:field="*{periodId}">
+        <option value="">-- Chọn đợt --</option>
+        <option th:each="period : ${periods}" th:value="${period.id}"
+                th:text="|${period.name} (${period.type.label})|"></option>
+    </select>
+    <div class="err" th:errors="*{periodId}"></div>
+
+    <p>
+        <button type="submit">Tạo nhóm</button>
+        <a th:href="@{/teams}">Hủy</a>
+    </p>
+</form>
+</body>
+</html>

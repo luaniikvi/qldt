@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Nhóm của tôi</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 24px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+        form { margin: 4px 0; }
+        input[type=text], select { padding: 4px; width: 180px; }
+        .ok { color: #1b5e20; background: #e8f5e9; padding: 8px 12px; }
+        .error { color: #b00020; background: #fdecea; padding: 8px 12px; }
+        .hint { color: #666; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+<h1>Nhóm của tôi</h1>
+<p><a th:href="@{/home}">Về trang chủ</a> | <a th:href="@{/teams/new}">Tạo nhóm</a></p>
+
+<p class="ok" th:if="${message}" th:text="${message}"></p>
+<p class="error" th:if="${error}" th:text="${error}"></p>
+
+<table>
+    <thead>
+    <tr>
+        <th>Nhóm</th>
+        <th>Đợt</th>
+        <th>Nhóm trưởng</th>
+        <th>Thành viên</th>
+        <th>Lời mời</th>
+        <th>Đề tài</th>
+        <th>Thao tác</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="v : ${teams}">
+        <td th:text="|Nhóm của ${v.team.leader.fullName}|">Nhóm của A</td>
+        <td th:text="${v.team.period.name}">Đợt 1</td>
+        <td th:text="|${v.team.leader.fullName} (${v.team.leader.studentCode})|">A (SV001)</td>
+        <td>
+            <div th:each="member : ${v.team.members}">
+                <span th:text="|${member.fullName} (${member.studentCode})|"></span>
+                <form th:if="${v.leader and member.studentCode != v.team.leader.studentCode}"
+                      th:action="@{/teams/{id}/members/remove(id=${v.team.id})}" method="post"
+                      style="display:inline">
+                    <input type="hidden" name="studentCode" th:value="${member.studentCode}"/>
+                    <button type="submit">Xóa</button>
+                </form>
+            </div>
+        </td>
+        <td>
+            <div class="hint" th:each="invitation : ${v.team.invitations}">
+                <span th:text="|${invitation.student.fullName} (${invitation.student.studentCode}) - ${invitation.status.label}|"></span>
+                <form th:if="${v.leader and invitation.status.name() == 'PENDING'}"
+                      th:action="@{/teams/{id}/invitation/cancel(id=${v.team.id})}" method="post"
+                      style="display:inline">
+                    <input type="hidden" name="studentCode" th:value="${invitation.student.studentCode}"/>
+                    <button type="submit">Hủy lời mời</button>
+                </form>
+            </div>
+            <div class="hint" th:if="${#lists.isEmpty(v.team.invitations)}">Chưa có lời mời</div>
+        </td>
+        <td>
+            <div th:if="${v.team.topic == null}">
+                <span class="hint">Chưa đăng ký đề tài</span>
+                <div class="error" th:if="${v.team.registrationRejectionReason != null}"
+                     th:text="|Lý do từ chối: ${v.team.registrationRejectionReason}|"></div>
+                <a th:if="${v.leader}" th:href="@{/teams/{id}/register(id=${v.team.id})}">Đăng ký đề tài</a>
+            </div>
+            <div th:if="${v.team.topic != null}">
+                <div th:text="${v.team.topic.name}">Tên đề tài</div>
+                <div class="hint" th:text="${v.team.topic.availability.label}">Chờ duyệt</div>
+                <form th:if="${v.leader and v.team.topic.availability.name() == 'PENDING'}"
+                      th:action="@{/teams/{id}/registration/cancel(id=${v.team.id})}" method="post">
+                    <button type="submit">Hủy đăng ký</button>
+                </form>
+                <div th:if="${v.team.topic.availability.name() == 'REGISTERED'}">
+                    <div class="hint" th:text="|Hạn nộp báo cáo: ${#temporals.format(v.team.period.reportDeadline, 'dd/MM/yyyy')}|"></div>
+                    <div th:if="${v.report != null}">
+                        <div th:text="|Báo cáo: ${v.report.originalFileName} (v${v.report.version})|"></div>
+                        <div class="hint" th:text="|Nộp lúc: ${#temporals.format(v.report.submittedAt, 'dd/MM/yyyy HH:mm')}|"></div>
+                    </div>
+                    <form th:if="${v.leader}" th:action="@{/teams/{id}/report(id=${v.team.id})}" method="post" enctype="multipart/form-data">
+                        <input type="file" name="file" accept=".pdf,.doc,.docx" required/>
+                        <button type="submit" th:text="${v.report != null} ? 'Nộp lại báo cáo' : 'Nộp báo cáo'"></button>
+                    </form>
+                </div>
+            </div>
+        </td>
+        <td>
+            <div class="hint" th:if="${v.leader}">Bạn là nhóm trưởng</div>
+            <div class="hint" th:if="${v.member and not v.leader}">Bạn là thành viên</div>
+            <div class="hint" th:if="${v.invited}">Bạn được mời vào nhóm</div>
+
+            <th:block th:if="${v.invited}">
+                <form th:action="@{/teams/{id}/invitation(id=${v.team.id})}" method="post">
+                    <input type="hidden" name="accept" value="true"/>
+                    <button type="submit">Đồng ý</button>
+                </form>
+                <form th:action="@{/teams/{id}/invitation(id=${v.team.id})}" method="post">
+                    <input type="hidden" name="accept" value="false"/>
+                    <input type="text" name="reason" placeholder="Lý do từ chối" required/>
+                    <button type="submit">Từ chối</button>
+                </form>
+            </th:block>
+
+            <th:block th:if="${v.leader}">
+                <form th:if="${#lists.size(v.team.members) lt 3}"
+                      th:action="@{/teams/{id}/invite(id=${v.team.id})}" method="post">
+                    <input type="text" name="studentCode" placeholder="Mã SV cần mời" required/>
+                    <button type="submit">Mời thành viên</button>
+                </form>
+                <form th:if="${#lists.size(v.team.members) gt 1}"
+                      th:action="@{/teams/{id}/leader(id=${v.team.id})}" method="post">
+                    <select name="studentCode">
+                        <option th:each="member : ${v.team.members}"
+                                th:if="${member.studentCode != v.team.leader.studentCode}"
+                                th:value="${member.studentCode}"
+                                th:text="|${member.fullName} (${member.studentCode})|"></option>
+                    </select>
+                    <button type="submit">Chuyển quyền nhóm trưởng</button>
+                </form>
+            </th:block>
+
+            <form th:if="${v.member and not v.leader}"
+                  th:action="@{/teams/{id}/leave(id=${v.team.id})}" method="post">
+                <button type="submit">Rời nhóm</button>
+            </form>
+        </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(teams)}">
+        <td colspan="7">Bạn chưa có nhóm nào.</td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

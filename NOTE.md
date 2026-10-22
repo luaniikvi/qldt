@@ -45,6 +45,7 @@ File này dùng để giải thích code/thiết kế thay cho việc comment tr
 | `@RequestMapping` (class-level) | Gắn tiền tố URL chung: `/periods` cho HTML, `/api/v1/periods` cho API | Không dùng: phải ghi đầy đủ đường dẫn trong từng `@GetMapping`/`@PostMapping` |
 | `@GetMapping`, `@PostMapping`, `@PutMapping`, `@DeleteMapping` | Rút gọn của `@RequestMapping(method = RequestMethod.X)`, ánh xạ HTTP method + path tới method Java | Không dùng: phải viết `@RequestMapping(value="/periods", method=RequestMethod.GET)` cho từng method |
 | `@PathVariable` | Lấy phần biến trong URL (ví dụ `{id}` của `/periods/{id}/edit`) và gán vào tham số | Không dùng: phải đọc `HttpServletRequest.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE)` rồi parse thủ công |
+| `@RequestParam` | Lấy tham số từ query string hoặc body form (ví dụ `password` khi đặt lại mật khẩu, `dean=true/false` khi bổ nhiệm) và gán vào tham số method | Không dùng: phải gọi `request.getParameter("password")` rồi tự parse kiểu dữ liệu |
 | `@ModelAttribute("period")` | Bind dữ liệu form vào DTO và đưa DTO vào `Model` với tên `period` (khớp `th:object="${period}"`) | Không dùng: phải khai báo tham số `RegistrationPeriodRequest` (Spring vẫn bind) và tự `model.addAttribute("period", request)` |
 | `@RequestBody` (trên tham số của API) | Đọc body JSON của request và deserialize vào DTO | Không dùng: phải tự đọc `InputStream` và gọi `ObjectMapper.readValue(...)` |
 | `@Valid` | Kích hoạt Bean Validation trên DTO (chạy `@NotBlank`, `@NotNull`, `@Size`) trước khi vào thân method | Không dùng: phải tự tạo `Validator` và gọi `validator.validate(dto)` trong từng method |
@@ -62,17 +63,24 @@ File này dùng để giải thích code/thiết kế thay cho việc comment tr
 | `@Override` (`loadUserByUsername`) | Báo cho compiler biết method ghi đè method của interface `UserDetailsService`; sai chữ ký sẽ báo lỗi biên dịch | Không dùng: code vẫn chạy nếu chữ ký đúng, nhưng nếu gõ sai tên/tham số sẽ thành method mới và Spring Security không gọi tới (login luôn thất bại mà không báo lỗi) |
 | `@Getter` (Lombok) | Sinh getter cho các field của class lúc biên dịch (annotation processor), không sinh lại getter của lớp cha | Không dùng: phải viết tay `getId()`, `getUsername()`, `getPassword()`... cho từng field như `RegistrationPeriod` hiện tại |
 | `@Setter` (Lombok) | Sinh setter cho các field; cần cho form binding của Spring MVC (`th:field`) và cho Jackson khi đọc JSON | Không dùng: phải viết tay từng setter; thiếu setter thì form/JSON không bind được giá trị |
+| `@Test` (JUnit 5) | Đánh dấu method là một test case để JUnit platform runner nhận diện và thực thi | Không dùng: runner bỏ qua method, không chạy kiểm thử |
+| `@BeforeEach` (JUnit 5) | Thực thi method chuẩn bị trước mỗi bài test để reset trạng thái sạch sẽ, tránh phụ thuộc chéo giữa các test | Không dùng: phải gọi phương thức setup thủ công ở đầu mỗi test method |
+| `@TempDir` (JUnit 5) | Tự động tạo thư mục tạm thời trên đĩa cho từng test và tự dọn dẹp sau khi chạy | Không dùng: phải tự `Files.createTempDirectory()` và tự viết hàm xóa đệ quy khi test hoàn tất |
+| `@AutoConfigureMockMvc` (Spring Boot WebMvc Test) | Tự động cấu hình bean `MockMvc` cho phép gửi HTTP request giả lập kiểm thử controller mà không cần chạy Web Server thật | Không dùng: phải tự dùng `MockMvcBuilders.webAppContextSetup(context).build()` phức tạp |
+| `@WithMockUser` (Spring Security Test) | Giả lập người dùng đã đăng nhập với username và role/authorities chỉ định trong `SecurityContext` khi gọi request | Không dùng: phải tự tạo `UsernamePasswordAuthenticationToken` và gán vào `SecurityContextHolder` trước mỗi request |
+| `@Autowired` (Spring Framework) | Tự động tìm và inject bean từ ApplicationContext vào field trong test hoặc component | Không dùng: phải inject qua constructor hoặc gọi `applicationContext.getBean(...)` |
 
 ### 4.1. Khái niệm Spring Security dùng ở Bước 1 (không phải annotation)
 
 | Thành phần | Tác dụng | Nếu không dùng thì phải code thế nào |
 |---|---|---|
 | `SecurityFilterChain` | Chuỗi filter quyết định request nào được vào, redirect login, xử lý CSRF, logout | Phải tự viết servlet filter + `web.xml`/`FilterRegistrationBean` để kiểm tra session, đăng nhập, CSRF |
-| `UserDetailsService` (`CustomUserDetailsService`) | Cầu nối giữa kho tài khoản (in-memory `UserService`) và Spring Security khi đăng nhập | Phải tự viết `AuthenticationProvider` gọi `UserService` và so khớp mật khẩu bằng tay |
+| `UserDetailsService` (`CustomUserDetailsService`) | Cầu nối giữa kho tài khoản (in-memory `AccountService`) và Spring Security khi đăng nhập | Phải tự viết `AuthenticationProvider` gọi `AccountService` và so khớp mật khẩu bằng tay |
 | `PasswordEncoder` + `BCryptPasswordEncoder` | Băm mật khẩu một chiều có salt; `matches()` để so khớp khi login | Phải tự dùng thư viện BCrypt, tự lưu salt, tự so sánh — dễ sai và không đồng bộ với `UserDetailsService` |
-| `CommandLineRunner` (`initUsers`) | Chạy code seed dữ liệu ngay sau khi ApplicationContext khởi động xong | Phải seed trong constructor của service (dễ lỗi thứ tự khởi tạo) hoặc `@PostConstruct` |
+| `CommandLineRunner` (`initAccounts`) | Chạy code seed dữ liệu ngay sau khi ApplicationContext khởi động xong | Phải seed trong constructor của service (dễ lỗi thứ tự khởi tạo) hoặc `@PostConstruct` |
 | `sec:authorize`, `sec:authentication` (Thymeleaf) | Ẩn/hiện phần HTML theo quyền và in tên người đăng nhập | Phải truyền `Authentication` vào model từ controller rồi dùng `th:if` thủ công ở mọi trang |
 | `LogoutSuccessHandler` (lambda trong `.logout(...)`) | Xử lý sau khi logout xong; ở đây redirect về `/home?logout` | Phải tự viết `AuthenticationSuccessHandler`/filter lắng nghe sự kiện logout, hoặc để mặc định (dễ ra 204 hoặc về `/login?logout`) |
+| `Authentication` (tham số method controller) | Spring Security inject thông tin người đang đăng nhập (ở Bước 3 dùng `authentication.getName()` để lấy mã GV) | Không dùng: phải gọi `SecurityContextHolder.getContext().getAuthentication()` trong từng method |
 | `templates/error.html` (quy ước của Spring Boot, không phải annotation) | `BasicErrorController` tự tìm view tên `error` để render khi có lỗi; tránh trang whitelabel | Phải tự viết `ErrorController` hoặc `@ExceptionHandler` cho mọi exception để trả view lỗi |
 
 ## 5. Cách lưu dữ liệu — giống Lab 1 & Lab 2 (in-memory bằng `ArrayList`)
@@ -221,7 +229,18 @@ Phương án thay thế (chưa áp dụng): chuyển 5 rule liên trường sang
 
 ## 10. Bước tiếp theo (chờ xác nhận)
 
-- Theo RULE.md, mỗi bước cần bạn xác nhận. Đề xuất **Bước 2**: Bộ môn + hồ sơ GV/SV; màn hình ADMIN tạo/khóa tài khoản và bổ nhiệm/bãi nhiệm `DEAN`; bổ sung `reportDeadline` + `registrationLocked` (DEAN khóa sớm) vào module Đợt đăng ký.
+- Theo RULE.md, mỗi bước cần bạn xác nhận.
+- **Bước 2 đã xong** — xem mục 13.
+- Đề xuất **Bước 3 — Module Đề tài**: GV tạo đề tài (tự là GVHD thứ nhất), mời thêm 1 GV và **GV được mời phải xác nhận**; **GVHD phải cùng bộ môn** với GVHD thứ nhất (dùng `Lecturer.department`); DEAN duyệt/từ chối/công bố danh sách đề tài theo đợt. Trạng thái đề tài: `AVAILABLE` → `PENDING` → `REGISTERED` (chốt ở mục 12 #4).
+- **Bước 3 đã xong** — xem mục 14.
+- Đề xuất **Bước 4 — Module Nhóm sinh viên**: SV tạo nhóm (mình là nhóm trưởng), mời thành viên (tối đa 3, thành viên phải xác nhận), mỗi SV chỉ thuộc 1 nhóm trong đợt, chuyển quyền nhóm trưởng; chuẩn bị cho Bước 5 đăng ký đề tài.
+- **Bước 4 đã xong** — xem mục 15.
+- **Bước 5 đã xong** — xem mục 17 (kèm tính năng hủy lời mời/xóa ở mục 16).
+- **Bước 6 đã xong** — xem mục 18.
+- **Bước 7 đã xong** — xem mục 19.
+- **Bước 8 (JPA + MySQL) đã xong** — xem mục 21.
+- **Bước 9 đã xong** — xem mục 22.
+- Đề xuất **Bước 10 — Thông báo & nhắc hạn**: thông báo trong hệ thống khi có lời mời vào nhóm/mời GVHD, khi đề tài/đăng ký được duyệt hoặc bị từ chối, khi công bố điểm; nhắc hạn nộp báo cáo và lịch báo cáo hội đồng.
 
 ## 11. Bước 1 — Tài khoản & Spring Security (in-memory)
 
@@ -232,8 +251,8 @@ Phương án thay thế (chưa áp dụng): chuyển 5 rule liên trường sang
 | `model/Role.java` | Enum vai trò: `ADMIN`, `LECTURER`, `STUDENT`, `DEAN` |
 | `model/Account.java` | Lớp abstract chứa phần chung: `id`, `username`, `password` (đã băm), `fullName`, `email`, `enabled`, `extraRoles`; `getRoles()` = vai trò gốc + `extraRoles` |
 | `model/Admin.java` | Tài khoản quản trị, vai trò gốc `ADMIN` |
-| `model/Lecturer.java` | Giảng viên: `lecturerCode` (mã GV), vai trò gốc `LECTURER`; `DEAN` nằm trong `extraRoles` |
-| `model/Student.java` | Sinh viên: `studentCode` (mã SV), vai trò gốc `STUDENT` |
+| `model/Lecturer.java` | Giảng viên: `lecturerCode` (mã GV, đồng thời là username đăng nhập), `department` (bộ môn), vai trò gốc `LECTURER`; `DEAN` nằm trong `extraRoles` |
+| `model/Student.java` | Sinh viên: `studentCode` (mã SV, đồng thời là username đăng nhập), vai trò gốc `STUDENT` |
 | `exception/AccountNotFoundException.java` | Không tìm thấy tài khoản (theo username hoặc theo mã) |
 | `exception/InvalidAccountException.java` | Dữ liệu tài khoản không hợp lệ (trùng username, trùng mã, mã rỗng) |
 | `service/AccountService.java` | Kho tài khoản in-memory (`List<Account>` + `AtomicLong`): `createAdmin`, `createLecturer`, `createStudent`, `assignDean`, `findByUsername`, `findByStudentCode`, `findByLecturerCode`, `findAllStudents`, `findAllLecturers`; mật khẩu băm bằng `PasswordEncoder` |
@@ -246,33 +265,35 @@ Phương án thay thế (chưa áp dụng): chuyển 5 rule liên trường sang
 
 ### 11.2. Tài khoản seed (mất khi restart, tự seed lại)
 
-| Username | Password | Mã | Roles | Họ tên |
+| Đăng nhập | Password | Vai trò | Bộ môn | Họ tên |
 |---|---|---|---|---|
-| `admin` | `123456` | — | `ADMIN` | Quản trị hệ thống |
-| `dean` | `123456` | `GV001` | `LECTURER` + `DEAN` | Trưởng khoa CNTT |
-| `lecturer` | `123456` | `GV002` | `LECTURER` | Giảng viên CNTT |
-| `student` | `123456` | `SV001` | `STUDENT` | Sinh viên CNTT |
+| `admin` | `123456` | `ADMIN` | — | Quản trị hệ thống |
+| `GV001` | `123456` | `LECTURER` + `DEAN` | Công nghệ phần mềm | Trưởng khoa CNTT |
+| `GV002` | `123456` | `LECTURER` | Hệ thống thông tin | Giảng viên CNTT |
+| `SV001` | `123456` | `STUDENT` | — | Sinh viên CNTT |
 
 ### 11.3. Quy tắc tài khoản (`AccountService`)
 
-1. `username` không được trống và **không trùng** trong toàn hệ thống.
-2. `lecturerCode` / `studentCode` không được trống và không trùng **trong cùng loại** (mã GV trùng chuỗi với mã SV vẫn hợp lệ vì khác không gian).
-3. Vai trò gốc suy ra từ lớp: `Admin` → `ADMIN`, `Lecturer` → `LECTURER`, `Student` → `STUDENT` → không thể tạo ra một `Student` lại mang vai trò `LECTURER`.
-4. `DEAN` chỉ nằm trong `extraRoles` của `Lecturer`, cấp/bãi qua `assignDean(lecturerCode, true/false)`.
-5. Mật khẩu luôn được băm BCrypt trước khi lưu (`applyCommon`).
+1. **Đăng nhập bằng mã**: với `Lecturer`/`Student`, `username = lecturerCode/studentCode` (ví dụ `GV001`, `SV001`); `Admin` dùng username riêng (`admin`).
+2. Mã đăng nhập không được trống và **không trùng trên toàn hệ thống** (mã GV trùng mã SV cũng bị chặn) vì `username` là duy nhất.
+3. `Lecturer.department` (bộ môn) **bắt buộc**, không được rỗng; `Student` **không** có lớp/khóa (đề bài không yêu cầu).
+4. Vai trò gốc suy ra từ lớp: `Admin` → `ADMIN`, `Lecturer` → `LECTURER`, `Student` → `STUDENT` → không thể tạo ra một `Student` lại mang vai trò `LECTURER`.
+5. `DEAN` chỉ nằm trong `extraRoles` của `Lecturer`, cấp/bãi qua `assignDean(lecturerCode, true/false)`.
+6. Mật khẩu luôn được băm BCrypt trước khi lưu (`applyCommon`).
 
 ### 11.4. Quy tắc URL (`SecurityFilterChain`, xét từ trên xuống)
 
 | Rule | Quyền |
 |---|---|
 | `/`, `/home`, `/login`, `/error`, `/css/**`, `/js/**` | ai cũng vào (trang chủ công khai, khách thấy nút Đăng nhập) |
+| `/admin/**` | `ADMIN` |
 | `GET /periods/new`, `GET /periods/*/edit` | `DEAN` |
 | `GET /periods/**` | đã đăng nhập |
 | các method khác `/periods/**` | `DEAN` |
 | `/api/**` | đã đăng nhập + **miễn CSRF** |
 | còn lại | đã đăng nhập |
 
-- Đăng nhập: form login mặc định của Spring Security tại `/login` (chưa làm trang login riêng), mật khẩu băm BCrypt; API hỗ trợ thêm HTTP Basic để test bằng Postman/curl.
+- Đăng nhập: **trang login riêng** tại `/login` (`loginPage("/login")` + `LoginController` + `templates/login.html`), mật khẩu băm BCrypt; API hỗ trợ thêm HTTP Basic để test bằng Postman/curl.
 - Logout: `POST /logout` → **luôn** redirect `302` về `/home?logout` (handler tự viết), trang chủ hiện "Bạn đã đăng xuất thành công".
 - CSRF bật cho form HTML (Thymeleaf tự thêm `_csrf`), tắt cho `/api/**` (giống Lab 4 trang 13).
 - Thứ tự rule rất quan trọng: nếu đặt `GET /periods/**` trước thì `GET /periods/new` sẽ lọt cho mọi người dùng đã đăng nhập (đã gặp lỗi này khi test và đã sửa).
@@ -280,7 +301,7 @@ Phương án thay thế (chưa áp dụng): chuyển 5 rule liên trường sang
 ### 11.5. Lưu ý
 
 - Quyền của người dùng được giữ trong **session**: khi ADMIN bổ nhiệm/bãi nhiệm DEAN, người đó phải **đăng xuất rồi đăng nhập lại** mới thấy quyền mới.
-- `ADMIN` hiện chưa có màn hình quản trị tài khoản (làm ở Bước 2).
+- `ADMIN` đã có màn hình quản trị tài khoản tại `/admin/accounts` (Bước 2, xem mục 13).
 - Bật cả 2 lớp bảo vệ: `SecurityFilterChain` (theo URL) + `@PreAuthorize` (theo method) — giống "defense-in-depth" ở Lab 4 trang 10.
 
 ### 11.6. Sự cố "bấm Đăng xuất bị lỗi no explicit mapping for /error" và cách sửa
@@ -330,7 +351,7 @@ Phương án thay thế (chưa áp dụng): chuyển 5 rule liên trường sang
 |---|---|---|
 | `Account` (abstract) | `id`, `username`, `password`, `fullName`, `email`, `enabled`, `extraRoles` | `getBaseRole()` (abstract) |
 | `Admin` | — | `ADMIN` |
-| `Lecturer` | `lecturerCode` | `LECTURER` (+ `DEAN` trong `extraRoles`) |
+| `Lecturer` | `lecturerCode`, `department` | `LECTURER` (+ `DEAN` trong `extraRoles`) |
 | `Student` | `studentCode` | `STUDENT` |
 
 `Account.getRoles()` trả về `{getBaseRole()} ∪ extraRoles` → không thể tạo ra `Student` mang vai trò `LECTURER` hay `Admin` mang `DEAN`.
@@ -362,17 +383,21 @@ public abstract class Account { ... }
 
 | Ca | Kết quả |
 |---|---|
-| `mvn clean package` | BUILD SUCCESS, **7 test pass** (`QldtApplicationTests` + 6 test `AccountServiceTest`) |
+| `mvn clean package` | BUILD SUCCESS, **12 test pass** (`QldtApplicationTests` + 11 test `AccountServiceTest`) |
 | Test: sinh viên chỉ có `STUDENT`, không có `DEAN` | pass |
 | Test: `assignDean("GV001", true)` → có `LECTURER` + `DEAN`, GV002 không bị ảnh hưởng | pass |
 | Test: trùng `username` bị chặn | pass |
 | Test: trùng `studentCode` bị chặn | pass |
 | Test: mật khẩu lưu dạng BCrypt, `matches("123456")` đúng | pass |
-| Đăng nhập `admin` / `dean` / `lecturer` / `student` (mật khẩu `123456`) | 200 |
-| `admin` + `lecturer` + `student` vào `/periods/new` | 403 |
-| `dean` vào `/periods/new` và tạo đợt | 200, đợt mới xuất hiện trong danh sách |
+| Test: đăng nhập bằng mã `SV001` / `GV001` tìm đúng tài khoản | pass |
+| Test: mã GV trùng mã SV bị chặn | pass |
+| Test: `department` rỗng bị chặn | pass |
+| Đăng nhập `admin` / `GV001` / `GV002` / `SV001` (mật khẩu `123456`) | 200 |
+| Đăng nhập bằng username cũ `dean` | bị từ chối (`/login?error`) |
+| `admin` + `GV002` + `SV001` vào `/periods/new` | 403 |
+| `GV001` (DEAN) vào `/periods/new` và tạo đợt | 200, đợt mới xuất hiện trong danh sách |
 
-**Chưa thêm (để đúng Bước 2):** `className`/`cohort` cho `Student`, `department` cho `Lecturer` — sẽ bổ sung khi có model `Department`.
+**Chưa thêm:** `className`/`cohort` cho `Student` — đề bài không yêu cầu (theo xác nhận của bạn).
 
 ## 12. Biên bản chốt kế hoạch (bạn đã xác nhận)
 
@@ -388,5 +413,573 @@ public abstract class Account { ... }
 | 8 | DEAN được **khóa đăng ký sớm**; `Period` bổ sung `reportDeadline`; hệ thống **tự chặn nộp báo cáo muộn** | Làm ở Bước 2 (module Period) |
 | 9 | Thread-safety: chấp nhận rủi ro ở giai đoạn in-memory, sẽ xử lý khi chuyển JPA bằng `@Transactional` + ràng buộc unique | Ghi nhận, không làm bây giờ |
 | 10 | Tách model tài khoản thành `Account` (abstract) + `Admin`/`Lecturer`/`Student`, dùng Lombok `@Getter`/`@Setter`, quản lý tài khoản theo `lecturerCode`/`studentCode` | Đã làm (mở rộng Bước 1) |
+| 11 | **Đăng nhập bằng mã GV/SV** (`GV001`, `SV001`); `admin` vẫn là `admin / 123456`; `Student` không có lớp/khóa; `Lecturer` có `department` (bộ môn) | Đã làm |
+| 12 | **Quy tắc cho module Đề tài: GVHD của đề tài phải cùng bộ môn** | Sẽ kiểm tra trong `TopicService` ở Bước 3; dữ liệu so sánh đã có ở `Lecturer.department` |
+| 13 | `Lecturer.department` **giữ dạng chuỗi**, không tạo model `Department` | Đã làm; khi nhập cần thống nhất cách viết để so sánh bộ môn chính xác |
+| 14 | Đề tài: GV tạo trong thời gian GV đăng ký của đợt, bộ môn lấy theo GV tạo, GVHD 1–2 và **phải cùng bộ môn**, chỉ sửa khi `PENDING`/`REJECTED`, DEAN duyệt/từ chối (kèm lý do)/công bố theo đợt | Đã làm ở Bước 3 (mục 14) |
+| 15 | Nhóm SV: nhóm trưởng lưu ở `Team.leaderId`, tối đa 3 thành viên có xác nhận, mỗi SV 1 nhóm/đợt, chuyển quyền nhóm trưởng, thành viên rời nhóm; **tạo nhóm không giới hạn thời gian** (thời gian SV đăng ký + khóa đợt chỉ dùng khi đăng ký đề tài) | Đã làm ở Bước 4 (mục 15) |
+| 16 | Cho phép **hủy lời mời** (GVHD và thành viên nhóm) và **xóa GVHD thứ hai / xóa thành viên** (chỉ người tạo đề tài / nhóm trưởng) | Đã làm (mục 16) |
+| 17 | **Bước 5**: nhóm trưởng đăng ký 1 đề tài đã công bố trong thời gian SV đăng ký + đợt chưa khóa; `AVAILABLE` → `PENDING` → GVHD duyệt `REGISTERED` / từ chối trả về `AVAILABLE` (kèm lý do); **được hủy đăng ký trước khi được duyệt** | Đã làm (mục 17) |
+| 18 | **Bước 6**: chỉ nhóm trưởng nộp báo cáo khi đề tài `REGISTERED`; PDF/DOC/DOCX ≤ 10MB; chặn sau `reportDeadline`; cho **nộp lại** (tăng phiên bản); GVHD xem/tải báo cáo | Đã làm (mục 18) |
+| 19 | **Bước 7**: DEAN lập hội đồng 3–5 GV cho đề tài `REGISTERED` (đúng 1 chủ tịch, 1 thư ký, không có GVHD); mỗi thành viên chấm 0–10 (1 chữ số thập phân); chủ tịch tổng hợp điểm trung bình; DEAN công bố; SV trong nhóm + GVHD xem kết quả đã công bố | Đã làm (mục 19) |
+| 20 | **Bước 8**: dữ liệu lưu trong **MySQL** qua JPA (`@Entity` + `JpaRepository`), dùng **instance MySQL riêng (port 3307)** với tài khoản `qldt_app` (không dùng root); test chạy trên H2 `MODE=MySQL` | Đã làm (mục 21) |
+| 21 | **Bước 9**: DEAN xem thống kê theo đợt (số đề tài, nhóm, báo cáo, hội đồng, điểm trung bình), xuất CSV và API JSON `/api/statistics`; code được format tự động bằng `formatter-maven-plugin` | Đã làm (mục 22) |
 
+
+
+
+## 13. Bước 2 — Quản trị tài khoản, cấu hình Đợt, trang login
+
+### 13.1. File mới/cập nhật
+
+| File | Vai trò |
+|---|---|
+| `model/AccountType.java` | Enum loại tài khoản `ADMIN`, `LECTURER`, `STUDENT` + `label` tiếng Việt |
+| `model/Role.java` | Bổ sung `label` để hiển thị (Quản trị / Giảng viên / Sinh viên / Trưởng khoa) |
+| `dto/AccountRequest.java` | DTO tạo tài khoản: `type`, `code`, `fullName`, `email`, `password`, `department` + Bean Validation |
+| `service/AccountService.java` | Thêm `findById`, `setEnabled` (khóa/mở), `resetPassword`, `setDean(id, boolean)`, `createAccount(request)` |
+| `controller/AccountAdminController.java` | `/admin/accounts`: danh sách, form tạo, tạo, khóa, mở khóa, bổ nhiệm/bãi nhiệm DEAN, đặt lại mật khẩu; `@PreAuthorize("hasRole('ADMIN')")` |
+| `templates/admin/accounts/list.html`, `form.html` | Giao diện quản trị tài khoản |
+| `controller/LoginController.java`, `templates/login.html` | Trang đăng nhập riêng (thay trang mặc định của Spring Security) |
+| `model/RegistrationPeriod.java` | Thêm `reportDeadline`, `registrationLocked`; chuyển sang Lombok `@Getter/@Setter` |
+| `dto/RegistrationPeriodRequest.java` | Thêm `reportDeadline`; chuyển sang Lombok |
+| `service/RegistrationPeriodService.java` | `validateReportDeadline` + `setRegistrationLocked` |
+| `controller/RegistrationPeriodController.java` | Thêm `POST /periods/{id}/lock` và `/unlock` (chỉ DEAN) |
+| `templates/periods/list.html`, `form.html` | Cột "Hạn nộp báo cáo", "Trạng thái", nút Khóa/Mở khóa |
+| `config/SecurityConfig.java` | `/admin/**` → `ADMIN`; `formLogin.loginPage("/login")` |
+| `src/test/.../AccountServiceTest.java` | Thêm 4 test (khóa/mở, reset mật khẩu, chỉ GV được làm DEAN, tạo từ `AccountRequest`) |
+| `src/test/.../RegistrationPeriodServiceTest.java` | Mới, 5 test cho nghiệp vụ Period |
+
+### 13.2. Nghiệp vụ
+
+1. **Tạo tài khoản** (ADMIN): nhập loại + mã + họ tên + email + mật khẩu; nếu là giảng viên thì **bắt buộc bộ môn**. Mã không được trùng toàn hệ thống, mật khẩu 6–50 ký tự, email đúng định dạng (DTO).
+2. **Khóa / mở khóa**: đặt `enabled`; tài khoản bị khóa không đăng nhập được (`DisabledException`).
+3. **Đặt lại mật khẩu**: mật khẩu mới ≥ 6 ký tự, được băm BCrypt lại.
+4. **Bổ nhiệm / bãi nhiệm DEAN**: chỉ áp dụng cho `Lecturer`; gọi `setDean(id, true/false)`.
+5. **Hạn nộp báo cáo** (`reportDeadline`): **bắt buộc** (`@NotNull` trong DTO + kiểm tra trong service), phải **sau ngày SV đăng ký kết thúc**.
+6. **Khóa đăng ký sớm** (`registrationLocked`): DEAN bật/tắt bằng nút trên danh sách đợt. Hiện chỉ lưu trạng thái; việc **chặn đăng ký** sẽ dùng ở Bước 5.
+7. **Trang login riêng** tại `/login`: form POST `/login` (CSRF tự chèn), hiện lỗi khi `?error`, hiện thông báo khi `?logout`.
+
+### 13.3. Kiểm thử
+
+- `mvn clean package`: **BUILD SUCCESS**, `Tests run: 21, Failures: 0` (1 context + 15 `AccountServiceTest` + 5 `RegistrationPeriodServiceTest`).
+- Chạy thật trên `http://localhost:8080`:
+
+| Ca | Kết quả |
+|---|---|
+| `GET /login` | trang login riêng hiển thị đúng |
+| `admin / 123456` | vào `/home`, thấy link "Quản trị tài khoản" |
+| `GET /admin/accounts` (admin) | 200, danh sách có `GV001`, `SV001`, cột Bộ môn/Trạng thái |
+| `GV001` (không phải ADMIN) vào `/admin/accounts` | 403 |
+| Tạo `GV003` qua form | 200, xuất hiện trong danh sách |
+| Khóa `GV003` | 200, trạng thái "Đã khóa"; đăng nhập `GV003` bị từ chối (`/login?error`) |
+| Đặt lại mật khẩu `SV001` → `999999` | đăng nhập `SV001/999999` thành công, `SV001/123456` bị từ chối |
+| Bổ nhiệm DEAN cho `GV002` | danh sách hiện "Trưởng khoa"; `GV002` đăng nhập lại vào `/periods/new` = 200, `/admin/accounts` = 403 |
+| Tạo đợt có `reportDeadline = 01/02/2027` | danh sách hiển thị đúng `01/02/2027` |
+| Tạo đợt có hạn nộp trước ngày SV kết thúc | hiện "Hạn nộp báo cáo phải sau thời điểm SV đăng ký kết thúc" |
+| Khóa / mở khóa đợt | trạng thái đổi "Đã khóa" ↔ "Đang mở" |
+
+### 13.4. Giới hạn hiện tại
+
+- Chưa có API JSON cho quản trị tài khoản (chỉ giao diện MVC); có thể bổ sung sau nếu cần dùng cho mobile.
+- ADMIN có thể tự khóa chính mình hoặc bãi nhiệm hết Trưởng khoa (dữ liệu in-memory sẽ reset khi restart). Nếu cần chặn triệt để, thêm kiểm tra "không được khóa tài khoản ADMIN duy nhất" ở `AccountService`.
+- Đổi vai trò DEAN cần **đăng nhập lại** mới có hiệu lực (authority lưu trong session).
+- `reportDeadline` là **bắt buộc**; form đã có `th:errors="*{reportDeadline}"` để hiện lỗi khi bỏ trống.
+- Danh sách tài khoản/đợt chưa phân trang (dữ liệu in-memory, số lượng nhỏ).
+
+### 13.5. Ẩn/hiện ô "Bộ môn" theo loại tài khoản (JavaScript phía client)
+
+- Yêu cầu: ô **Bộ môn** chỉ hiện khi chọn loại **Giảng viên**.
+- `th:if="*{type != null and type.name() == 'LECTURER'}"` **không đáp ứng được**: Thymeleaf render một lần ở server; lúc mở form `type = null` nên khối bị loại khỏi HTML, khi người dùng đổi select thì trang không render lại → khối vẫn ẩn (chỉ hiện sau khi submit và server trả lại form).
+- Cách làm hiện tại: **luôn render** `<div id="departmentBlock">` và dùng JavaScript trong `form.html`:
+  - `th:field="*{type}"` sinh ra `id="type"`; `th:field="*{department}"` sinh ra `id="department"` → JS lấy phần tử theo các id này.
+  - `syncDepartment()`: nếu `type === 'LECTURER'` thì hiện khối và đặt `required`; ngược lại ẩn khối, bỏ `required` và xoá giá trị đã nhập.
+  - Gọi `syncDepartment()` ngay khi tải trang để xử lý trường hợp **server render lại form sau lỗi** (select đã chọn Giảng viên).
+- Vì khối luôn được render nên khi người dùng tắt JavaScript thì ô Bộ môn vẫn hiện (chấp nhận được) và **server vẫn kiểm tra** `department` bắt buộc với giảng viên ở `AccountService.validateDepartment`.
+- Đã kiểm chứng: HTML trả về có `id="type"`, `id="department"`, `id="departmentBlock"` và script; submit thiếu bộ môn → 200 + "Bộ môn của giảng viên không được để trống", option `LECTURER` vẫn `selected` để JS hiện lại khối.
+
+## 14. Bước 3 — Module Đề tài
+
+### 14.1. File mới/cập nhật
+
+| File | Vai trò |
+|---|---|
+| `model/Topic.java` | Đề tài: `name`, `description`, `period`, `primaryAdvisor`, `department`, `advisors` (1–2), `status`, `availability`, `rejectionReason`, `invitation` |
+| `model/AdvisorInvitation.java` | Lời mời GVHD thứ hai: `lecturer`, `status`, `responseReason` |
+| `model/TopicStatus.java` | `PENDING`, `APPROVED`, `REJECTED`, `PUBLISHED` (+ label) |
+| `model/TopicAvailability.java` | `AVAILABLE`, `PENDING`, `REGISTERED` (+ label) — dùng cho Bước 5 |
+| `model/InvitationStatus.java` | `PENDING`, `ACCEPTED`, `REJECTED` (+ label) |
+| `dto/TopicRequest.java` | Form đề tài: `name`, `description`, `periodId` + validation + `from(Topic)` |
+| `exception/TopicNotFoundException.java`, `InvalidTopicException.java` | Lỗi không tìm thấy / vi phạm nghiệp vụ |
+| `service/TopicService.java` | Toàn bộ nghiệp vụ đề tài (xem 14.2) |
+| `controller/TopicController.java` | `/topics`: danh sách, tạo, sửa, mời GVHD, phản hồi lời mời (LECTURER) |
+| `controller/TopicReviewController.java` | `/dean/topics`: duyệt, từ chối, công bố theo đợt (DEAN) |
+| `controller/PublishedTopicController.java` | `/published-topics`: danh sách đề tài đã công bố (mọi người đã đăng nhập) |
+| `templates/topics/list.html`, `form.html`, `pending.html`, `published.html` | Giao diện |
+| `config/SecurityConfig.java` | Thêm rule `/dean/**`, `/topics/**`, `/published-topics` |
+| `templates/home.html` | Menu theo vai trò: Đề tài của tôi / Duyệt và công bố đề tài / Đề tài đã công bố |
+| `src/test/.../TopicServiceTest.java` | 12 test cho nghiệp vụ đề tài |
+
+### 14.2. Nghiệp vụ (đặt trong `TopicService`)
+
+1. **Tạo đề tài**: chỉ trong khoảng `teacherRegisterStart`–`teacherRegisterEnd` của đợt (đề bài: "theo đúng thời gian quy định"); đề tài **thuộc bộ môn của GV tạo** (`topic.department = primaryAdvisor.department`); người tạo tự động là **GVHD thứ nhất**; trạng thái `PENDING`.
+2. **Sửa đề tài**: chỉ người tạo, chỉ khi `PENDING` hoặc `REJECTED`; sau khi sửa (kể cả đề tài vừa bị từ chối) quay về `PENDING` và xoá lý do từ chối.
+3. **Mời GVHD thứ hai**: tối đa 2 GVHD; không mời chính mình; không mời khi đang có lời mời chờ; **bắt buộc cùng bộ môn** với GVHD thứ nhất.
+4. **Phản hồi lời mời**: chỉ đúng GV được mời mới phản hồi; đồng ý → thêm vào `advisors` và đánh dấu `ACCEPTED`; từ chối → **phải nhập lý do**, đánh dấu `REJECTED` (người tạo có thể mời GV khác).
+5. **Duyệt / từ chối**: chỉ DEAN, chỉ khi `PENDING`; từ chối **phải nhập lý do** (`rejectionReason`).
+6. **Công bố**: DEAN công bố **theo đợt**, chuyển toàn bộ đề tài `APPROVED` của đợt sang `PUBLISHED` và đặt `availability = AVAILABLE`; nếu đợt không có đề tài đã duyệt thì báo lỗi.
+7. **Tra cứu**: GV thấy đề tài mình hướng dẫn + lời mời đang chờ; SV/GV xem danh sách đã công bố ở `/published-topics`.
+
+### 14.3. Phân quyền
+
+| Đường dẫn | Quyền |
+|---|---|
+| `/topics/**` | `LECTURER` (DEAN cũng có `LECTURER` nên dùng được) |
+| `/dean/topics/**` | `DEAN` |
+| `/published-topics` | đã đăng nhập |
+
+Bảo vệ 2 lớp: rule trong `SecurityFilterChain` + `@PreAuthorize` trên cả 3 controller.
+
+### 14.4. Kiểm thử
+
+- `mvn clean package`: **BUILD SUCCESS**, `Tests run: 33, Failures: 0` (1 context + 15 account + 5 period + 12 topic).
+- Chạy thật trên `http://localhost:8080`:
+
+| Ca | Kết quả |
+|---|---|
+| DEAN tạo đợt có thời gian GV đăng ký bao quanh hôm nay | 200 |
+| `GV001` tạo đề tài | 200, trạng thái "Chờ duyệt", bộ môn "Công nghệ phần mềm" |
+| `GV001` mời `GV002` (Hệ thống thông tin) | bị chặn: *"Giảng viên được mời phải cùng bộ môn..."* ✔ |
+| Tạo `GV004` cùng bộ môn (ADMIN) rồi mời | 302, hiện "Chờ phản hồi", nút mời bị ẩn |
+| `GV004` đăng nhập, đồng ý lời mời | 302, đề tài có **2 GVHD** |
+| DEAN thấy đề tài chờ duyệt → duyệt | 302 |
+| DEAN bấm "Công bố đề tài của đợt" | 302, đề tài chuyển `PUBLISHED` |
+| `SV001` xem `/published-topics` | thấy đề tài đã công bố |
+| `SV001` vào `/topics` | 403 |
+| `GV002` vào `/dean/topics` | 403 |
+| `GV001` (DEAN) vào `/admin/accounts` | 403 |
+
+### 14.5. Giả định & giới hạn hiện tại
+
+1. Đề tài **không cho chọn bộ môn** — luôn lấy theo bộ môn của GV tạo (bảo đảm quy tắc cùng bộ môn).
+2. Chỉ được tạo/sửa đề tài **trong thời gian GV đăng ký** của đợt; đợt bị `registrationLocked` **chưa** chặn việc tạo đề tài (khoá này dùng cho SV ở Bước 5).
+3. Đề tài đã `APPROVED`/`PUBLISHED` thì **không sửa được**; muốn sửa phải quay lại quy trình (hiện chưa có chức năng "hủy duyệt").
+4. Chưa giới hạn số đề tài mỗi GV, chưa chống trùng tên đề tài trong cùng đợt.
+5. Chưa có API JSON cho module đề tài (chỉ MVC) và chưa gửi email thông báo khi mời/duyệt (Lab 6).
+6. `#lists.size(...)` dùng trong template để đếm số GVHD — khi lên JPA sẽ đổi sang quan hệ `@ManyToMany`/bảng trung gian.
+
+## 15. Bước 4 — Module Nhóm sinh viên
+
+### 15.1. File mới/cập nhật
+
+| File | Vai trò |
+|---|---|
+| `model/Team.java` | Nhóm: `period`, `leader`, `members` (1–3, gồm nhóm trưởng), `invitations` |
+| `model/TeamInvitation.java` | Lời mời vào nhóm: `student`, `status`, `responseReason` |
+| `dto/TeamRequest.java` | Form tạo nhóm: `periodId` + validation |
+| `dto/TeamView.java` | Record cho view: `team`, `leader`, `member`, `invited` (tính theo người đang đăng nhập) |
+| `exception/TeamNotFoundException.java`, `InvalidTeamException.java` | Lỗi không tìm thấy / vi phạm nghiệp vụ nhóm |
+| `service/TeamService.java` | Toàn bộ nghiệp vụ nhóm (xem 15.2) |
+| `controller/TeamController.java` | `/teams`: danh sách, tạo nhóm, mời, phản hồi lời mời, chuyển nhóm trưởng, rời nhóm (STUDENT) |
+| `templates/teams/list.html`, `form.html` | Giao diện nhóm |
+| `config/SecurityConfig.java` | Thêm rule `/teams/**` → `STUDENT` |
+| `templates/home.html` | Menu "Nhóm của tôi" cho sinh viên |
+| `src/test/.../TeamServiceTest.java` | 11 test nghiệp vụ nhóm |
+
+### 15.2. Nghiệp vụ (`TeamService`)
+
+1. **Tạo nhóm**: chỉ cần đợt tồn tại — **không** yêu cầu thời gian nằm trong `studentRegisterStart`–`studentRegisterEnd` và **không** phụ thuộc `registrationLocked` (nhóm là bước chuẩn bị; hai điều kiện này chỉ dùng cho **đăng ký đề tài** ở Bước 5); người tạo là **nhóm trưởng** và là thành viên đầu tiên.
+2. **Mỗi SV chỉ thuộc 1 nhóm trong 1 đợt**: chặn khi tạo nhóm, khi mời và khi nhận lời mời (kiểm tra lại tại thời điểm chấp nhận).
+3. **Tối đa 3 thành viên**: tính cả lời mời đang chờ (`members.size() + pendingInvitations < 3`) để tránh nhận quá số lượng.
+4. **Mời thành viên**: chỉ nhóm trưởng, mời bằng mã SV; không mời chính mình, không mời người đã trong nhóm/đã có lời mời chờ/đã thuộc nhóm khác cùng đợt.
+5. **Phản hồi lời mời**: chỉ đúng SV được mời; đồng ý → thêm vào `members` (kiểm tra lại sức chứa + 1 nhóm/đợt); từ chối → **phải nhập lý do**.
+6. **Chuyển nhóm trưởng**: chỉ nhóm trưởng hiện tại, người nhận phải là thành viên trong nhóm.
+7. **Rời nhóm**: chỉ thành viên (không phải nhóm trưởng); nhóm trưởng phải chuyển quyền trước.
+
+### 15.3. Phân quyền
+
+- `/teams/**` → `STUDENT` (rule trong `SecurityFilterChain` + `@PreAuthorize` trên controller).
+- Home hiển thị "Nhóm của tôi" cho sinh viên.
+
+### 15.4. Kiểm thử
+
+- `mvn clean package`: **BUILD SUCCESS**, `Tests run: 44, Failures: 0` (1 context + 15 account + 5 period + 12 topic + 11 team).
+- Chạy thật trên `http://localhost:8080` (đợt bất kỳ, không cần hôm nay nằm trong thời gian SV đăng ký):
+
+| Ca | Kết quả |
+|---|---|
+| SV001 tạo nhóm | 302, nhóm có 1 thành viên (SV001 là nhóm trưởng) |
+| Tạo nhóm cho đợt đã hết thời gian SV đăng ký / đợt đang khóa | vẫn tạo được (không phụ thuộc thời gian/khóa) |
+| SV001 mời SV002 | 302, hiện "Chờ phản hồi" |
+| SV002 đồng ý | 302, nhóm có 2 thành viên |
+| SV001 mời SV003, SV003 đồng ý | 302, nhóm đủ 3 người → **nút mời bị ẩn** |
+| SV001 mời SV004 khi đã đủ 3 | hiện lỗi *"Nhóm đã đủ 3 thành viên..."* |
+| SV002 (đang ở nhóm 1) tạo nhóm mới | bị chặn, form hiện lỗi |
+| SV001 chuyển quyền nhóm trưởng cho SV002 | 302, SV002 thấy nút mời, SV001 thấy nút **Rời nhóm** |
+| SV001 rời nhóm | 302 |
+| SV001 tạo nhóm mới sau khi đã rời | thành công (không còn thuộc nhóm nào trong đợt) |
+| `GV001` vào `/teams` | 403 |
+| `SV001` vào `/topics` | 403 |
+
+### 15.5. Sự cố phát hiện và đã sửa trong bước này
+
+1. `RegistrationPeriodService.validateReportDeadline` bị sửa sai: gọi **vô điều kiện** và kiểm tra `request == null` (thay vì `getReportDeadline() == null`) → **NullPointerException** khi đợt không nhập hạn báo cáo (làm hỏng toàn bộ test tạo đợt). Đã sửa: chỉ gọi khi cần, kiểm tra đúng trường, và vì `reportDeadline` là bắt buộc nên service ném lỗi rõ ràng khi thiếu.
+2. `RegistrationPeriodRequest` có `@NotNull` cho `reportDeadline` nhưng `periods/form.html` **thiếu `th:errors`** cho trường này → submit thiếu deadline bị trả lại form mà **không hiện lỗi**. Đã thêm dòng lỗi + cập nhật hint "(bắt buộc, phải sau ngày SV đăng ký kết thúc)".
+3. Vì `reportDeadline` bắt buộc, các test/helper tạo đợt (`RegistrationPeriodServiceTest`, `TopicServiceTest`, `TeamServiceTest`) đã được bổ sung deadline.
+
+### 15.6. Giả định & giới hạn
+
+1. Nhóm **không phụ thuộc thời gian** `studentRegisterStart`–`studentRegisterEnd` và **không bị chặn bởi `registrationLocked`**; hai điều kiện này chỉ áp dụng khi **đăng ký đề tài** (Bước 5).
+2. Nhóm **không có tên riêng** (đề bài không yêu cầu) — hiển thị "Nhóm của <nhóm trưởng>".
+3. Nhóm trưởng **không được rời nhóm**; muốn rời phải chuyển quyền trước. Chưa có chức năng "giải tán nhóm" nên nhóm 1 người vẫn tồn tại.
+4. Lời mời đã từ chối vẫn lưu lại để tra cứu; nhóm trưởng có thể mời SV khác.
+5. Đề tài được gắn vào nhóm ở Bước 5 (mục 17); chưa có API JSON cho module nhóm.
+
+## 16. Hủy lời mời & xóa GVHD / thành viên
+
+### 16.1. Thay đổi nghiệp vụ
+
+- `InvitationStatus` bổ sung `CANCELLED` ("Đã hủy") — dùng chung cho lời mời GVHD và lời mời vào nhóm.
+- `TopicService.cancelAdvisorInvitation(topicId, actor)`: **người tạo đề tài** hủy lời mời GVHD đang `PENDING`; sau đó có thể mời GV khác.
+- `TopicService.removeCoAdvisor(topicId, lecturerCode, actor)`: **người tạo đề tài** xóa GVHD thứ hai khi đề tài còn sửa được (`PENDING`/`REJECTED`); lời mời tương ứng chuyển `CANCELLED`, GVHD thứ nhất vẫn giữ.
+- `TeamService.cancelInvitation(teamId, studentCode, actor)`: **nhóm trưởng** hủy lời mời đang chờ.
+- `TeamService.removeMember(teamId, studentCode, actor)`: **nhóm trưởng** xóa thành viên (không cho tự xóa mình); lời mời `ACCEPTED` tương ứng chuyển `CANCELLED` để giữ lịch sử.
+
+Lịch sử lời mời **không bị xóa** — chỉ đổi trạng thái, nên có thể tra cứu và mời lại người cũ.
+
+### 16.2. Route mới
+
+| Method | URL | Quyền |
+|---|---|---|
+| POST | `/topics/{id}/invitation/cancel` | người tạo đề tài (LECTURER) |
+| POST | `/topics/{id}/advisor/remove` (`lecturerCode`) | người tạo đề tài |
+| POST | `/teams/{id}/invitation/cancel` (`studentCode`) | nhóm trưởng (STUDENT) |
+| POST | `/teams/{id}/members/remove` (`studentCode`) | nhóm trưởng |
+
+### 16.3. Kiểm thử
+
+- Unit: `TopicServiceTest` +4 (hủy lời mời & mời lại, chỉ người tạo được hủy, xóa GVHD thứ hai, chỉ người tạo được xóa), `TeamServiceTest` +4 (hủy & mời lại, chỉ nhóm trưởng được hủy, xóa thành viên, không xóa nhóm trưởng).
+- Runtime: mời `SV002` → **Hủy lời mời** → mời lại → `SV002` đồng ý → **Xóa** `SV002`; thành viên trở về 1 và nút xóa biến mất.
+
+## 17. Bước 5 — Đăng ký đề tài
+
+### 17.1. File mới/cập nhật
+
+| File | Vai trò |
+|---|---|
+| `model/Team.java` | Thêm `topic` (đề tài nhóm đã đăng ký) và `registrationRejectionReason` |
+| `dto/RegistrationView.java` | Record `(topic, team)` cho màn duyệt đăng ký |
+| `exception/InvalidRegistrationException.java` | Lỗi nghiệp vụ đăng ký |
+| `service/TopicRegistrationService.java` | Đăng ký / hủy / duyệt / từ chối / danh sách chờ duyệt |
+| `service/TopicService.java` | Thêm `findAvailablePublished()` |
+| `service/TeamService.java` | Thêm `findByTopicId(topicId)` |
+| `controller/TeamController.java` | `GET/POST /teams/{id}/register`, `POST /teams/{id}/registration/cancel` |
+| `controller/RegistrationReviewController.java` | `/registrations`: danh sách chờ duyệt, duyệt, từ chối |
+| `templates/teams/register.html` | Chọn đề tài để đăng ký |
+| `templates/registrations/list.html` | Màn duyệt đăng ký của GVHD |
+| `templates/teams/list.html` | Cột "Đề tài": tên đề tài + trạng thái (**Chờ duyệt / Đã duyệt**), nút đăng ký/hủy (khi chờ duyệt), lý do bị từ chối (khi chưa có đề tài) |
+| `config/SecurityConfig.java` | `/registrations/**` → `LECTURER` |
+| `templates/home.html` | Menu "Duyệt đăng ký đề tài" cho giảng viên |
+| `src/test/.../TopicRegistrationServiceTest.java` | 12 test |
+
+### 17.2. Nghiệp vụ (`TopicRegistrationService`)
+
+1. **Chỉ nhóm trưởng** được đăng ký và hủy đăng ký.
+2. Mỗi nhóm chỉ đăng ký **1 đề tài**.
+3. **Chỉ bước này** kiểm tra thời gian `studentRegisterStart`–`studentRegisterEnd` và `registrationLocked`.
+4. Đề tài phải **đã công bố**, `AVAILABLE` và **cùng đợt** với nhóm.
+5. Đăng ký → đề tài `PENDING` (giữ chỗ, nhóm khác không đăng ký được).
+6. **GVHD duyệt** → `REGISTERED`; **từ chối** (bắt buộc lý do) → đề tài về `AVAILABLE`, gỡ khỏi nhóm và lưu lý do vào `team.registrationRejectionReason`.
+7. **Hủy đăng ký** chỉ khi đề tài còn `PENDING` (trước khi được duyệt) — đúng xác nhận của bạn; đã `REGISTERED` thì không hủy.
+
+### 17.3. Phân quyền
+
+| Đường dẫn | Quyền |
+|---|---|
+| `/teams/{id}/register`, `/teams/{id}/registration/cancel` | `STUDENT` (service kiểm tra thêm phải là nhóm trưởng) |
+| `/registrations/**` | `LECTURER` (service kiểm tra thêm phải là GVHD của đề tài) |
+
+### 17.4. Kiểm thử
+
+- `mvn clean package`: **BUILD SUCCESS**, `Tests run: 64, Failures: 0`.
+- Chạy thật:
+
+| Ca | Kết quả |
+|---|---|
+| SV001 mở `/teams/1/register` | thấy đề tài đã công bố của đợt |
+| SV001 đăng ký đề tài | 302, nhóm hiện đề tài + trạng thái "Chờ duyệt", có nút **Hủy đăng ký** |
+| SV001 hủy đăng ký (trước khi duyệt) | 302, nhóm trở về "Chưa đăng ký đề tài" |
+| SV001 đăng ký lại | 302 |
+| GV001 vào `/registrations` | thấy nhóm + thành viên đang chờ duyệt |
+| GV001 duyệt | 302, đề tài `REGISTERED`, nút hủy của SV biến mất |
+| SV001 hủy sau khi duyệt | bị chặn, hiện lỗi *"Đề tài đã được duyệt, không thể hủy đăng ký"* |
+
+### 17.5. Giả định & giới hạn
+
+1. Mỗi đề tài chỉ cho **1 nhóm**; đã `REGISTERED` thì không đổi/hủy.
+2. Bất kỳ GVHD nào của đề tài đều duyệt được (không chỉ người tạo).
+3. Lý do từ chối lưu ở `Team` và hiển thị cho nhóm; khi đăng ký lại sẽ xóa lý do cũ.
+4. Nhãn trạng thái `TopicAvailability` đã đổi: `PENDING` → "Chờ duyệt", `REGISTERED` → "Đã duyệt" (hiển thị ở cột Đề tài của nhóm, danh sách đề tài của GV và trang đề tài đã công bố).
+4. Chưa có thông báo/email khi duyệt/từ chối (Lab 6) và chưa có API JSON.
+5. Trong unit test, để chuyển từ giai đoạn GV sang giai đoạn SV, test **chỉnh trực tiếp mốc thời gian** của `RegistrationPeriod` (dữ liệu in-memory) sau khi đã tạo đề tài — không ảnh hưởng code nghiệp vụ.
+
+
+
+## 18. Bước 6 — Nộp báo cáo
+
+### 18.1. File mới/cập nhật
+
+| File | Vai trò |
+|---|---|
+| `model/Report.java` | Báo cáo: `team`, `originalFileName`, `storedFileName`, `size`, `version`, `submittedAt` |
+| `exception/InvalidReportException.java`, `ReportNotFoundException.java` | Lỗi nghiệp vụ / không tìm thấy báo cáo |
+| `service/ReportService.java` | Nộp báo cáo, kiểm tra quyền + hạn + định dạng + dung lượng, lưu tệp vào `uploads/`, nộp lại tăng `version`; `findByAdvisor` cho GVHD |
+| `controller/ReportController.java` | `/reports` (danh sách báo cáo của GVHD), `/reports/{id}/download` |
+| `controller/TeamController.java` | Thêm `POST /teams/{id}/report` (multipart) và gắn `report` vào `TeamView` |
+| `dto/TeamView.java` | Thêm trường `report` |
+| `templates/teams/list.html` | Khối "Báo cáo": hạn nộp, tệp + phiên bản + thời điểm, form nộp/nộp lại |
+| `templates/reports/list.html` | Màn danh sách báo cáo cho GVHD + link tải |
+| `config/SecurityConfig.java` | `/reports/**` → `LECTURER` |
+| `templates/home.html` | Menu "Báo cáo đề tài" cho giảng viên |
+| `application.properties` | `spring.servlet.multipart.max-file-size=10MB`, `max-request-size=12MB`, `app.upload-dir=uploads` |
+| `src/test/.../ReportServiceTest.java` | 8 test |
+
+### 18.2. Nghiệp vụ (`ReportService`)
+
+1. **Chỉ nhóm trưởng** được nộp báo cáo.
+2. Đề tài của nhóm phải ở trạng thái **`REGISTERED`** (đã được GVHD duyệt đăng ký).
+3. **Chặn sau `reportDeadline`**: so sánh theo ngày, nộp trong đúng ngày hạn vẫn hợp lệ.
+4. Tệp hợp lệ: **PDF / DOC / DOCX**, không rỗng, **tối đa 10MB**.
+5. Tệp lưu tại `uploads/team-{teamId}.{ext}` (tạo thư mục nếu chưa có); metadata lưu trong bộ nhớ.
+6. **Cho nộp lại**: ghi đè tệp cũ, tăng `version`, cập nhật `submittedAt`.
+7. GVHD xem danh sách báo cáo của đề tài mình và tải tệp; SV không vào được `/reports`.
+
+### 18.3. Kiểm thử
+
+- `mvn clean package`: **BUILD SUCCESS**, `Tests run: 72, Failures: 0` (8 test mới cho `ReportService`).
+- Chạy thật:
+
+| Ca | Kết quả |
+|---|---|
+| SV001 nộp `bc1.pdf` | 302, trang nhóm hiện "Báo cáo: bc1.pdf (v1)", hạn nộp 10/11/2026, giờ nộp |
+| GV001 vào `/reports` | thấy tệp `bc1.pdf` |
+| GV001 tải `/reports/1/download` | 200 |
+| SV001 vào `/reports` | **403** |
+| SV001 nộp lại | 302, "bc2.pdf (v2)" |
+| Đổi `reportDeadline` về 22/10/2026 rồi nộp | bị chặn, hiện lỗi *"Đã quá hạn nộp báo cáo (hạn: 2026-10-22)"*, báo cáo cũ vẫn giữ |
+
+### 18.4. Giả định & giới hạn
+
+1. Metadata báo cáo vẫn **in-memory** (mất khi restart); tệp nằm trên đĩa tại thư mục `uploads/`.
+2. Chỉ lưu **bản mới nhất** + số phiên bản, không lưu lịch sử từng lần nộp.
+3. Hạn nộp so sánh theo **ngày** (nộp trong ngày hạn vẫn được).
+4. Chưa có thông báo/email khi nộp hoặc nhắc hạn (Lab 6).
+5. Chưa có API JSON cho module báo cáo.
+
+
+## 19. Bước 7 — Hội đồng & chấm điểm
+
+### 19.1. File mới/cập nhật
+
+| File | Vai trò |
+|---|---|
+| `model/CouncilRole.java` | Enum vai trò: `CHAIR` (Chủ tịch), `SECRETARY` (Thư ký), `MEMBER` (Thành viên) |
+| `model/CouncilMember.java` | Thành viên hội đồng: `lecturer`, `role`, `score`, `comment`, `scoredAt` |
+| `model/Council.java` | Hội đồng: `name`, `topic`, danh sách `members` |
+| `model/TopicResult.java` | Kết quả: `council`, `averageScore`, `published`, `publishedAt` |
+| `exception/InvalidCouncilException.java`, `CouncilNotFoundException.java` | Lỗi nghiệp vụ |
+| `service/CouncilService.java` | Lập hội đồng, chấm điểm, tổng hợp, công bố, truy vấn kết quả |
+| `dto/CouncilView.java` | Gói dữ liệu cho màn hình: hội đồng + vai trò/điểm của tôi + kết quả + đã chấm đủ |
+| `controller/CouncilController.java` | `/councils` (GV): hội đồng của tôi, `POST /{id}/score`, `POST /{id}/confirm` |
+| `controller/CouncilAdminController.java` | `/dean/councils`: lập hội đồng, `POST /results/{id}/publish` |
+| `controller/ResultController.java` | `/results`: SV xem kết quả nhóm mình, GVHD xem kết quả đề tài mình hướng dẫn |
+| `templates/councils/list.html`, `councils/dean.html`, `results/list.html` | Giao diện |
+| `config/SecurityConfig.java` | `/councils/**` → `LECTURER`; thêm GV004, GV005 vào dữ liệu mẫu |
+| `templates/home.html` | Menu "Lập hội đồng và công bố điểm", "Hội đồng của tôi", "Kết quả..." |
+| `src/test/.../CouncilServiceTest.java` | 15 test |
+
+### 19.2. Nghiệp vụ (`CouncilService`)
+
+1. Chỉ lập hội đồng cho đề tài **`REGISTERED`** và **mỗi đề tài chỉ 1 hội đồng**.
+2. Hội đồng **3–5 GV**, đúng **1 chủ tịch** và **1 thư ký**; không trùng GV; **GVHD (kể cả đồng hướng dẫn) không được tham gia**.
+3. Mỗi thành viên chấm **1 điểm 0–10, tối đa 1 chữ số thập phân**, kèm nhận xét; sửa được đến khi công bố.
+4. **Chỉ chủ tịch** được tổng hợp; chỉ tổng hợp khi **tất cả thành viên đã chấm**; điểm trung bình = trung bình cộng, **làm tròn 2 chữ số**.
+5. **DEAN công bố** kết quả (mỗi kết quả 1 lần); sau khi công bố **khóa điểm** (không sửa, không tổng hợp lại).
+6. Xem kết quả: **SV trong nhóm** của đề tài và **GVHD** của đề tài; người khác không thấy.
+
+### 19.3. Kiểm thử
+
+- `mvn clean package`: BUILD SUCCESS, `Tests run: 87` (15 test mới).
+- Chạy thật (GV001 = DEAN làm chủ tịch, GV003 thư ký, GV004 thành viên; GV002 là GVHD):
+
+| Ca | Kết quả |
+|---|---|
+| DEAN lập hội đồng | 302, `/dean/councils` hiện "HD1", 3 thành viên đúng vai trò |
+| GV001/GV003/GV004 chấm 8.0 / 7.5 / 8.5 | lưu điểm, hiện trong bảng |
+| GV001 "Tổng hợp điểm" | điểm trung bình **8.0** |
+| DEAN "Công bố điểm" | trạng thái "Đã công bố 23/10/2026 23:21", form chấm ẩn |
+| SV001 `/results` | thấy "De tai 7 — HD1 — 8.0" |
+| SV002 (không thuộc nhóm) | "Chưa có kết quả nào được công bố" |
+| GV002 (GVHD) | thấy 8.0 |
+| GV003 (thành viên, không phải GVHD) | không thấy |
+
+### 19.4. Giả định & giới hạn
+
+1. Dữ liệu hội đồng/điểm vẫn **in-memory**, mất khi restart.
+2. **1 hội đồng / 1 đề tài**; chưa gom nhiều đề tài vào một hội đồng, chưa có lịch/ngày bảo vệ, phòng bảo vệ.
+3. Chưa có biên bản họp, nhận xét tổng hợp của chủ tịch, hay tệp đính kèm.
+4. Chưa có API JSON, chưa xuất Excel/PDF bảng điểm.
+5. Điểm nhập tối đa 1 chữ số thập phân; điểm trung bình làm tròn 2 chữ số.
+
+## 20. Bước 8 — Kiểm thử toàn diện hệ thống (E2E Browser UI, Business Logic Tests, Security & Controllers)
+
+### 20.1. Kiểm thử giao diện và tương tác người dùng (E2E Browser Subagent)
+- **Môi trường**: Ứng dụng chạy trên port 8080 với dữ liệu seed ban đầu.
+- **Kịch bản đã kiểm tra**:
+  1. Truy cập trang chủ `/` và `/home`: hiển thị đúng danh mục chức năng theo quyền người dùng chưa đăng nhập.
+  2. Đăng nhập sai: nhập sai mật khẩu tại `/login` → hiển thị banner thông báo lỗi màu đỏ *"Tài khoản hoặc mật khẩu không chính xác"*.
+  3. Đăng nhập thành công với tài khoản Admin (`admin`/`123456`) → chuyển hướng tới `/home`, thanh điều hướng hiển thị tên tài khoản và menu quản trị.
+  4. Quản lý tài khoản tại `/admin/accounts`:
+     - Danh sách tải đầy đủ các tài khoản seed.
+     - Mở form thêm mới tài khoản `/admin/accounts/new`.
+     - Kiểm thử logic client-side JavaScript ẩn/hiện trường "Bộ môn": khi chọn loại "Sinh viên" trường bộ môn tự động ẩn và xóa giá trị; khi chuyển sang "Giảng viên" trường bộ môn tự động hiển thị lại.
+     - Tạo tài khoản giảng viên mới: Mã `GV099`, Tên `TS. Tran Test`, Email `gv099@qldt.local`, Bộ môn `Khoa học máy tính`. Submit form thành công, chuyển hướng về danh sách và xuất hiện ngay tài khoản mới.
+  5. Đăng xuất: Nhấn nút "Đăng xuất" trên navbar → chuyển hướng về `/home?logout` kèm thông báo xanh *"Bạn đã đăng xuất thành công"*, các menu quản trị bị ẩn.
+
+### 20.2. Bộ kiểm thử tự động (Automated Test Suite)
+Đã triển khai hệ thống unit test, integration test và mock MVC controller test kiểm tra toàn bộ logic nghiệp vụ, nâng tổng số bài test lên **231 tests**, kết quả **100% PASS (0 Failure, 0 Error, 0 Skipped)**:
+
+| Phân lớp kiểm thử | Lớp kiểm thử (Test Class) | Số lượng test | Nội dung kiểm thử |
+|---|---|---|---|
+| Service Logic | `AccountServiceTest` & `AccountServiceExtraTest` | 28 tests | CRUD tài khoản, mã duy nhất, email duy nhất, khóa/mở khóa, đổi mật khẩu, bổ nhiệm trưởng bộ môn, chỉ 1 trưởng bộ môn/bộ môn, quyền đăng nhập |
+| Service Logic | `RegistrationPeriodServiceTest` & `RegistrationPeriodServiceExtraTest` | 19 tests | Tạo đợt, validate thời gian GV/SV, điều kiện TLCN/KLTN, cập nhật, xóa, khóa đăng ký |
+| Service Logic | `TopicServiceTest` & `TopicServiceExtraTest` | 31 tests | Tạo đề tài trong thời hạn GV, giới hạn tối đa đề tài/GV, trùng tên, duyệt đề tài, công bố đề tài, đề tài đa bộ môn |
+| Service Logic | `TeamServiceTest` & `TeamServiceExtraTest` | 27 tests | Tạo nhóm, mời thành viên, phản hồi lời mời, giới hạn tối đa 3 SV, không mời SV đã có nhóm, rời nhóm, giải tán nhóm |
+| Service Logic | `TopicRegistrationServiceTest` & `TopicRegistrationServiceExtraTest` | 19 tests | Đăng ký đề tài trong thời hạn SV, khóa đợt, trùng đề tài, GV duyệt đăng ký, hủy đăng ký, chỉ nhóm trưởng thao tác |
+| Service Logic | `ReportServiceTest` & `ReportServiceExtraTest` | 16 tests | Nộp báo cáo PDF/ZIP/DOCX, kiểm tra hạn nộp, chặn tệp sai định dạng hoặc > 20MB, cập nhật phiên bản (v1, v2), tải tệp |
+| Service Logic | `CouncilServiceTest` & `CouncilServiceExtraTest` | 24 tests | Lập hội đồng 3-5 GV, 1 chủ tịch, 1 thư ký, GVHD không được tham gia, chấm điểm 0-10, tổng hợp điểm, công bố kết quả, khóa điểm sau công bố |
+| Service Logic | `CustomUserDetailsServiceTest` | 5 tests | Tải UserDetails theo username, kiểm tra username không tồn tại, tài khoản bị khóa, ánh xạ roles và authorities |
+| Integration | `FullProjectLifecycleIntegrationTest` | 1 test | Kiểm thử toàn bộ vòng đời dự án: Tạo tài khoản → Mở đợt → GV đăng ký đề tài → Dean duyệt/công bố → SV lập nhóm → Đăng ký đề tài → GV duyệt nhóm → SV nộp báo cáo → Lập hội đồng → Chấm điểm → Tổng hợp điểm → Công bố kết quả |
+| Controller & Security | `SecurityAccessTest` | 16 tests | Kiểm tra bảo mật URL: truy cập công khai `/`, `/home`, `/login`; chặn 401/302 người dùng chưa đăng nhập; chặn 403 khi sai vai trò trên các endpoint admin/dean/lecturer/student |
+| Controller & Security | `AccountAdminControllerTest` | 9 tests | MVC Controller: xem danh sách, hiển thị form, validate lỗi, tạo mới, khóa/mở khóa, đặt lại mật khẩu |
+| Controller & Security | `RegistrationPeriodControllerTest` | 8 tests | MVC Controller: xem danh sách, form tạo/sửa, validate thời gian, cập nhật, xóa đợt |
+| Controller & Security | `TopicControllerTest` | 8 tests | MVC Controller: xem đề tài của tôi, form đề tài, công bố đề tài, phê duyệt đề tài của trưởng bộ môn |
+| Controller & Security | `TeamControllerTest` | 7 tests | MVC Controller: danh sách nhóm, tạo nhóm, mời thành viên, đăng ký đề tài |
+| Controller & Security | `CouncilControllerTest` | 6 tests | MVC Controller: danh sách hội đồng, form chấm điểm, tổng hợp điểm, lập hội đồng |
+| Controller & Security | `ReportControllerTest` | 6 tests | MVC Controller: nộp báo cáo, danh sách báo cáo, tải file báo cáo |
+| Sanity | `QldtApplicationTests` | 1 test | Khởi động ApplicationContext của ứng dụng |
+| **Tổng cộng** | **17 test classes** | **231 tests** | **Tất cả vượt qua (BUILD SUCCESS, 0 failures, 0 errors)** |
+
+
+
+## 21. Bước 8 — JPA + MySQL
+
+### 20.1. Instance MySQL riêng (không dùng root của máy)
+
+- Tạo instance mới, độc lập với service MySQL80 có sẵn: `mysqld --initialize-insecure --datadir=db\data`, chạy ở **port 3307**.
+- `db/init.sql`: tạo database `qldt`, `qldt_test`; tạo **`qldt_admin`** (quản trị instance) và **`qldt_app`** (tài khoản app dùng); **xóa `root`** của instance mới.
+- Ứng dụng kết nối bằng `qldt_app`, không dùng root.
+- `db/start-db.ps1` / `db/stop-db.ps1` để bật/tắt instance.
+
+### 20.2. File mới/cập nhật
+
+| File | Vai trò |
+|---|---|
+| `repository/*Repository.java` (9 file) | `Account`, `Lecturer`, `Student`, `RegistrationPeriod`, `Topic`, `Team`, `Report`, `Council`, `TopicResult` |
+| `model/*.java` | Thêm `@Entity`, `@Table`, `@Id/@GeneratedValue`, quan hệ `@ManyToOne/@ManyToMany/@OneToOne/@ElementCollection`; `Account` dùng `@Inheritance(JOINED)` + `@DiscriminatorColumn` |
+| `service/*.java` | Bỏ `ArrayList`/`AtomicLong`, dùng repository + `@Transactional`; nghiệp vụ giữ nguyên |
+| `config/SecurityConfig.java` | Seed dữ liệu mẫu **idempotent** (`existsByUsername`) |
+| `src/main/resources/application.properties` | DataSource MySQL 3307 (`qldt_app`), `ddl-auto=update`, `open-in-view=false` |
+| `src/test/resources/application-test.properties` | H2 in-memory `MODE=MySQL`, `ddl-auto=create-drop` |
+| `pom.xml` | Thêm `com.h2database:h2` (test scope) |
+| `db/init.sql`, `db/start-db.ps1`, `db/stop-db.ps1` | Tạo/khoi động instance MySQL riêng |
+| `src/test/java/project/qldt/support/Beans.java` | Cầu nối lấy bean trong test |
+
+### 20.3. Bảng dữ liệu
+
+`account` (+ `lecturer`, `student`, `admin`, `account_role`), `registration_period`, `topic`, `topic_advisor`, `advisor_invitation`, `team`, `team_member`, `team_invitation`, `report`, `council`, `council_member`, `topic_result`.
+
+### 20.4. Kiểm thử
+
+- `mvn clean package`: BUILD SUCCESS, **231 test** pass.
+- Test chạy trên H2 (`MODE=MySQL`) với profile `test`, mỗi test trong transaction rollback; seed tài khoản mẫu dùng cho test controller, test service dùng mã riêng `GV9xx`/`SV9xx`.
+- Chạy thật trên MySQL:
+
+| Ca | Kết quả |
+|---|---|
+| Khởi động app | tạo 12 bảng, seed 1 admin + 5 GV + 2 SV |
+| Tạo đợt → đề tài → duyệt → công bố → nhóm → mời/tham gia → đăng ký → duyệt | OK |
+| Lập hội đồng → chấm 8.0/7.5/8.5 → tổng hợp 8.0 → công bố | OK |
+| SV và GVHD xem kết quả | OK |
+| Nộp báo cáo PDF | 302, bảng `report` có `bc-jpa.pdf` v1 |
+| **Restart app** rồi xem lại hội đồng/điểm | dữ liệu **vẫn còn** (HD-JPA, 8.0, đã công bố) |
+
+### 20.5. Giả định & giới hạn
+
+1. Dùng `ddl-auto=update` (chưa dùng Flyway/Liquibase).
+2. Mật khẩu DB nằm trong `application.properties` (phục vụ bài lab).
+3. Instance MySQL chạy thủ công bằng script, chưa cài thành Windows service.
+4. Quan hệ dùng `EAGER` để template đọc được khi `open-in-view=false`; dữ liệu nhỏ nên chưa tối ưu N+1.
+5. Tệp báo cáo vẫn lưu trên đĩa, chỉ metadata nằm trong DB.
+
+
+## 22. Bước 9 — Thống kê & xuất kết quả
+
+### 22.1. Chuẩn hoá định dạng code
+
+- Thêm `config/eclipse-formatter.xml` (tab = 4, lineSplit 120) và plugin `formatter-maven-plugin` trong `pom.xml`.
+- Chạy `mvn formatter:format` để format toàn bộ `src/main` + `src/test` (99 → 106 file), `mvn formatter:validate` để kiểm tra.
+- Từ nay code mới đều được format lại bằng plugin này trước khi kết thúc bước.
+
+### 22.2. File mới/cập nhật
+
+| File | Vai trò |
+|---|---|
+| `dto/PeriodStatistics.java` | Số liệu tổng hợp của một đợt |
+| `dto/TopicStatisticsRow.java` | Một dòng thống kê theo đề tài |
+| `dto/StatisticsResponse.java` | Gói JSON cho API |
+| `service/StatisticsService.java` | Tính số liệu, tạo các dòng, xuất CSV |
+| `controller/StatisticsController.java` | `/dean/statistics`, `/dean/statistics/export` |
+| `controller/StatisticsApiController.java` | `/api/statistics` (JSON) |
+| `templates/statistics/index.html` | Trang thống kê + chọn đợt + link xuất CSV |
+| `templates/home.html` | Menu "Thống kê & xuất kết quả" cho DEAN |
+| `src/test/.../StatisticsServiceTest.java` | 5 test |
+
+### 22.3. Nghiệp vụ (`StatisticsService`)
+
+1. Thống kê theo **đợt**: tổng đề tài, số đã công bố, số đã có nhóm (`REGISTERED`), số nhóm, số báo cáo đã nộp, số hội đồng, số kết quả đã công bố.
+2. **Điểm trung bình** = trung bình các kết quả **đã công bố**, làm tròn 2 chữ số; đợt chưa có kết quả → 0.
+3. Mỗi dòng: đề tài, GVHD, nhóm trưởng, số thành viên, tệp báo cáo, hội đồng, điểm, trạng thái công bố.
+4. Xuất **CSV** (UTF-8 có BOM để Excel đọc đúng tiếng Việt), có escape dấu phẩy/nháy.
+5. API JSON `/api/statistics?periodId=` trả `summary` + `rows`.
+6. Chỉ **DEAN** xem thống kê/API/cSV; giảng viên thường bị chặn.
+
+### 22.4. Kiểm thử
+
+- `mvn clean package`: BUILD SUCCESS, **236 test** pass (5 test mới cho `StatisticsService`).
+- Chạy thật trên MySQL (đợt "Dot JPA" đã có đủ dữ liệu):
+
+| Ca | Kết quả |
+|---|---|
+| `GET /dean/statistics?periodId=1` | 200, hiện card thống kê, đề tài "De tai JPA", điểm **8.0** |
+| `GET /dean/statistics/export?periodId=1` | 200, CSV có tiêu đề + dòng dữ liệu + điểm 8.0 |
+| `GET /api/statistics?periodId=1` | 200, JSON có `summary`, `rows`, điểm 8.0 |
+| GV002 (không phải DEAN) gọi trang/API thống kê | **bị chặn** |
+
+### 22.5. Giả định & giới hạn
+
+1. Xuất **CSV** (mở bằng Excel) chứ không phải `.xlsx` thật.
+2. Số liệu tính trực tiếp từ DB mỗi lần xem, chưa cache và chưa có biểu đồ.
+3. API chỉ dành cho DEAN, chưa có phiên bản public.
+4. Chưa thống kê theo khoa/bộ môn hay theo học kỳ.
+
+
+## 23. Khai báo thuộc tính `app.*` (hết cảnh báo "unknown property")
+
+- Thêm `config/AppProperties.java`: `@ConfigurationProperties(prefix = "app")` với thuộc tính `uploadDir` (mặc định `uploads`) và `uploadPath()`.
+- `QldtApplication` thêm `@ConfigurationPropertiesScan` để Spring đăng ký lớp cấu hình.
+- `ReportService` nhận `AppProperties` thay cho `@Value("${app.upload-dir:uploads}")`.
+- `pom.xml` thêm `spring-boot-configuration-processor` (optional) để sinh `META-INF/spring-configuration-metadata.json`.
+- Kết quả: file metadata có `"name": "app.upload-dir"` gắn với `project.qldt.config.AppProperties` → IDE hết cảnh báo.
+- Đã kiểm tra: `mvn formatter:format` + `mvn clean package` → **236 test pass**, app khởi động bình thường.
 
