@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Đợt đăng ký</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 24px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
+        a, button { margin-right: 8px; }
+        .error { color: #b00020; font-weight: 600; }
+    </style>
+</head>
+<body>
+<h1>Danh sách đợt đăng ký</h1>
+<p sec:authorize="hasRole('DEAN')"><a th:href="@{/periods/new}">Tạo đợt đăng ký</a></p>
+<p class="error" th:if="${error}" th:text="${error}"></p>
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Tên đợt</th>
+        <th>Loại</th>
+        <th>GV đăng ký</th>
+        <th>SV đăng ký</th>
+        <th>Hạn nộp điểm GVPB</th>
+        <th>Ngày báo cáo hội đồng</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="period : ${periods}">
+        <td th:text="${period.id}">1</td>
+        <td th:text="${period.name}">Đợt 1</td>
+        <td th:text="${period.type.label}">KLTN</td>
+        <td th:text="${#temporals.format(period.teacherRegisterStart, 'dd/MM/yyyy HH:mm')} + ' - ' + ${#temporals.format(period.teacherRegisterEnd, 'dd/MM/yyyy HH:mm')}">
+            01/01/2026 08:00 - 10/01/2026 17:00
+        </td>
+        <td th:text="${#temporals.format(period.studentRegisterStart, 'dd/MM/yyyy HH:mm')} + ' - ' + ${#temporals.format(period.studentRegisterEnd, 'dd/MM/yyyy HH:mm')}">
+            11/01/2026 08:00 - 20/01/2026 17:00
+        </td>
+        <td th:text="${period.reviewerScoreDeadline != null ? #temporals.format(period.reviewerScoreDeadline, 'dd/MM/yyyy') : '—'}">—</td>
+        <td th:text="${period.councilReportDate != null ? #temporals.format(period.councilReportDate, 'dd/MM/yyyy') : '—'}">—</td>
+        <td>
+            <span sec:authorize="hasRole('DEAN')">
+                <a th:href="@{/periods/{id}/edit(id=${period.id})}">Sửa</a>
+                <form th:action="@{/periods/{id}/delete(id=${period.id})}" method="post" style="display:inline">
+                    <button type="submit">Xóa</button>
+                </form>
+            </span>
+        </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(periods)}">
+        <td colspan="8">Chưa có đợt đăng ký nào.</td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

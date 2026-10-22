@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Hệ thống quản lý đề tài sinh viên</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 24px; }
+        li { margin: 8px 0; }
+        .bar { display: flex; gap: 16px; align-items: center; }
+        .ok { color: #1b5e20; background: #e8f5e9; padding: 8px 12px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<h1>Hệ thống quản lý đề tài sinh viên</h1>
+
+<div class="bar">
+    <span sec:authorize="isAuthenticated()">Xin chào <strong sec:authentication="name">user</strong></span>
+    <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post">
+        <button type="submit">Đăng xuất</button>
+    </form>
+    <a sec:authorize="!isAuthenticated()" th:href="@{/login}">Đăng nhập</a>
+</div>
+
+<p class="ok" th:if="${param.logout}">Bạn đã đăng xuất thành công.</p>
+
+<ul>
+    <li sec:authorize="isAuthenticated()">
+        <a th:href="@{/periods}">Danh sách đợt đăng ký</a>
+    </li>
+    <li sec:authorize="hasRole('DEAN')">
+        <a th:href="@{/periods/new}">Tạo đợt đăng ký</a>
+    </li>
+    <li sec:authorize="hasRole('ADMIN')">
+        Quản trị tài khoản (sẽ triển khai ở bước tiếp theo)
+    </li>
+    <li sec:authorize="hasRole('LECTURER') and !hasRole('DEAN')">
+        Khu vực giảng viên (sẽ triển khai ở bước tiếp theo)
+    </li>
+    <li sec:authorize="hasRole('STUDENT')">
+        Khu vực sinh viên (sẽ triển khai ở bước tiếp theo)
+    </li>
+    <!-- <li sec:authorize="isAuthenticated()">
+        <a th:href="@{/api/v1/periods}">API đợt đăng ký (JSON)</a>
+    </li> -->
+</ul>
+</body>
+</html>

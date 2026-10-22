@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Đợt đăng ký</title>
+    <style>
+        body { font-family: Segoe UI, sans-serif; margin: 24px; max-width: 620px; }
+        label { display: block; margin-top: 12px; font-weight: 600; }
+        input[type=text], select, input[type=datetime-local], input[type=date] { width: 100%; padding: 6px; }
+        .hint { font-weight: 400; color: #666; font-size: 0.9rem; }
+        .err { color: #b00020; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+<h1 th:text="${periodId == null} ? 'Tạo đợt đăng ký' : 'Sửa đợt đăng ký'">Tạo đợt đăng ký</h1>
+
+<form th:object="${period}" method="post"
+      th:action="${periodId == null} ? @{/periods} : @{/periods/{id}(id=${periodId})}">
+
+    <div class="err" th:if="${#fields.hasGlobalErrors()}">
+        <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+    </div>
+
+    <label>Tên đợt đăng ký</label>
+    <input type="text" th:field="*{name}"/>
+    <div class="err" th:errors="*{name}"></div>
+
+    <label>Loại đợt</label>
+    <select th:field="*{type}">
+        <option value="">-- Chọn loại --</option>
+        <option th:each="type : ${periodTypes}" th:value="${type}" th:text="${type.label}"></option>
+    </select>
+    <div class="err" th:errors="*{type}"></div>
+
+    <label>Thời điểm bắt đầu cho GV đăng ký</label>
+    <input type="datetime-local" th:field="*{teacherRegisterStart}"/>
+    <div class="err" th:errors="*{teacherRegisterStart}"></div>
+
+    <label>Thời điểm kết thúc cho GV đăng ký</label>
+    <input type="datetime-local" th:field="*{teacherRegisterEnd}"/>
+    <div class="err" th:errors="*{teacherRegisterEnd}"></div>
+
+    <label>Thời điểm bắt đầu cho SV đăng ký</label>
+    <input type="datetime-local" th:field="*{studentRegisterStart}"/>
+    <div class="err" th:errors="*{studentRegisterStart}"></div>
+
+    <label>Thời điểm kết thúc cho SV đăng ký</label>
+    <input type="datetime-local" th:field="*{studentRegisterEnd}"/>
+    <div class="err" th:errors="*{studentRegisterEnd}"></div>
+
+    <label>Hạn nộp điểm GVPB <span class="hint">(chỉ TLCN và KLTN)</span></label>
+    <input type="date" th:field="*{reviewerScoreDeadline}"/>
+
+    <label>Ngày báo cáo hội đồng <span class="hint">(chỉ KLTN)</span></label>
+    <input type="date" th:field="*{councilReportDate}"/>
+
+    <p>
+        <button type="submit">Lưu</button>
+        <a th:href="@{/periods}">Hủy</a>
+    </p>
+</form>
+</body>
+</html>
