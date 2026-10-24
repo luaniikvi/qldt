@@ -1,87 +1,129 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"/>
-    <title>Quản trị tài khoản</title>
-    <style>
-        body { font-family: Segoe UI, sans-serif; margin: 24px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
-        form { margin: 2px 0; }
-        button { margin-right: 4px; }
-        .ok { color: #1b5e20; background: #e8f5e9; padding: 8px 12px; }
-        .error { color: #b00020; background: #fdecea; padding: 8px 12px; }
-        .badge { background: #eceff1; padding: 2px 6px; border-radius: 4px; }
-    </style>
-</head>
+<head th:replace="~{fragments/head :: head(title='Quản trị tài khoản người dùng')}"></head>
 <body>
-<h1>Quản trị tài khoản</h1>
-<p><a th:href="@{/home}">Về trang chủ</a> | <a th:href="@{/admin/accounts/new}">Tạo tài khoản</a></p>
 
-<p class="ok" th:if="${message}" th:text="${message}"></p>
-<p class="error" th:if="${error}" th:text="${error}"></p>
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='admin-accounts')}"></aside>
 
-<table>
-    <thead>
-    <tr>
-        <th>Mã đăng nhập</th>
-        <th>Họ tên</th>
-        <th>Loại</th>
-        <th>Bộ môn</th>
-        <th>Trạng thái</th>
-        <th>Vai trò</th>
-        <th>Khóa / Mở khóa</th>
-        <th>Trưởng khoa</th>
-        <th>Đặt lại mật khẩu</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="acc : ${accounts}">
-        <td th:text="${acc.username}">SV001</td>
-        <td th:text="${acc.fullName}">Nguyễn Văn A</td>
-        <td th:text="${acc.baseRole.label}">Sinh viên</td>
-        <td>
-            <span th:if="${acc.baseRole.name() == 'LECTURER'}" th:text="${acc.department}">Công nghệ phần mềm</span>
-            <span th:unless="${acc.baseRole.name() == 'LECTURER'}">—</span>
-        </td>
-        <td th:text="${acc.enabled} ? 'Đang hoạt động' : 'Đã khóa'">Đang hoạt động</td>
-        <td>
-            <span class="badge"
-                  th:if="${acc.baseRole.name() == 'LECTURER' and acc.dean}">Trưởng khoa</span>
-            <span th:unless="${acc.baseRole.name() == 'LECTURER' and acc.dean}">—</span>
-        </td>
-        <td>
-            <form th:if="${acc.enabled}" th:action="@{/admin/accounts/{id}/lock(id=${acc.id})}" method="post">
-                <button type="submit">Khóa</button>
-            </form>
-            <form th:unless="${acc.enabled}" th:action="@{/admin/accounts/{id}/unlock(id=${acc.id})}" method="post">
-                <button type="submit">Mở khóa</button>
-            </form>
-        </td>
-        <td>
-            <form th:if="${acc.baseRole.name() == 'LECTURER' and acc.dean}"
-                  th:action="@{/admin/accounts/{id}/dean(id=${acc.id})}" method="post">
-                <input type="hidden" name="dean" value="false"/>
-                <button type="submit">Bãi nhiệm</button>
-            </form>
-            <form th:if="${acc.baseRole.name() == 'LECTURER' and !acc.dean}"
-                  th:action="@{/admin/accounts/{id}/dean(id=${acc.id})}" method="post">
-                <input type="hidden" name="dean" value="true"/>
-                <button type="submit">Bổ nhiệm</button>
-            </form>
-            <span th:if="${acc.baseRole.name() != 'LECTURER'}">—</span>
-        </td>
-        <td>
-            <form th:action="@{/admin/accounts/{id}/reset-password(id=${acc.id})}" method="post">
-                <input type="password" name="password" placeholder="Mật khẩu mới" required minlength="6" size="14"/>
-                <button type="submit">Đặt lại</button>
-            </form>
-        </td>
-    </tr>
-    <tr th:if="${#lists.isEmpty(accounts)}">
-        <td colspan="9">Chưa có tài khoản nào.</td>
-    </tr>
-    </tbody>
-</table>
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title='QUẢN TRỊ TÀI KHOẢN', icon='bi-people-fill', actionUrl='/admin/accounts/new', actionText='Tạo tài khoản mới', actionIcon='bi-person-plus-fill')}"></div>
+
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <div class="hcmute-card p-4">
+        <!-- Search bar -->
+        <div class="search-bar-box">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" id="tableSearchInput" class="form-control search-bar-input"
+                   placeholder="Tìm kiếm theo mã tài khoản, họ tên, loại người dùng hoặc bộ môn..." aria-label="Tìm kiếm tài khoản">
+        </div>
+
+        <div class="table-responsive">
+            <table class="hcmute-table">
+                <thead>
+                <tr>
+                    <th style="width: 140px;">Mã tài khoản</th>
+                    <th>Họ và tên</th>
+                    <th style="width: 130px;" class="text-center">Loại</th>
+                    <th>Bộ môn</th>
+                    <th style="width: 130px;" class="text-center">Trạng thái</th>
+                    <th style="width: 140px;" class="text-center">Chức vụ</th>
+                    <th style="width: 120px;" class="text-center">Khóa / Mở</th>
+                    <th style="width: 140px;" class="text-center">Trưởng khoa</th>
+                    <th style="width: 250px;">Đặt lại mật khẩu</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="acc : ${accounts}">
+                    <td>
+                        <strong class="text-primary-dark" th:text="${acc.username}">SV001</strong>
+                    </td>
+                    <td>
+                        <div class="fw-semibold text-dark" th:text="${acc.fullName}">Nguyễn Văn A</div>
+                        <div class="small text-muted" th:if="${acc.email != null}" th:text="${acc.email}">email@qldt.local</div>
+                    </td>
+                    <td class="text-center">
+                        <span th:if="${acc.baseRole.name() == 'STUDENT'}" class="badge-status badge-status-info">Sinh viên</span>
+                        <span th:if="${acc.baseRole.name() == 'LECTURER'}" class="badge-status badge-status-warning">Giảng viên</span>
+                        <span th:if="${acc.baseRole.name() == 'ADMIN'}" class="badge-status badge-status-neutral">Admin</span>
+                    </td>
+                    <td class="small">
+                        <span th:if="${acc.baseRole.name() == 'LECTURER'}" th:text="${acc.department != null ? acc.department.name : ''}">Công nghệ phần mềm</span>
+                        <span th:unless="${acc.baseRole.name() == 'LECTURER'}" class="text-muted">—</span>
+                    </td>
+                    <td class="text-center">
+                        <span th:if="${acc.enabled}" class="badge-status badge-status-success">
+                            <i class="bi bi-check-circle"></i> Hoạt động
+                        </span>
+                        <span th:unless="${acc.enabled}" class="badge-status badge-status-danger">
+                            <i class="bi bi-lock-fill"></i> Đã khóa
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span th:if="${acc.baseRole.name() == 'LECTURER' and acc.dean}" class="badge-status badge-status-warning">
+                            <i class="bi bi-star-fill"></i> Trưởng khoa
+                        </span>
+                        <span th:unless="${acc.baseRole.name() == 'LECTURER' and acc.dean}" class="text-muted">—</span>
+                    </td>
+                    <td class="text-center">
+                        <form th:if="${acc.enabled}" th:action="@{/admin/accounts/{id}/lock(id=${acc.id})}" method="post" class="m-0"
+                              data-confirm="Bạn có chắc muốn khóa tài khoản này?">
+                            <button type="submit" class="btn-hcmute-secondary btn-hcmute-sm text-danger" title="Khóa tài khoản">
+                                <i class="bi bi-lock-fill"></i> Khóa
+                            </button>
+                        </form>
+                        <form th:unless="${acc.enabled}" th:action="@{/admin/accounts/{id}/unlock(id=${acc.id})}" method="post" class="m-0">
+                            <button type="submit" class="btn-hcmute-secondary btn-hcmute-sm text-success" title="Mở khóa tài khoản">
+                                <i class="bi bi-unlock-fill"></i> Mở
+                            </button>
+                        </form>
+                    </td>
+                    <td class="text-center">
+                        <form th:if="${acc.baseRole.name() == 'LECTURER' and acc.dean}"
+                              th:action="@{/admin/accounts/{id}/dean(id=${acc.id})}" method="post" class="m-0"
+                              data-confirm="Bạn có chắc muốn bãi nhiệm chức danh Trưởng khoa của giảng viên này?">
+                            <input type="hidden" name="dean" value="false"/>
+                            <button type="submit" class="btn-hcmute-danger btn-hcmute-sm">
+                                <i class="bi bi-person-dash"></i> Bãi nhiệm
+                            </button>
+                        </form>
+                        <form th:if="${acc.baseRole.name() == 'LECTURER' and !acc.dean}"
+                              th:action="@{/admin/accounts/{id}/dean(id=${acc.id})}" method="post" class="m-0"
+                              data-confirm="Bạn có chắc muốn bổ nhiệm giảng viên này làm Trưởng khoa?">
+                            <input type="hidden" name="dean" value="true"/>
+                            <button type="submit" class="btn-hcmute-outline btn-hcmute-sm">
+                                <i class="bi bi-award"></i> Bổ nhiệm
+                            </button>
+                        </form>
+                        <span th:if="${acc.baseRole.name() != 'LECTURER'}" class="text-muted">—</span>
+                    </td>
+                    <td>
+                        <form th:action="@{/admin/accounts/{id}/reset-password(id=${acc.id})}" method="post" class="d-flex gap-1 m-0">
+                            <input type="password" name="password" class="form-control form-control-sm"
+                                   placeholder="Mật khẩu mới (≥6)" required minlength="6" style="width: 140px;"/>
+                            <button type="submit" class="btn-hcmute-secondary btn-hcmute-sm text-nowrap" title="Đặt lại mật khẩu">
+                                <i class="bi bi-key"></i> Đặt lại
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(accounts)}" class="empty-row">
+                    <td colspan="9">
+                        <div class="empty-state">
+                            <i class="bi bi-people empty-state-icon"></i>
+                            <div class="empty-state-title">Chưa có tài khoản nào</div>
+                            <div class="empty-state-desc">Hãy nhấn "Tạo tài khoản mới" ở phía trên để thêm người dùng vào hệ thống.</div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
 </body>
 </html>

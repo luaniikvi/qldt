@@ -1,59 +1,91 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"/>
-    <title>Nhắc hạn</title>
-    <style>
-        body { font-family: Segoe UI, sans-serif; margin: 24px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
-        .ok { color: #1b5e20; background: #e8f5e9; padding: 8px 12px; }
-        .error { color: #b00020; background: #fdecea; padding: 8px 12px; }
-        .hint { color: #555; }
-    </style>
-</head>
+<head th:replace="~{fragments/head :: head(title='Gửi thông báo nhắc hạn')}"></head>
 <body>
-<h1>Gửi nhắc hạn cho các đợt</h1>
-<p><a th:href="@{/home}">Về trang chủ</a></p>
 
-<p class="ok" th:if="${message}" th:text="${message}"></p>
-<p class="error" th:if="${error}" th:text="${error}"></p>
-<p class="hint">Nhắc hạn nộp báo cáo gửi cho thành viên các nhóm chưa nộp; nhắc lịch báo cáo hội đồng gửi cho thành viên hội đồng. Mỗi người chỉ nhận một thông báo cho mỗi đợt.</p>
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='dean-reminders')}"></aside>
 
-<table>
-    <thead>
-    <tr>
-        <th>Đợt</th>
-        <th>Loại</th>
-        <th>Hạn nộp báo cáo</th>
-        <th>Ngày báo cáo hội đồng</th>
-        <th>Nhắc hạn nộp báo cáo</th>
-        <th>Nhắc lịch báo cáo hội đồng</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="p : ${periods}">
-        <td th:text="${p.name}">Đợt</td>
-        <td th:text="${p.type.label}">Loại</td>
-        <td th:text="${p.reportDeadline}">31/12/2026</td>
-        <td th:text="${p.councilReportDate}"></td>
-        <td>
-            <form th:action="@{/dean/reminders/{id}/report-deadline(id=${p.id})}" method="post">
-                <button type="submit">Gửi nhắc nộp báo cáo</button>
-            </form>
-        </td>
-        <td>
-            <form th:if="${p.councilReportDate != null}"
-                  th:action="@{/dean/reminders/{id}/council-date(id=${p.id})}" method="post">
-                <button type="submit">Gửi nhắc lịch hội đồng</button>
-            </form>
-            <span th:if="${p.councilReportDate == null}" class="hint">Đợt chưa có ngày báo cáo hội đồng</span>
-        </td>
-    </tr>
-    <tr th:if="${#lists.isEmpty(periods)}">
-        <td colspan="6">Chưa có đợt đăng ký nào.</td>
-    </tr>
-    </tbody>
-</table>
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title='GỬI THÔNG BÁO NHẮC HẠN', icon='bi-send-exclamation-fill', actionUrl=null, actionText=null, actionIcon=null)}"></div>
+
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <div class="hcmute-card p-4">
+        <div class="hcmute-card-header">
+            <div>
+                <h2 class="h2 mb-1"><i class="bi bi-bell text-warning me-2"></i>Tự động phát thông báo nhắc nhở tiến độ</h2>
+                <div class="small text-muted">Nhắc hạn nộp báo cáo sẽ gửi trực tiếp đến hộp thư cá nhân của các thành viên nhóm chưa nộp; nhắc lịch hội đồng gửi đến các giảng viên thuộc hội đồng.</div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="hcmute-table">
+                <thead>
+                <tr>
+                    <th style="width: 50px;" class="text-center">STT</th>
+                    <th>Tên đợt đăng ký</th>
+                    <th style="width: 130px;" class="text-center">Loại hình</th>
+                    <th style="width: 170px;">Hạn nộp báo cáo</th>
+                    <th style="width: 170px;">Ngày báo cáo HĐ</th>
+                    <th style="width: 220px;" class="text-center">Nhắc nộp báo cáo</th>
+                    <th style="width: 240px;" class="text-center">Nhắc lịch hội đồng</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p, stat : ${periods}">
+                    <td class="text-center text-muted fw-semibold" th:text="${stat.count}">1</td>
+                    <td>
+                        <strong class="text-primary-dark fs-6" th:text="${p.name}">Đợt 1</strong>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge-status badge-status-info" th:text="${p.type.label}">KLTN</span>
+                    </td>
+                    <td class="small">
+                        <i class="bi bi-calendar-event text-danger me-1"></i>
+                        <span class="fw-semibold text-danger" th:text="${p.reportDeadline != null ? #temporals.format(p.reportDeadline, 'dd/MM/yyyy') : '—'}">31/12/2026</span>
+                    </td>
+                    <td class="small">
+                        <i class="bi bi-calendar-check text-primary me-1"></i>
+                        <span class="fw-semibold" th:text="${p.councilReportDate != null ? #temporals.format(p.councilReportDate, 'dd/MM/yyyy') : '—'}">Chưa có</span>
+                    </td>
+                    <td class="text-center">
+                        <form th:action="@{/dean/reminders/{id}/report-deadline(id=${p.id})}" method="post" class="m-0"
+                              data-confirm="Bạn có chắc muốn gửi thông báo nhắc nộp báo cáo cho các nhóm chưa hoàn tất?">
+                            <button type="submit" class="btn-hcmute-primary btn-hcmute-sm">
+                                <i class="bi bi-send me-1"></i> Gửi nhắc báo cáo
+                            </button>
+                        </form>
+                    </td>
+                    <td class="text-center">
+                        <form th:if="${p.councilReportDate != null}"
+                              th:action="@{/dean/reminders/{id}/council-date(id=${p.id})}" method="post" class="m-0"
+                              data-confirm="Bạn có chắc muốn gửi nhắc lịch bảo vệ đến các giảng viên hội đồng?">
+                            <button type="submit" class="btn-hcmute-secondary btn-hcmute-sm">
+                                <i class="bi bi-calendar2-week me-1"></i> Nhắc lịch hội đồng
+                            </button>
+                        </form>
+                        <span th:if="${p.councilReportDate == null}" class="badge-status badge-status-neutral small">
+                            Chưa có ngày báo cáo
+                        </span>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(periods)}" class="empty-row">
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <i class="bi bi-calendar-x empty-state-icon"></i>
+                            <div class="empty-state-title">Chưa có đợt học thuật nào</div>
+                            <div class="empty-state-desc">Khi có đợt học thuật được khởi tạo, danh sách cấu hình nhắc hạn sẽ xuất hiện tại đây.</div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
 </body>
 </html>

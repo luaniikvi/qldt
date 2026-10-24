@@ -1,5 +1,14 @@
 package project.qldt.service;
 
+import project.qldt.service.account.AccountService;
+import project.qldt.service.council.CouncilService;
+import project.qldt.service.notification.NotificationService;
+import project.qldt.service.notification.ReminderService;
+import project.qldt.service.period.RegistrationPeriodService;
+import project.qldt.service.report.ReportService;
+import project.qldt.service.team.TeamService;
+import project.qldt.service.topic.TopicRegistrationService;
+import project.qldt.service.topic.TopicService;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -17,19 +26,19 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import project.qldt.dto.RegistrationPeriodRequest;
-import project.qldt.dto.TopicRequest;
+import project.qldt.dto.period.RegistrationPeriodRequest;
+import project.qldt.dto.topic.TopicRequest;
 import project.qldt.exception.InvalidNotificationException;
-import project.qldt.model.Council;
-import project.qldt.model.CouncilRole;
-import project.qldt.model.Lecturer;
-import project.qldt.model.Notification;
-import project.qldt.model.NotificationType;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
-import project.qldt.model.Student;
-import project.qldt.model.Team;
-import project.qldt.model.Topic;
+import project.qldt.model.council.Council;
+import project.qldt.model.council.CouncilRole;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.notification.Notification;
+import project.qldt.model.notification.NotificationType;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
+import project.qldt.model.account.Student;
+import project.qldt.model.team.Team;
+import project.qldt.model.topic.Topic;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -194,7 +203,8 @@ class NotificationServiceTest {
 		assertTrue(hasNotification(chair, NotificationType.REMINDER, "Nhắc lịch báo cáo hội đồng"));
 	}
 
-	private boolean hasNotification(project.qldt.model.Account recipient, NotificationType type, String titlePrefix) {
+	private boolean hasNotification(project.qldt.model.account.Account recipient, NotificationType type,
+			String titlePrefix) {
 		return notificationService.findByRecipient(recipient).stream()
 				.anyMatch(item -> item.getType() == type && item.getTitle().startsWith(titlePrefix));
 	}
@@ -210,7 +220,7 @@ class NotificationServiceTest {
 	private RegistrationPeriodRequest periodRequest() {
 		RegistrationPeriodRequest request = new RegistrationPeriodRequest();
 		request.setName("Đợt thông báo");
-		request.setType(PeriodType.COURSE);
+		request.setType(PeriodType.COURSE_PROJECT);
 		request.setTeacherRegisterStart(LocalDateTime.now().minusDays(1));
 		request.setTeacherRegisterEnd(LocalDateTime.now().plusDays(1));
 		request.setStudentRegisterStart(LocalDateTime.now().plusDays(2));

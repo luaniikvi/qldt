@@ -1,5 +1,4 @@
 package project.qldt.controller;
-import project.qldt.support.Beans;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,10 +24,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import project.qldt.dto.RegistrationPeriodRequest;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
-import project.qldt.service.RegistrationPeriodService;
+import project.qldt.dto.period.RegistrationPeriodRequest;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
+import project.qldt.service.period.RegistrationPeriodService;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -49,7 +48,7 @@ class RegistrationPeriodControllerTest {
 	void setUp() {
 		RegistrationPeriodRequest req = new RegistrationPeriodRequest();
 		req.setName("Đợt Controller Test");
-		req.setType(PeriodType.COURSE);
+		req.setType(PeriodType.COURSE_PROJECT);
 		req.setTeacherRegisterStart(LocalDateTime.now().minusDays(5));
 		req.setTeacherRegisterEnd(LocalDateTime.now().minusDays(1));
 		req.setStudentRegisterStart(LocalDateTime.now());
@@ -80,7 +79,7 @@ class RegistrationPeriodControllerTest {
 		mockMvc.perform(post("/periods")
 				.with(csrf())
 				.param("name", "Đợt Mới Test")
-				.param("type", "COURSE")
+				.param("type", "COURSE_PROJECT")
 				.param("teacherRegisterStart", "2027-01-01T08:00")
 				.param("teacherRegisterEnd", "2027-01-10T17:00")
 				.param("studentRegisterStart", "2027-01-11T08:00")
@@ -95,7 +94,7 @@ class RegistrationPeriodControllerTest {
 		mockMvc.perform(post("/periods")
 				.with(csrf())
 				.param("name", "")
-				.param("type", "COURSE"))
+				.param("type", "COURSE_PROJECT"))
 				.andExpect(status().isOk())
 				.andExpect(view().name("periods/form"))
 				.andExpect(model().hasErrors());
@@ -114,7 +113,7 @@ class RegistrationPeriodControllerTest {
 		mockMvc.perform(post("/periods/" + testPeriod.getId())
 				.with(csrf())
 				.param("name", "Đợt Controller Test Sửa")
-				.param("type", "COURSE")
+				.param("type", "COURSE_PROJECT")
 				.param("teacherRegisterStart", "2027-01-01T08:00")
 				.param("teacherRegisterEnd", "2027-01-10T17:00")
 				.param("studentRegisterStart", "2027-01-11T08:00")
@@ -145,7 +144,7 @@ class RegistrationPeriodControllerTest {
 	void xoaDotDangKy() throws Exception {
 		RegistrationPeriodRequest req = new RegistrationPeriodRequest();
 		req.setName("Đợt Sẽ Xóa");
-		req.setType(PeriodType.COURSE);
+		req.setType(PeriodType.COURSE_PROJECT);
 		req.setTeacherRegisterStart(LocalDateTime.now().minusDays(5));
 		req.setTeacherRegisterEnd(LocalDateTime.now().minusDays(1));
 		req.setStudentRegisterStart(LocalDateTime.now());
@@ -165,5 +164,20 @@ class RegistrationPeriodControllerTest {
 				.andExpect(status().is3xxRedirection())
 				.andExpect(redirectedUrl("/periods"))
 				.andExpect(flash().attributeExists("error"));
+	}
+
+	@Test
+	void taoDotNckhKhongNhapNgayBaoCaoVaHanNopKhongBiLoi500() throws Exception {
+		mockMvc.perform(post("/periods")
+				.with(csrf())
+				.param("name", "Đợt NCKH Không Mốc GVPB")
+				.param("type", "RESEARCH")
+				.param("teacherRegisterStart", "2027-01-01T08:00")
+				.param("teacherRegisterEnd", "2027-01-10T17:00")
+				.param("studentRegisterStart", "2027-01-11T08:00")
+				.param("studentRegisterEnd", "2027-01-20T17:00")
+				.param("reportDeadline", "2027-02-15"))
+				.andExpect(status().is3xxRedirection())
+				.andExpect(redirectedUrl("/periods"));
 	}
 }

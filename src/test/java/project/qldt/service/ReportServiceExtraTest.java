@@ -1,4 +1,10 @@
 package project.qldt.service;
+import project.qldt.service.account.AccountService;
+import project.qldt.service.period.RegistrationPeriodService;
+import project.qldt.service.report.ReportService;
+import project.qldt.service.team.TeamService;
+import project.qldt.service.topic.TopicRegistrationService;
+import project.qldt.service.topic.TopicService;
 import project.qldt.support.Beans;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -19,19 +25,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import project.qldt.dto.RegistrationPeriodRequest;
-import project.qldt.dto.TopicRequest;
+import project.qldt.dto.period.RegistrationPeriodRequest;
+import project.qldt.dto.topic.TopicRequest;
 import project.qldt.exception.InvalidReportException;
 import project.qldt.exception.ReportNotFoundException;
-import project.qldt.model.Lecturer;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
-import project.qldt.model.Report;
-import project.qldt.model.Student;
-import project.qldt.model.Team;
-import project.qldt.model.Topic;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
+import project.qldt.model.report.Report;
+import project.qldt.model.account.Student;
+import project.qldt.model.team.Team;
+import project.qldt.model.topic.Topic;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -69,7 +74,7 @@ class ReportServiceExtraTest {
 
 		RegistrationPeriodRequest pReq = new RegistrationPeriodRequest();
 		pReq.setName("Đợt test");
-		pReq.setType(PeriodType.COURSE);
+		pReq.setType(PeriodType.COURSE_PROJECT);
 		pReq.setTeacherRegisterStart(LocalDateTime.now().minusDays(1));
 		pReq.setTeacherRegisterEnd(LocalDateTime.now().plusDays(1));
 		pReq.setStudentRegisterStart(LocalDateTime.now().plusDays(2));
@@ -134,7 +139,7 @@ class ReportServiceExtraTest {
 		MockMultipartFile txtFile = new MockMultipartFile("file", "bc.txt", "text/plain", "abc".getBytes());
 		Report txtReport = reportService.submit(team.getId(), sv1, txtFile);
 		assertEquals("bc.txt", txtReport.getOriginalFileName());
-		assertTrue(Files.exists(reportService.loadFile(txtReport)));
+		assertTrue(reportService.prepareDownload(txtReport).resource().exists());
 
 		MockMultipartFile zipFile = new MockMultipartFile("file", "bc.zip", "application/zip", "abc".getBytes());
 		assertEquals("bc.zip", reportService.submit(team.getId(), sv1, zipFile).getOriginalFileName());
@@ -167,9 +172,10 @@ class ReportServiceExtraTest {
 		MockMultipartFile file = new MockMultipartFile("file", "bc.pdf", "application/pdf", "noidung".getBytes());
 		Report report = reportService.submit(team.getId(), sv1, file);
 
-		Path path = reportService.loadFile(report);
-		assertTrue(Files.exists(path));
-		assertEquals("team-" + team.getId() + ".pdf", path.getFileName().toString());
+		ReportService.ReportFile download = reportService.prepareDownload(report);
+		assertTrue(download.resource().exists());
+		assertEquals("bc.pdf", download.fileName());
+		assertEquals("team-" + team.getId() + "-v1.pdf", report.getStoredFileName());
 	}
 
 	private TopicRequest createTopicRequest(String name, Long periodId) {

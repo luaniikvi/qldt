@@ -1,5 +1,5 @@
 package project.qldt.controller;
-import project.qldt.support.Beans;
+
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,10 +22,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import project.qldt.model.Account;
-import project.qldt.model.Lecturer;
-import project.qldt.model.Student;
-import project.qldt.service.AccountService;
+import project.qldt.model.account.Account;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.account.Student;
+import project.qldt.service.account.AccountService;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -70,7 +70,7 @@ class AccountAdminControllerTest {
 				.param("email", "gvmock@qldt.local")
 				.param("password", "123456")
 				.param("confirmPassword", "123456")
-				.param("department", "Khoa học máy tính"))
+				.param("department", "Công nghệ phần mềm"))
 				.andExpect(status().is3xxRedirection())
 				.andExpect(redirectedUrl("/admin/accounts"));
 
@@ -113,7 +113,7 @@ class AccountAdminControllerTest {
 
 	@Test
 	void boNhiemDeanChoGiangVien() throws Exception {
-		Lecturer gv = accountService.createLecturer("123456", "GV Dean", "dean2@qldt.local", "GV_DEAN_2", "KHMT");
+		Lecturer gv = accountService.createLecturer("123456", "GV Dean", "dean2@qldt.local", "GV_DEAN_2", "CNPM");
 
 		mockMvc.perform(post("/admin/accounts/" + gv.getId() + "/dean")
 				.with(csrf())

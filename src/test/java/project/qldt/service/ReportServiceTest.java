@@ -1,4 +1,10 @@
 package project.qldt.service;
+import project.qldt.service.account.AccountService;
+import project.qldt.service.period.RegistrationPeriodService;
+import project.qldt.service.report.ReportService;
+import project.qldt.service.team.TeamService;
+import project.qldt.service.topic.TopicRegistrationService;
+import project.qldt.service.topic.TopicService;
 import project.qldt.support.Beans;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -9,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -18,18 +23,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import project.qldt.dto.RegistrationPeriodRequest;
-import project.qldt.dto.TopicRequest;
+import project.qldt.dto.period.RegistrationPeriodRequest;
+import project.qldt.dto.topic.TopicRequest;
 import project.qldt.exception.InvalidReportException;
-import project.qldt.model.Lecturer;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
-import project.qldt.model.Report;
-import project.qldt.model.Student;
-import project.qldt.model.Team;
-import project.qldt.model.Topic;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
+import project.qldt.model.report.Report;
+import project.qldt.model.account.Student;
+import project.qldt.model.team.Team;
+import project.qldt.model.topic.Topic;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -80,7 +84,7 @@ class ReportServiceTest {
 		assertEquals(1, report.getVersion());
 		assertEquals("baocao.pdf", report.getOriginalFileName());
 		assertNotNull(report.getSubmittedAt());
-		assertTrue(Files.exists(reportService.loadFile(report)));
+		assertTrue(reportService.prepareDownload(report).resource().exists());
 	}
 
 	@Test
@@ -120,7 +124,7 @@ class ReportServiceTest {
 		Report report = reportService.submit(team.getId(), sv1, file("baocao.txt", "noi dung"));
 
 		assertEquals("baocao.txt", report.getOriginalFileName());
-		assertTrue(Files.exists(reportService.loadFile(report)));
+		assertTrue(reportService.prepareDownload(report).resource().exists());
 	}
 
 	@Test
@@ -152,7 +156,7 @@ class ReportServiceTest {
 	private RegistrationPeriodRequest periodRequest() {
 		RegistrationPeriodRequest request = new RegistrationPeriodRequest();
 		request.setName("Đợt đăng ký");
-		request.setType(PeriodType.COURSE);
+		request.setType(PeriodType.COURSE_PROJECT);
 		request.setTeacherRegisterStart(LocalDateTime.now().minusDays(1));
 		request.setTeacherRegisterEnd(LocalDateTime.now().plusDays(1));
 		request.setStudentRegisterStart(LocalDateTime.now().plusDays(2));

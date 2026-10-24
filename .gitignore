@@ -1,6 +1,6 @@
 HELP.md
 target/
-.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
@@ -29,9 +29,11 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
+# IDE and OS files
+.idea/
+*.iml
 .vscode/
-
+.DS_Store
 
 ### MyDocumentation ###
 /documentation
@@ -39,3 +41,9 @@ build/
 /testFile
 /scripts
 NOTE.md
+DOCKER.md
+CURRENT_BUG.md
+qldt.md
+/uploads/
+
+

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(title='Phân công phản biện')}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='dean-reviewers')}"></aside>
+
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title='PHÂN CÔNG GIẢNG VIÊN PHẢN BIỆN', icon='bi-person-check-fill', actionUrl=null, actionText=null, actionIcon=null)}"></div>
+
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <div class="hcmute-card p-4">
+        <div class="hcmute-card-header">
+            <div>
+                <h2 class="h2 mb-1"><i class="bi bi-person-badge-fill text-primary me-2"></i>Đề tài cần phân công phản biện</h2>
+                <div class="small text-muted">Áp dụng cho đợt TLCN và KLTN. Giảng viên phản biện chấm điểm trước, sau đó hội đồng mới chấm điểm.</div>
+            </div>
+            <span class="badge bg-primary px-3 py-2 rounded-pill fs-6" th:text="${#lists.size(topics)} + ' đề tài'">0 đề tài</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="hcmute-table">
+                <thead>
+                <tr>
+                    <th style="width: 50px;" class="text-center">STT</th>
+                    <th>Tên đề tài</th>
+                    <th style="width: 170px;">Đợt</th>
+                    <th style="width: 190px;">Giảng viên hướng dẫn</th>
+                    <th style="width: 200px;">Giảng viên phản biện</th>
+                    <th style="width: 320px;">Phân công</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="t, stat : ${topics}">
+                    <td class="text-center text-muted fw-semibold" th:text="${stat.count}">1</td>
+                    <td>
+                        <strong class="text-primary-dark" th:text="${t.name}">Tên đề tài</strong>
+                        <div class="small text-muted" th:text="|Bộ môn: ${t.department != null ? t.department.name : ''}|">Bộ môn</div>
+                    </td>
+                    <td class="small" th:text="${t.period.name}">Đợt</td>
+                    <td class="small" th:text="${t.primaryAdvisor.fullName}">GVHD</td>
+                    <td class="small">
+                        <span th:if="${t.reviewer != null}" class="fw-semibold" th:text="|${t.reviewer.fullName} (${t.reviewer.lecturerCode})|">GVPB</span>
+                        <span th:if="${t.reviewer == null}" class="text-muted fst-italic">Chưa phân công</span>
+                        <div th:if="${t.reviewerScore != null}" class="text-success small">
+                            <i class="bi bi-check2-circle"></i> Đã chấm: <span th:text="${t.reviewerScore}">8.0</span>
+                        </div>
+                    </td>
+                    <td>
+                        <form th:action="@{/dean/reviewers}" method="post" class="d-flex gap-2">
+                            <input type="hidden" name="topicId" th:value="${t.id}" />
+                            <select name="lecturerCode" class="form-select form-select-sm" required>
+                                <option value="">-- Chọn giảng viên --</option>
+                                <option th:each="l : ${lecturers}" th:value="${l.lecturerCode}"
+                                        th:text="|${l.lecturerCode} - ${l.fullName}|"
+                                        th:selected="${t.reviewer != null and t.reviewer.id == l.id}">GV002</option>
+                            </select>
+                            <button type="submit" class="btn-hcmute-primary btn-hcmute-sm text-nowrap">
+                                <i class="bi bi-check2"></i> Lưu
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(topics)}" class="empty-row">
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <i class="bi bi-person-workspace empty-state-icon"></i>
+                            <div class="empty-state-title">Chưa có đề tài nào cần phân công phản biện</div>
+                            <div class="empty-state-desc">Đề tài hiển thị tại đây sau khi được duyệt đăng ký và thuộc đợt TLCN/KLTN.</div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
+</body>
+</html>

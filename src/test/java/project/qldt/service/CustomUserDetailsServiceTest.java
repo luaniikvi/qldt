@@ -1,4 +1,6 @@
 package project.qldt.service;
+import project.qldt.service.account.AccountService;
+import project.qldt.service.account.CustomUserDetailsService;
 import project.qldt.support.Beans;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -11,13 +13,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import project.qldt.model.Lecturer;
-import project.qldt.model.Student;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.account.Student;
 
 @SpringBootTest
 @ActiveProfiles("test")

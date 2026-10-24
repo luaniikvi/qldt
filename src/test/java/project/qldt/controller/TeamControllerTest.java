@@ -1,5 +1,4 @@
 package project.qldt.controller;
-import project.qldt.support.Beans;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,19 +24,19 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import project.qldt.dto.RegistrationPeriodRequest;
-import project.qldt.dto.TopicRequest;
-import project.qldt.model.Lecturer;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
-import project.qldt.model.Student;
-import project.qldt.model.Team;
-import project.qldt.model.Topic;
-import project.qldt.service.AccountService;
-import project.qldt.service.RegistrationPeriodService;
-import project.qldt.service.TeamService;
-import project.qldt.service.TopicRegistrationService;
-import project.qldt.service.TopicService;
+import project.qldt.dto.period.RegistrationPeriodRequest;
+import project.qldt.dto.topic.TopicRequest;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
+import project.qldt.model.account.Student;
+import project.qldt.model.team.Team;
+import project.qldt.model.topic.Topic;
+import project.qldt.service.account.AccountService;
+import project.qldt.service.period.RegistrationPeriodService;
+import project.qldt.service.team.TeamService;
+import project.qldt.service.topic.TopicRegistrationService;
+import project.qldt.service.topic.TopicService;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -78,7 +77,7 @@ class TeamControllerTest {
 
 		RegistrationPeriodRequest pReq = new RegistrationPeriodRequest();
 		pReq.setName("Đợt Team Controller Test");
-		pReq.setType(PeriodType.COURSE);
+		pReq.setType(PeriodType.COURSE_PROJECT);
 		pReq.setTeacherRegisterStart(LocalDateTime.now().minusDays(1));
 		pReq.setTeacherRegisterEnd(LocalDateTime.now().plusDays(1));
 		pReq.setStudentRegisterStart(LocalDateTime.now().plusDays(2));

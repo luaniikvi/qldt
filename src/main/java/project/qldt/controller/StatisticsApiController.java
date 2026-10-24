@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import project.qldt.dto.StatisticsResponse;
-import project.qldt.service.StatisticsService;
+import project.qldt.dto.statistics.StatisticsResponse;
+import project.qldt.service.statistics.StatisticsService;
 
 @RestController
 @RequestMapping("/api/statistics")

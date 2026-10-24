@@ -1,4 +1,6 @@
 package project.qldt.integration;
+
+import project.qldt.model.account.Admin;
 import project.qldt.support.Beans;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -19,30 +21,30 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import project.qldt.dto.RegistrationPeriodRequest;
-import project.qldt.dto.TopicRequest;
-import project.qldt.model.Council;
-import project.qldt.model.CouncilRole;
-import project.qldt.model.InvitationStatus;
-import project.qldt.model.Lecturer;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
-import project.qldt.model.Report;
-import project.qldt.model.Student;
-import project.qldt.model.Team;
-import project.qldt.model.Topic;
-import project.qldt.model.TopicAvailability;
-import project.qldt.model.TopicResult;
-import project.qldt.model.TopicStatus;
-import project.qldt.service.AccountService;
-import project.qldt.service.CouncilService;
-import project.qldt.service.RegistrationPeriodService;
-import project.qldt.service.ReportService;
-import project.qldt.service.TeamService;
-import project.qldt.service.TopicRegistrationService;
-import project.qldt.service.TopicService;
+import project.qldt.dto.period.RegistrationPeriodRequest;
+import project.qldt.dto.topic.TopicRequest;
+import project.qldt.model.council.Council;
+import project.qldt.model.council.CouncilRole;
+import project.qldt.model.topic.InvitationStatus;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
+import project.qldt.model.report.Report;
+import project.qldt.model.account.Student;
+import project.qldt.model.team.Team;
+import project.qldt.model.topic.Topic;
+import project.qldt.model.topic.TopicAvailability;
+import project.qldt.model.council.TopicResult;
+import project.qldt.model.topic.TopicStatus;
+import project.qldt.service.account.AccountService;
+import project.qldt.service.council.CouncilService;
+import project.qldt.service.reviewer.ReviewerService;
+import project.qldt.service.period.RegistrationPeriodService;
+import project.qldt.service.report.ReportService;
+import project.qldt.service.team.TeamService;
+import project.qldt.service.topic.TopicRegistrationService;
+import project.qldt.service.topic.TopicService;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -59,6 +61,7 @@ class FullProjectLifecycleIntegrationTest {
 	private TopicRegistrationService registrationService;
 	private ReportService reportService;
 	private CouncilService councilService;
+	private ReviewerService reviewerService;
 
 	@BeforeEach
 	void setUp() {
@@ -69,6 +72,7 @@ class FullProjectLifecycleIntegrationTest {
 		registrationService = Beans.get(TopicRegistrationService.class);
 		reportService = Beans.get(ReportService.class);
 		councilService = Beans.get(CouncilService.class);
+		reviewerService = Beans.get(ReviewerService.class);
 	}
 
 	@Test
@@ -81,6 +85,8 @@ class FullProjectLifecycleIntegrationTest {
 		Lecturer gv3 = accountService.createLecturer("123456", "GV 3", "gv3@qldt.local", "GV903", "Hệ thống thông tin");
 		Lecturer gv4 = accountService.createLecturer("123456", "GV 4", "gv4@qldt.local", "GV904", "Hệ thống thông tin");
 		Lecturer gv5 = accountService.createLecturer("123456", "GV 5", "gv5@qldt.local", "GV905", "Hệ thống thông tin");
+		Lecturer gv6 = accountService.createLecturer("123456", "GV Phan Bien", "gv6@qldt.local", "GV906",
+				"Hệ thống thông tin");
 
 		Student sv1 = accountService.createStudent("123456", "SV 1", "sv1@qldt.local", "SV901");
 		Student sv2 = accountService.createStudent("123456", "SV 2", "sv2@qldt.local", "SV902");
@@ -106,7 +112,7 @@ class FullProjectLifecycleIntegrationTest {
 		tReq.setPeriodId(period.getId());
 		Topic topic = topicService.create(tReq, gv1);
 		assertEquals(TopicStatus.PENDING, topic.getStatus());
-		assertEquals("Hệ thống thông tin", topic.getDepartment());
+		assertEquals("Hệ thống thông tin", topic.getDepartment().getName());
 
 		topicService.inviteAdvisor(topic.getId(), "GV902", gv1);
 		assertEquals(InvitationStatus.PENDING, topic.getInvitation().getStatus());
@@ -149,7 +155,7 @@ class FullProjectLifecycleIntegrationTest {
 		Report reportV1 = reportService.submit(team.getId(), sv1, fileV1);
 		assertEquals(1, reportV1.getVersion());
 		assertEquals("baocao-v1.pdf", reportV1.getOriginalFileName());
-		assertTrue(Files.exists(reportService.loadFile(reportV1)));
+		assertTrue(reportService.prepareDownload(reportV1).resource().exists());
 
 		MockMultipartFile fileV2 = new MockMultipartFile("file", "baocao-v2.pdf", "application/pdf",
 				"noi dung v2 hoan chinh".getBytes());
@@ -165,6 +171,10 @@ class FullProjectLifecycleIntegrationTest {
 				List.of("GV903", "GV904", "GV905"),
 				List.of(CouncilRole.CHAIR, CouncilRole.SECRETARY, CouncilRole.MEMBER));
 		assertEquals(3, council.getMembers().size());
+
+		reviewerService.assign(topic.getId(), "GV906");
+		reviewerService.score(topic.getId(), gv6, 9.0, "Nội dung tốt, cần bổ sung thực nghiệm");
+		assertEquals(9.0, topic.getReviewerScore());
 		assertEquals("Hội đồng KLTN 01", council.getName());
 
 		councilService.score(council.getId(), gv3, 8.5, "Báo cáo xuất sắc");
@@ -178,6 +188,7 @@ class FullProjectLifecycleIntegrationTest {
 		TopicResult published = councilService.publish(confirmed.getId());
 		assertTrue(published.isPublished());
 		assertNotNull(published.getPublishedAt());
+		assertEquals(8.7, published.getFinalScore(), 0.0001);
 
 		List<TopicResult> sv1Results = councilService.findPublishedResultsFor(sv1);
 		List<TopicResult> sv2Results = councilService.findPublishedResultsFor(sv2);

@@ -1,4 +1,7 @@
 package project.qldt.service;
+import project.qldt.service.account.AccountService;
+import project.qldt.service.period.RegistrationPeriodService;
+import project.qldt.service.team.TeamService;
 import project.qldt.support.Beans;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -15,18 +18,17 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import project.qldt.dto.RegistrationPeriodRequest;
+import project.qldt.dto.period.RegistrationPeriodRequest;
 import project.qldt.exception.AccountNotFoundException;
 import project.qldt.exception.InvalidTeamException;
 import project.qldt.exception.RegistrationPeriodNotFoundException;
 import project.qldt.exception.TeamNotFoundException;
-import project.qldt.model.InvitationStatus;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
-import project.qldt.model.Student;
-import project.qldt.model.Team;
+import project.qldt.model.topic.InvitationStatus;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
+import project.qldt.model.account.Student;
+import project.qldt.model.team.Team;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -56,7 +58,7 @@ class TeamServiceExtraTest {
 
 		RegistrationPeriodRequest pReq = new RegistrationPeriodRequest();
 		pReq.setName("Đợt test");
-		pReq.setType(PeriodType.COURSE);
+		pReq.setType(PeriodType.COURSE_PROJECT);
 		pReq.setTeacherRegisterStart(LocalDateTime.now().minusDays(2));
 		pReq.setTeacherRegisterEnd(LocalDateTime.now().minusDays(1));
 		pReq.setStudentRegisterStart(LocalDateTime.now());

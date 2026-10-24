@@ -4,7 +4,7 @@ CSDL của dự án được đóng gói trong `docker-compose.yml`. Bản đón
 
 | File | Nội dung |
 | --- | --- |
-| `docker/mysql/init/01-schema.sql` | **17 bảng** (chỉ `CREATE TABLE`, không có `INSERT`, không mang `AUTO_INCREMENT` của dữ liệu cũ) |
+| `docker/mysql/init/01-schema.sql` | **19 bảng** (chỉ `CREATE TABLE`, không có `INSERT`, không mang `AUTO_INCREMENT` của dữ liệu cũ) |
 | `docker-compose.yml` | Service `mysql` (image `mysql:8.0`), volume, healthcheck, mã hoá `utf8mb4` |
 
 ## 1. Thông số mặc định
@@ -50,7 +50,7 @@ docker exec qldt-mysql mysql -uqldt_app -pQldtApp@2026 -N -B qldt -e "show table
 ## 3. Mang sang máy khác
 
 1. Copy thư mục dự án (gồm `src/`, `pom.xml`, `docker-compose.yml`, `docker/`).
-2. Máy mới chỉ cần **JDK 21**, **Maven**, **Docker Desktop** — không cần cài MySQL.
+2. Máy mới chỉ cần **JDK 25 (LTS)**, **Maven**, **Docker Desktop** — không cần cài MySQL.
 3. Chạy:
     ```powershell
     docker compose up -d

@@ -1,0 +1,153 @@
+package project.qldt.controller;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
+
+import project.qldt.dto.period.RegistrationPeriodRequest;
+import project.qldt.dto.topic.TopicRequest;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.account.Student;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
+import project.qldt.model.team.Team;
+import project.qldt.model.topic.Topic;
+import project.qldt.service.account.AccountService;
+import project.qldt.service.period.RegistrationPeriodService;
+import project.qldt.service.team.TeamService;
+import project.qldt.service.topic.TopicRegistrationService;
+import project.qldt.service.topic.TopicService;
+
+@SpringBootTest
+@ActiveProfiles("test")
+@Transactional
+@AutoConfigureMockMvc
+class ReviewerAdminControllerTest {
+
+	@Autowired
+	private MockMvc mockMvc;
+
+	@Autowired
+	private AccountService accountService;
+
+	@Autowired
+	private RegistrationPeriodService periodService;
+
+	@Autowired
+	private TopicService topicService;
+
+	@Autowired
+	private TeamService teamService;
+
+	@Autowired
+	private TopicRegistrationService registrationService;
+
+	private RegistrationPeriod period;
+	private Lecturer gv1;
+	private Lecturer gvReviewer;
+	private Student sv;
+	private Topic topic;
+
+	@BeforeEach
+	void setUp() {
+		String stamp = String.valueOf(System.nanoTime());
+		gv1 = accountService.createLecturer("123456", "GV HD", "gvhd" + stamp + "@test.local", "GVHD" + stamp, "CNPM");
+		gvReviewer = accountService.createLecturer("123456", "GV PB", "gvpb" + stamp + "@test.local", "GVPB" + stamp,
+				"CNPM");
+		sv = accountService.createStudent("123456", "SV Test", "svt" + stamp + "@test.local", "SVT" + stamp);
+
+		LocalDateTime now = LocalDateTime.now();
+		RegistrationPeriodRequest req = new RegistrationPeriodRequest();
+		req.setName("Đợt KLTN ReviewerAdmin " + stamp);
+		req.setType(PeriodType.GRADUATION_THESIS);
+		req.setTeacherRegisterStart(now.minusDays(2));
+		req.setTeacherRegisterEnd(now.plusDays(2));
+		req.setStudentRegisterStart(now.plusDays(3));
+		req.setStudentRegisterEnd(now.plusDays(10));
+		req.setReportDeadline(LocalDate.now().plusDays(15));
+		req.setReviewerScoreDeadline(LocalDate.now().plusDays(20));
+		req.setCouncilReportDate(LocalDate.now().plusDays(25));
+		period = periodService.create(req);
+
+		TopicRequest tr = new TopicRequest();
+		tr.setName("Đề tài KLTN ReviewerAdmin " + stamp);
+		tr.setDescription("Mô tả");
+		tr.setPeriodId(period.getId());
+		topic = topicService.create(tr, gv1);
+		topicService.approve(topic.getId());
+		topicService.publish(period.getId());
+
+		period.setTeacherRegisterStart(now.minusDays(10));
+		period.setTeacherRegisterEnd(now.minusDays(9));
+		period.setStudentRegisterStart(now.minusDays(1));
+		period.setStudentRegisterEnd(now.plusDays(1));
+
+		Team team = teamService.create(period.getId(), sv);
+		registrationService.register(team.getId(), topic.getId(), sv);
+		registrationService.approve(topic.getId(), gv1);
+	}
+
+	@Test
+	@WithMockUser(username = "dean", roles = "DEAN")
+	@DisplayName("Trưởng khoa xem trang phân công phản biện thành công")
+	void deanCanViewReviewerAdminPage() throws Exception {
+		mockMvc.perform(get("/dean/reviewers"))
+				.andExpect(status().isOk())
+				.andExpect(view().name("reviewer/admin"))
+				.andExpect(model().attributeExists("topics"))
+				.andExpect(model().attributeExists("lecturers"));
+	}
+
+	@Test
+	@WithMockUser(username = "gv001", roles = "LECTURER")
+	@DisplayName("Giảng viên không có quyền DEAN truy cập bị 403 Forbidden")
+	void lecturerCannotAccessReviewerAdmin() throws Exception {
+		mockMvc.perform(get("/dean/reviewers"))
+				.andExpect(status().isForbidden());
+	}
+
+	@Test
+	@WithMockUser(username = "dean", roles = "DEAN")
+	@DisplayName("Trưởng khoa phân công giảng viên phản biện thành công")
+	void deanAssignReviewer_Success() throws Exception {
+		mockMvc.perform(post("/dean/reviewers")
+				.with(csrf())
+				.param("topicId", String.valueOf(topic.getId()))
+				.param("lecturerCode", gvReviewer.getLecturerCode()))
+				.andExpect(status().is3xxRedirection())
+				.andExpect(redirectedUrl("/dean/reviewers"))
+				.andExpect(flash().attributeExists("message"));
+	}
+
+	@Test
+	@WithMockUser(username = "dean", roles = "DEAN")
+	@DisplayName("Trưởng khoa phân công GVHD làm GVPB bị lỗi")
+	void deanAssignAdvisorAsReviewer_Fails() throws Exception {
+		mockMvc.perform(post("/dean/reviewers")
+				.with(csrf())
+				.param("topicId", String.valueOf(topic.getId()))
+				.param("lecturerCode", gv1.getLecturerCode()))
+				.andExpect(status().is3xxRedirection())
+				.andExpect(redirectedUrl("/dean/reviewers"))
+				.andExpect(flash().attributeExists("error"));
+	}
+}

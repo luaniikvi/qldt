@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head :: head(title='Bảng tin thông báo')}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='announcements')}"></aside>
+
+<main class="portal-main">
+    <!-- Page Header Banner (Mockup Parity) -->
+    <div th:replace="~{fragments/layout :: portal-page-header(title='THÔNG BÁO', icon='bi-megaphone-fill', actionUrl=${#authorization.expression('hasRole(''ADMIN'')') or #authentication.name == 'admin' ? '/admin/announcements' : null}, actionText='Quản trị thông báo', actionIcon='bi-gear-fill')}"></div>
+
+    <!-- Dual Tab System (Mockup Parity) -->
+    <div th:replace="~{fragments/layout :: portal-notice-tabs(activeTab='announcements')}"></div>
+
+    <!-- Flash Messages -->
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <!-- Content Panel -->
+    <div class="hcmute-card p-4">
+        <!-- Search Bar (Mockup Parity) -->
+        <div class="search-bar-box">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" id="tableSearchInput" class="form-control search-bar-input"
+                   placeholder="Tìm kiếm thông báo theo tiêu đề hoặc nội dung..." aria-label="Tìm kiếm thông báo">
+        </div>
+
+        <!-- Announcements Table (Mockup Parity) -->
+        <div class="table-responsive">
+            <table class="hcmute-table">
+                <thead>
+                <tr>
+                    <th style="width: 70px;" class="text-center">STT</th>
+                    <th>TIÊU ĐỀ THÔNG BÁO</th>
+                    <th style="width: 220px;" class="text-end text-sm-start">THỜI GIAN GỬI</th>
+                    <th style="width: 120px;" class="text-center">CHI TIẾT</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="a, stat : ${announcements}">
+                    <td class="text-center text-muted fw-semibold" th:text="${stat.count}">1</td>
+                    <td>
+                        <a th:href="@{/announcements/{id}(id=${a.id})}"
+                           class="fw-bold text-decoration-none"
+                           th:text="${a.title}">Tiêu đề thông báo</a>
+                    </td>
+                    <td class="text-muted small">
+                        <i class="bi bi-calendar3 me-1"></i>
+                        <span th:text="${#temporals.format(a.createdAt, 'dd/MM/yyyy HH:mm')}">16/10/2026 13:49:22</span>
+                    </td>
+                    <td class="text-center">
+                        <a th:href="@{/announcements/{id}(id=${a.id})}"
+                           class="btn-hcmute-outline btn-hcmute-sm"
+                           title="Xem chi tiết nội dung">
+                            <i class="bi bi-eye"></i> Xem
+                        </a>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(announcements)}" class="empty-row">
+                    <td colspan="4">
+                        <div class="empty-state py-5 text-center">
+                            <div class="empty-state-svg-wrapper mb-3">
+                                <svg width="150" height="116" viewBox="0 0 120 96" fill="none" xmlns="http://www.w3.org/2000/svg" class="empty-state-svg">
+                                    <ellipse cx="60" cy="88" rx="42" ry="6" fill="#E2E8F0" />
+                                    <!-- Sparkles / bursts around tray -->
+                                    <circle cx="28" cy="46" r="2" fill="#CBD5E1"/>
+                                    <circle cx="34" cy="38" r="1.5" fill="#CBD5E1"/>
+                                    <circle cx="24" cy="34" r="2" fill="#CBD5E1"/>
+                                    <circle cx="94" cy="42" r="2" fill="#CBD5E1"/>
+                                    <circle cx="100" cy="50" r="1.5" fill="#CBD5E1"/>
+                                    <path d="M 88 56 L 96 52 M 90 62 L 98 58 M 92 68 L 100 64" stroke="#CBD5E1" stroke-width="1.5" stroke-linecap="round"/>
+                                    <!-- Back folder -->
+                                    <rect x="36" y="24" width="48" height="38" rx="4" fill="#CBD5E1"/>
+                                    <path d="M42 20 H54 L58 24 H78 Q82 24 82 28 V32 H38 V24 Q38 20 42 20 Z" fill="#94A3B8"/>
+                                    <rect x="44" y="22" width="10" height="6" rx="1" fill="#145AFF"/>
+                                    <!-- Middle document -->
+                                    <rect x="32" y="30" width="56" height="36" rx="4" fill="#E2E8F0"/>
+                                    <!-- Front document -->
+                                    <rect x="28" y="36" width="64" height="34" rx="4" fill="#F8FAFC"/>
+                                    <!-- Inbox Tray -->
+                                    <path d="M22 46 L20 76 Q20 80 24 80 H96 Q100 80 100 76 L98 46 Q98 44 96 44 H82 L78 56 Q76 58 72 58 H48 Q44 58 42 56 L38 44 H24 Q22 44 22 46 Z" fill="url(#trayGradient)" />
+                                    <path d="M24 44 H38 L42 56 Q44 58 48 58 H72 Q76 58 78 56 L82 44 H96" stroke="#1D4ED8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                                    <defs>
+                                        <linearGradient id="trayGradient" x1="20" y1="44" x2="100" y2="80" gradientUnits="userSpaceOnUse">
+                                            <stop stop-color="#93C5FD"/>
+                                            <stop offset="0.6" stop-color="#60A5FA"/>
+                                            <stop offset="1" stop-color="#3B82F6"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+                            <div class="empty-state-title">Chưa có thông báo chung nào</div>
+                            <div class="empty-state-desc">Hiện tại khoa chưa đăng tải thông báo chung mới. Vui lòng quay lại sau.</div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
+</body>
+</html>

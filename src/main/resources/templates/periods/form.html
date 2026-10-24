@@ -1,67 +1,127 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"/>
-    <title>Đợt đăng ký</title>
-    <style>
-        body { font-family: Segoe UI, sans-serif; margin: 24px; max-width: 620px; }
-        label { display: block; margin-top: 12px; font-weight: 600; }
-        input[type=text], select, input[type=datetime-local], input[type=date] { width: 100%; padding: 6px; }
-        .hint { font-weight: 400; color: #666; font-size: 0.9rem; }
-        .err { color: #b00020; font-size: 0.9rem; }
-    </style>
-</head>
+<head th:replace="~{fragments/head :: head(title=${periodId == null ? 'Tạo đợt đăng ký' : 'Chỉnh sửa đợt đăng ký'})}"></head>
 <body>
-<h1 th:text="${periodId == null} ? 'Tạo đợt đăng ký' : 'Sửa đợt đăng ký'">Tạo đợt đăng ký</h1>
 
-<form th:object="${period}" method="post"
-      th:action="${periodId == null} ? @{/periods} : @{/periods/{id}(id=${periodId})}">
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='periods')}"></aside>
 
-    <div class="err" th:if="${#fields.hasGlobalErrors()}">
-        <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title=${periodId == null ? 'TẠO ĐỢT ĐĂNG KÝ MỚI' : 'CHỈNH SỬA ĐỢT ĐĂNG KÝ'}, icon='bi-calendar-plus-fill', actionUrl='/periods', actionText='Quay lại danh sách', actionIcon='bi-arrow-left')}"></div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="hcmute-card p-4">
+                <form th:object="${period}" method="post"
+                      th:action="${periodId == null} ? @{/periods} : @{/periods/{id}(id=${periodId})}">
+
+                    <div class="hcmute-alert hcmute-alert-danger" th:if="${#fields.hasGlobalErrors()}">
+                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                        <div>
+                            <div th:each="error : ${#fields.globalErrors()}" th:text="${error}">Lỗi</div>
+                        </div>
+                    </div>
+
+                    <!-- Row 1: Name and Type -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label required" for="name">Tên đợt đăng ký</label>
+                            <input type="text" id="name" th:field="*{name}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('name')} ? 'is-invalid' : ''"
+                                   placeholder="Ví dụ: Đợt Khóa luận tốt nghiệp HK1 2026-2027" required />
+                            <div class="invalid-feedback" th:errors="*{name}"></div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label required" for="type">Loại hình đề tài</label>
+                            <select id="type" th:field="*{type}" class="form-select"
+                                    th:classappend="${#fields.hasErrors('type')} ? 'is-invalid' : ''" required>
+                                <option value="">-- Chọn loại hình --</option>
+                                <option th:each="type : ${periodTypes}" th:value="${type}" th:text="${type.label}"></option>
+                            </select>
+                            <div class="invalid-feedback" th:errors="*{type}"></div>
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Teacher Registration Window -->
+                    <div class="card bg-light p-3 border-0 rounded-3 mb-3">
+                        <div class="fw-bold text-primary-dark mb-2">
+                            <i class="bi bi-person-badge me-1"></i> Giai đoạn 1: Giảng viên đăng ký đề tài
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label required" for="teacherRegisterStart">Thời điểm bắt đầu</label>
+                                <input type="datetime-local" id="teacherRegisterStart" th:field="*{teacherRegisterStart}"
+                                       class="form-control" th:classappend="${#fields.hasErrors('teacherRegisterStart')} ? 'is-invalid' : ''" required />
+                                <div class="invalid-feedback" th:errors="*{teacherRegisterStart}"></div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label required" for="teacherRegisterEnd">Thời điểm kết thúc</label>
+                                <input type="datetime-local" id="teacherRegisterEnd" th:field="*{teacherRegisterEnd}"
+                                       class="form-control" th:classappend="${#fields.hasErrors('teacherRegisterEnd')} ? 'is-invalid' : ''" required />
+                                <div class="invalid-feedback" th:errors="*{teacherRegisterEnd}"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 3: Student Registration Window -->
+                    <div class="card bg-light p-3 border-0 rounded-3 mb-3">
+                        <div class="fw-bold text-success mb-2">
+                            <i class="bi bi-people me-1"></i> Giai đoạn 2: Nhóm sinh viên đăng ký đề tài
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label required" for="studentRegisterStart">Thời điểm bắt đầu</label>
+                                <input type="datetime-local" id="studentRegisterStart" th:field="*{studentRegisterStart}"
+                                       class="form-control" th:classappend="${#fields.hasErrors('studentRegisterStart')} ? 'is-invalid' : ''" required />
+                                <div class="invalid-feedback" th:errors="*{studentRegisterStart}"></div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label required" for="studentRegisterEnd">Thời điểm kết thúc</label>
+                                <input type="datetime-local" id="studentRegisterEnd" th:field="*{studentRegisterEnd}"
+                                       class="form-control" th:classappend="${#fields.hasErrors('studentRegisterEnd')} ? 'is-invalid' : ''" required />
+                                <div class="invalid-feedback" th:errors="*{studentRegisterEnd}"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row 4: Deadlines and Council Dates -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4">
+                            <label class="form-label" for="reviewerScoreDeadline">Hạn nộp điểm GVPB</label>
+                            <input type="date" id="reviewerScoreDeadline" th:field="*{reviewerScoreDeadline}" class="form-control" />
+                            <div class="form-hint">Áp dụng cho TLCN và KLTN</div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label" for="councilReportDate">Ngày báo cáo hội đồng</label>
+                            <input type="date" id="councilReportDate" th:field="*{councilReportDate}" class="form-control" />
+                            <div class="form-hint">Chỉ áp dụng khi là KLTN</div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label required" for="reportDeadline">Hạn nộp báo cáo</label>
+                            <input type="date" id="reportDeadline" th:field="*{reportDeadline}"
+                                   class="form-control" th:classappend="${#fields.hasErrors('reportDeadline')} ? 'is-invalid' : ''" required />
+                            <div class="invalid-feedback" th:errors="*{reportDeadline}"></div>
+                            <div class="form-hint">Phải sau ngày SV đăng ký kết thúc</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 pt-3 border-top">
+                        <button type="submit" class="btn-hcmute-primary">
+                            <i class="bi bi-save"></i> Lưu thông tin đợt
+                        </button>
+                        <a th:href="@{/periods}" class="btn-hcmute-secondary">Hủy bỏ</a>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
+</main>
 
-    <label>Tên đợt đăng ký</label>
-    <input type="text" th:field="*{name}"/>
-    <div class="err" th:errors="*{name}"></div>
-
-    <label>Loại đợt</label>
-    <select th:field="*{type}">
-        <option value="">-- Chọn loại --</option>
-        <option th:each="type : ${periodTypes}" th:value="${type}" th:text="${type.label}"></option>
-    </select>
-    <div class="err" th:errors="*{type}"></div>
-
-    <label>Thời điểm bắt đầu cho GV đăng ký</label>
-    <input type="datetime-local" th:field="*{teacherRegisterStart}"/>
-    <div class="err" th:errors="*{teacherRegisterStart}"></div>
-
-    <label>Thời điểm kết thúc cho GV đăng ký</label>
-    <input type="datetime-local" th:field="*{teacherRegisterEnd}"/>
-    <div class="err" th:errors="*{teacherRegisterEnd}"></div>
-
-    <label>Thời điểm bắt đầu cho SV đăng ký</label>
-    <input type="datetime-local" th:field="*{studentRegisterStart}"/>
-    <div class="err" th:errors="*{studentRegisterStart}"></div>
-
-    <label>Thời điểm kết thúc cho SV đăng ký</label>
-    <input type="datetime-local" th:field="*{studentRegisterEnd}"/>
-    <div class="err" th:errors="*{studentRegisterEnd}"></div>
-
-    <label>Hạn nộp điểm GVPB <span class="hint">(chỉ TLCN và KLTN)</span></label>
-    <input type="date" th:field="*{reviewerScoreDeadline}"/>
-
-    <label>Ngày báo cáo hội đồng <span class="hint">(chỉ KLTN)</span></label>
-    <input type="date" th:field="*{councilReportDate}"/>
-
-    <label>Hạn nộp báo cáo <span class="hint">(bắt buộc, phải sau ngày SV đăng ký kết thúc)</span></label>
-    <input type="date" th:field="*{reportDeadline}"/>
-    <div class="err" th:errors="*{reportDeadline}"></div>
-
-    <p>
-        <button type="submit">Lưu</button>
-        <a th:href="@{/periods}">Hủy</a>
-    </p>
-</form>
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
 </body>
 </html>

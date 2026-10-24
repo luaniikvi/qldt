@@ -1,4 +1,5 @@
 package project.qldt.service;
+import project.qldt.service.account.AccountService;
 import project.qldt.support.Beans;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -13,13 +14,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import project.qldt.dto.AccountRequest;
+import project.qldt.dto.account.AccountRequest;
 import project.qldt.exception.InvalidAccountException;
-import project.qldt.model.Account;
-import project.qldt.model.AccountType;
-import project.qldt.model.Lecturer;
-import project.qldt.model.Role;
-import project.qldt.model.Student;
+import project.qldt.model.account.Account;
+import project.qldt.model.account.AccountType;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.account.Role;
+import project.qldt.model.account.Student;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -43,7 +44,7 @@ class AccountServiceTest {
 				"Công nghệ phần mềm");
 
 		assertEquals("GV901", lecturer.getLecturerCode());
-		assertEquals("Công nghệ phần mềm", lecturer.getDepartment());
+		assertEquals("Công nghệ phần mềm", lecturer.getDepartment().getName());
 	}
 
 	@Test

@@ -1,5 +1,13 @@
 package project.qldt.service;
 
+import project.qldt.service.account.AccountService;
+import project.qldt.service.council.CouncilService;
+import project.qldt.service.period.RegistrationPeriodService;
+import project.qldt.service.report.ReportService;
+import project.qldt.service.statistics.StatisticsService;
+import project.qldt.service.team.TeamService;
+import project.qldt.service.topic.TopicRegistrationService;
+import project.qldt.service.topic.TopicService;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -19,20 +27,20 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import project.qldt.dto.PeriodStatistics;
-import project.qldt.dto.RegistrationPeriodRequest;
-import project.qldt.dto.StatisticsChart;
-import project.qldt.dto.StatisticsCharts;
-import project.qldt.dto.TopicRequest;
-import project.qldt.dto.TopicStatisticsRow;
-import project.qldt.model.CouncilRole;
-import project.qldt.model.Lecturer;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
-import project.qldt.model.Student;
-import project.qldt.model.Team;
-import project.qldt.model.Topic;
-import project.qldt.model.TopicResult;
+import project.qldt.dto.period.PeriodStatistics;
+import project.qldt.dto.period.RegistrationPeriodRequest;
+import project.qldt.dto.statistics.StatisticsChart;
+import project.qldt.dto.statistics.StatisticsCharts;
+import project.qldt.dto.topic.TopicRequest;
+import project.qldt.dto.statistics.TopicStatisticsRow;
+import project.qldt.model.council.CouncilRole;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
+import project.qldt.model.account.Student;
+import project.qldt.model.team.Team;
+import project.qldt.model.topic.Topic;
+import project.qldt.model.council.TopicResult;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -203,7 +211,7 @@ class StatisticsServiceTest {
 	private RegistrationPeriodRequest periodRequest() {
 		RegistrationPeriodRequest request = new RegistrationPeriodRequest();
 		request.setName("Đợt thống kê");
-		request.setType(PeriodType.COURSE);
+		request.setType(PeriodType.COURSE_PROJECT);
 		request.setTeacherRegisterStart(LocalDateTime.now().minusDays(1));
 		request.setTeacherRegisterEnd(LocalDateTime.now().plusDays(1));
 		request.setStudentRegisterStart(LocalDateTime.now().plusDays(2));

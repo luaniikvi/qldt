@@ -1,100 +1,165 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"/>
-    <title>Đề tài của tôi</title>
-    <style>
-        body { font-family: Segoe UI, sans-serif; margin: 24px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
-        form { margin: 4px 0; }
-        input[type=text] { padding: 4px; width: 170px; }
-        .ok { color: #1b5e20; background: #e8f5e9; padding: 8px 12px; }
-        .error { color: #b00020; background: #fdecea; padding: 8px 12px; }
-        .hint { color: #666; font-size: 0.9rem; }
-    </style>
-</head>
+<head th:replace="~{fragments/head :: head(title='Đề tài của tôi')}"></head>
 <body>
-<h1>Đề tài của tôi</h1>
-<p><a th:href="@{/home}">Về trang chủ</a> | <a th:href="@{/topics/new}">Đăng đề tài mới</a></p>
 
-<p class="ok" th:if="${message}" th:text="${message}"></p>
-<p class="error" th:if="${error}" th:text="${error}"></p>
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='topics')}"></aside>
 
-<table>
-    <thead>
-    <tr>
-        <th>Tên đề tài</th>
-        <th>Đợt</th>
-        <th>Bộ môn</th>
-        <th>Giảng viên hướng dẫn</th>
-        <th>Trạng thái</th>
-        <th>Đăng ký</th>
-        <th>Thao tác</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="topic : ${topics}">
-        <td>
-            <div th:text="${topic.name}">Tên đề tài</div>
-            <div class="hint" th:text="${topic.description}">Nội dung</div>
-            <div class="error" th:if="${topic.rejectionReason != null}"
-                 th:text="|Lý do từ chối: ${topic.rejectionReason}|"></div>
-        </td>
-        <td th:text="${topic.period.name}">Đợt 1</td>
-        <td th:text="${topic.department}">Công nghệ phần mềm</td>
-        <td>
-            <div th:each="advisor : ${topic.advisors}"
-                 th:text="|${advisor.fullName} (${advisor.lecturerCode})|"></div>
-        </td>
-        <td th:text="${topic.status.label}">Chờ duyệt</td>
-        <td th:text="${topic.availability.label}">Chưa có nhóm đăng ký</td>
-        <td>
-            <th:block
-                    th:if="${topic.primaryAdvisor.username == currentUser and (topic.status.name() == 'PENDING' or topic.status.name() == 'REJECTED')}">
-                <a th:href="@{/topics/{id}/edit(id=${topic.id})}">Sửa</a>
-                <form th:if="${#lists.size(topic.advisors) == 1 and (topic.invitation == null or topic.invitation.status.name() != 'PENDING')}"
-                      th:action="@{/topics/{id}/invite(id=${topic.id})}" method="post">
-                    <input type="text" name="lecturerCode" placeholder="Mã GV cùng bộ môn" required/>
-                    <button type="submit">Mời GVHD</button>
-                </form>
-                <div th:each="advisor : ${topic.advisors}"
-                     th:if="${advisor.username != topic.primaryAdvisor.username}">
-                    <form th:action="@{/topics/{id}/advisor/remove(id=${topic.id})}" method="post">
-                        <input type="hidden" name="lecturerCode" th:value="${advisor.lecturerCode}"/>
-                        <button type="submit" th:text="|Xóa GVHD ${advisor.fullName}|"></button>
-                    </form>
-                </div>
-            </th:block>
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title='ĐỀ TÀI CỦA TÔI', icon='bi-journal-text', actionUrl='/topics/new', actionText='Đăng đề tài mới', actionIcon='bi-plus-circle-fill')}"></div>
 
-            <th:block th:if="${topic.invitation != null}">
-                <div class="hint"
-                     th:text="|Lời mời: ${topic.invitation.lecturer.fullName} - ${topic.invitation.status.label}|"></div>
-                <div class="hint" th:if="${topic.invitation.responseReason != null}"
-                     th:text="|Lý do: ${topic.invitation.responseReason}|"></div>
-                <th:block
-                        th:if="${topic.invitation.status.name() == 'PENDING' and topic.invitation.lecturer.username == currentUser}">
-                    <form th:action="@{/topics/{id}/invitation(id=${topic.id})}" method="post">
-                        <input type="hidden" name="accept" value="true"/>
-                        <button type="submit">Đồng ý</button>
-                    </form>
-                    <form th:action="@{/topics/{id}/invitation(id=${topic.id})}" method="post">
-                        <input type="hidden" name="accept" value="false"/>
-                        <input type="text" name="reason" placeholder="Lý do từ chối" required/>
-                        <button type="submit">Từ chối</button>
-                    </form>
-                </th:block>
-                <form th:if="${topic.primaryAdvisor.username == currentUser and topic.invitation.status.name() == 'PENDING'}"
-                      th:action="@{/topics/{id}/invitation/cancel(id=${topic.id})}" method="post">
-                    <button type="submit">Hủy lời mời</button>
-                </form>
-            </th:block>
-        </td>
-    </tr>
-    <tr th:if="${#lists.isEmpty(topics)}">
-        <td colspan="7">Bạn chưa có đề tài nào.</td>
-    </tr>
-    </tbody>
-</table>
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <div class="hcmute-card p-4">
+        <!-- Search bar -->
+        <div class="search-bar-box">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" id="tableSearchInput" class="form-control search-bar-input"
+                   placeholder="Tìm kiếm đề tài theo tên, mô tả hoặc bộ môn..." aria-label="Tìm kiếm đề tài">
+        </div>
+
+        <div class="table-responsive">
+            <table class="hcmute-table">
+                <thead>
+                <tr>
+                    <th style="width: 50px;" class="text-center">STT</th>
+                    <th>Tên đề tài &amp; Mô tả</th>
+                    <th style="width: 180px;">Đợt</th>
+                    <th style="width: 160px;">Bộ môn</th>
+                    <th style="width: 200px;">Cán bộ hướng dẫn</th>
+                    <th style="width: 130px;" class="text-center">Duyệt đề tài</th>
+                    <th style="width: 140px;" class="text-center">SV Đăng ký</th>
+                    <th style="width: 240px;" class="text-center">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="topic, stat : ${topics}">
+                    <td class="text-center text-muted fw-semibold" th:text="${stat.count}">1</td>
+                    <td>
+                        <div class="fw-bold text-primary-dark fs-6 mb-1" th:text="${topic.name}">Tên đề tài</div>
+                        <div class="small text-muted mb-2" style="line-height: 1.4;" th:text="${topic.description}">Mô tả đề tài...</div>
+                        <div class="hcmute-alert hcmute-alert-danger py-1 px-2 small mb-0" th:if="${topic.rejectionReason != null}">
+                            <i class="bi bi-x-circle me-1"></i>
+                            <span th:text="|Lý do từ chối: ${topic.rejectionReason}|"></span>
+                        </div>
+                    </td>
+                    <td class="small">
+                        <span class="badge-period" th:text="${topic.period.name}">Đợt 1</span>
+                    </td>
+                    <td class="small fw-medium" th:text="${topic.department != null ? topic.department.name : ''}">Công nghệ phần mềm</td>
+                    <td class="small">
+                        <div th:each="advisor : ${topic.advisors}" class="d-flex align-items-center gap-1 mb-1">
+                            <i class="bi bi-person-fill text-muted"></i>
+                            <span class="fw-medium" th:text="${advisor.fullName}">ThS. Nguyễn Văn A</span>
+                            <span class="text-muted" th:text="'(' + ${advisor.lecturerCode} + ')'">(GV001)</span>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span th:if="${topic.status.name() == 'APPROVED'}" class="badge-status badge-status-success">
+                            <i class="bi bi-check-circle-fill"></i> Đã duyệt
+                        </span>
+                        <span th:if="${topic.status.name() == 'PENDING'}" class="badge-status badge-status-warning">
+                            <i class="bi bi-hourglass-split"></i> Chờ duyệt
+                        </span>
+                        <span th:if="${topic.status.name() == 'REJECTED'}" class="badge-status badge-status-danger">
+                            <i class="bi bi-x-circle-fill"></i> Bị từ chối
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span th:if="${topic.availability.name() == 'AVAILABLE'}" class="badge-status badge-status-success">
+                            <i class="bi bi-circle"></i> Trống
+                        </span>
+                        <span th:if="${topic.availability.name() == 'PENDING'}" class="badge-status badge-status-warning">
+                            <i class="bi bi-clock"></i> Chờ duyệt SV
+                        </span>
+                        <span th:if="${topic.availability.name() == 'REGISTERED'}" class="badge-status badge-status-neutral">
+                            <i class="bi bi-lock-fill"></i> Đã nhận SV
+                        </span>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column gap-2">
+                            <!-- Primary Advisor Actions when Pending/Rejected -->
+                            <th:block th:if="${topic.primaryAdvisor.username == currentUser and (topic.status.name() == 'PENDING' or topic.status.name() == 'REJECTED')}">
+                                <div class="d-flex gap-1">
+                                    <a th:href="@{/topics/{id}/edit(id=${topic.id})}" class="btn-hcmute-outline btn-hcmute-sm">
+                                        <i class="bi bi-pencil"></i> Sửa
+                                    </a>
+                                </div>
+
+                                <!-- Invite Co-Advisor Form -->
+                                <form th:if="${#lists.size(topic.advisors) == 1 and (topic.invitation == null or topic.invitation.status.name() != 'PENDING')}"
+                                      th:action="@{/topics/{id}/invite(id=${topic.id})}" method="post" class="d-flex gap-1 m-0">
+                                    <input type="text" name="lecturerCode" class="form-control form-control-sm"
+                                           placeholder="Mã GV cùng bộ môn" required style="width: 140px;"/>
+                                    <button type="submit" class="btn-hcmute-primary btn-hcmute-sm text-nowrap">
+                                        <i class="bi bi-person-plus"></i> Mời
+                                    </button>
+                                </form>
+
+                                <!-- Remove Co-Advisor Form -->
+                                <div th:each="advisor : ${topic.advisors}" th:if="${advisor.username != topic.primaryAdvisor.username}">
+                                    <form th:action="@{/topics/{id}/advisor/remove(id=${topic.id})}" method="post" class="m-0"
+                                          data-confirm="Bạn có chắc muốn gỡ giảng viên đồng hướng dẫn này không?">
+                                        <input type="hidden" name="lecturerCode" th:value="${advisor.lecturerCode}"/>
+                                        <button type="submit" class="btn-hcmute-danger btn-hcmute-sm w-100">
+                                            <i class="bi bi-person-dash"></i> Gỡ GVHD <span th:text="${advisor.fullName}"></span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </th:block>
+
+                            <!-- Co-Advisor Invitation Box -->
+                            <div th:if="${topic.invitation != null}" class="p-2 bg-light border rounded small">
+                                <div class="fw-medium text-primary-dark">
+                                    <i class="bi bi-envelope me-1"></i> Lời mời: <span th:text="${topic.invitation.lecturer.fullName}"></span>
+                                </div>
+                                <div class="text-muted mb-1" th:text="|Trạng thái: ${topic.invitation.status.label}|"></div>
+                                <div class="text-danger small mb-1" th:if="${topic.invitation.responseReason != null}"
+                                     th:text="|Lý do: ${topic.invitation.responseReason}|"></div>
+
+                                <!-- Response Form for Invited Lecturer -->
+                                <th:block th:if="${topic.invitation.status.name() == 'PENDING' and topic.invitation.lecturer.username == currentUser}">
+                                    <div class="d-flex gap-1 mt-1">
+                                        <form th:action="@{/topics/{id}/invitation(id=${topic.id})}" method="post" class="m-0">
+                                            <input type="hidden" name="accept" value="true"/>
+                                            <button type="submit" class="btn-hcmute-primary btn-hcmute-sm">Đồng ý</button>
+                                        </form>
+                                    </div>
+                                    <form th:action="@{/topics/{id}/invitation(id=${topic.id})}" method="post" class="mt-1 d-flex gap-1">
+                                        <input type="hidden" name="accept" value="false"/>
+                                        <input type="text" name="reason" class="form-control form-control-sm" placeholder="Lý do từ chối" required/>
+                                        <button type="submit" class="btn-hcmute-danger btn-hcmute-sm">Từ chối</button>
+                                    </form>
+                                </th:block>
+
+                                <!-- Cancel invitation for primary advisor -->
+                                <form th:if="${topic.primaryAdvisor.username == currentUser and topic.invitation.status.name() == 'PENDING'}"
+                                      th:action="@{/topics/{id}/invitation/cancel(id=${topic.id})}" method="post" class="mt-1 m-0">
+                                    <button type="submit" class="btn-hcmute-secondary btn-hcmute-sm w-100">
+                                        <i class="bi bi-x-circle"></i> Hủy lời mời
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(topics)}" class="empty-row">
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <i class="bi bi-journal-plus empty-state-icon"></i>
+                            <div class="empty-state-title">Bạn chưa đăng ký đề tài nào</div>
+                            <div class="empty-state-desc">Hãy bấm nút "Đăng đề tài mới" ở phía trên để tạo đề tài hướng dẫn sinh viên trong đợt mở.</div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
 </body>
 </html>

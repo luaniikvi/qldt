@@ -1,36 +1,35 @@
 package project.qldt.service;
+import project.qldt.service.account.AccountService;
+import project.qldt.service.period.RegistrationPeriodService;
+import project.qldt.service.topic.TopicService;
 import project.qldt.support.Beans;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import project.qldt.dto.RegistrationPeriodRequest;
-import project.qldt.dto.TopicRequest;
+import project.qldt.dto.period.RegistrationPeriodRequest;
+import project.qldt.dto.topic.TopicRequest;
 import project.qldt.exception.AccountNotFoundException;
 import project.qldt.exception.InvalidTopicException;
 import project.qldt.exception.RegistrationPeriodNotFoundException;
 import project.qldt.exception.TopicNotFoundException;
-import project.qldt.model.InvitationStatus;
-import project.qldt.model.Lecturer;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
-import project.qldt.model.Topic;
-import project.qldt.model.TopicAvailability;
-import project.qldt.model.TopicStatus;
+import project.qldt.model.topic.InvitationStatus;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
+import project.qldt.model.topic.Topic;
+import project.qldt.model.topic.TopicStatus;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -58,7 +57,7 @@ class TopicServiceExtraTest {
 
 		RegistrationPeriodRequest pReq = new RegistrationPeriodRequest();
 		pReq.setName("Đợt test");
-		pReq.setType(PeriodType.COURSE);
+		pReq.setType(PeriodType.COURSE_PROJECT);
 		pReq.setTeacherRegisterStart(LocalDateTime.now().minusDays(1));
 		pReq.setTeacherRegisterEnd(LocalDateTime.now().plusDays(2));
 		pReq.setStudentRegisterStart(LocalDateTime.now().plusDays(3));
@@ -218,10 +217,10 @@ class TopicServiceExtraTest {
 		assertEquals(1, periods.size());
 		assertEquals(period.getId(), periods.get(0).getId());
 
-		assertEquals(0, topicService.findAvailablePublished().size());
+		assertEquals(0, topicService.findAvailablePublishedFor(period.getId()).size());
 
 		topicService.publish(period.getId());
-		List<Topic> available = topicService.findAvailablePublished();
+		List<Topic> available = topicService.findAvailablePublishedFor(period.getId());
 		assertEquals(1, available.size());
 		assertEquals(topic.getId(), available.get(0).getId());
 	}

@@ -18,11 +18,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import project.qldt.dto.RegistrationPeriodRequest;
+import project.qldt.dto.period.RegistrationPeriodRequest;
+import project.qldt.dto.period.RegistrationPeriodResponse;
 import project.qldt.exception.InvalidRegistrationPeriodException;
 import project.qldt.exception.RegistrationPeriodNotFoundException;
-import project.qldt.model.RegistrationPeriod;
-import project.qldt.service.RegistrationPeriodService;
+import project.qldt.service.period.RegistrationPeriodService;
 
 @RestController
 @RequestMapping("/api/v1/periods")
@@ -35,32 +35,34 @@ public class RegistrationPeriodRestController {
 	}
 
 	@GetMapping
-	public List<RegistrationPeriod> list() {
-		return periodService.findAll();
+	public ResponseEntity<List<RegistrationPeriodResponse>> list() {
+		return ResponseEntity.ok(periodService.findAll().stream().map(RegistrationPeriodResponse::of).toList());
 	}
 
 	@GetMapping("/{id}")
-	public RegistrationPeriod getOne(@PathVariable Long id) {
-		return periodService.findById(id);
+	public ResponseEntity<RegistrationPeriodResponse> getOne(@PathVariable Long id) {
+		return ResponseEntity.ok(RegistrationPeriodResponse.of(periodService.findById(id)));
 	}
 
 	@PreAuthorize("hasRole('DEAN')")
 	@PostMapping
-	public RegistrationPeriod create(@Valid @RequestBody RegistrationPeriodRequest request) {
-		return periodService.create(request);
+	public ResponseEntity<RegistrationPeriodResponse> create(@Valid @RequestBody RegistrationPeriodRequest request) {
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(RegistrationPeriodResponse.of(periodService.create(request)));
 	}
 
 	@PreAuthorize("hasRole('DEAN')")
 	@PutMapping("/{id}")
-	public RegistrationPeriod update(@PathVariable Long id,
+	public ResponseEntity<RegistrationPeriodResponse> update(@PathVariable Long id,
 			@Valid @RequestBody RegistrationPeriodRequest request) {
-		return periodService.update(id, request);
+		return ResponseEntity.ok(RegistrationPeriodResponse.of(periodService.update(id, request)));
 	}
 
 	@PreAuthorize("hasRole('DEAN')")
 	@DeleteMapping("/{id}")
-	public void delete(@PathVariable Long id) {
+	public ResponseEntity<Void> delete(@PathVariable Long id) {
 		periodService.deleteById(id);
+		return ResponseEntity.noContent().build();
 	}
 
 	@ExceptionHandler(RegistrationPeriodNotFoundException.class)

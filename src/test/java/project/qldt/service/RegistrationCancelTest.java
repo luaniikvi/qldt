@@ -1,5 +1,11 @@
 package project.qldt.service;
 
+import project.qldt.service.account.AccountService;
+import project.qldt.service.notification.NotificationService;
+import project.qldt.service.period.RegistrationPeriodService;
+import project.qldt.service.team.TeamService;
+import project.qldt.service.topic.TopicRegistrationService;
+import project.qldt.service.topic.TopicService;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,18 +20,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-import project.qldt.dto.RegistrationPeriodRequest;
-import project.qldt.dto.TopicRequest;
+import project.qldt.dto.period.RegistrationPeriodRequest;
+import project.qldt.dto.topic.TopicRequest;
 import project.qldt.exception.InvalidRegistrationException;
-import project.qldt.model.Lecturer;
-import project.qldt.model.Notification;
-import project.qldt.model.NotificationType;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
-import project.qldt.model.Student;
-import project.qldt.model.Team;
-import project.qldt.model.Topic;
-import project.qldt.model.TopicAvailability;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.notification.NotificationType;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
+import project.qldt.model.account.Student;
+import project.qldt.model.team.Team;
+import project.qldt.model.topic.Topic;
+import project.qldt.model.topic.TopicAvailability;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -64,7 +69,7 @@ class RegistrationCancelTest {
 
 		RegistrationPeriodRequest periodRequest = new RegistrationPeriodRequest();
 		periodRequest.setName("Đợt hủy đăng ký");
-		periodRequest.setType(PeriodType.COURSE);
+		periodRequest.setType(PeriodType.COURSE_PROJECT);
 		periodRequest.setTeacherRegisterStart(LocalDateTime.now().minusDays(1));
 		periodRequest.setTeacherRegisterEnd(LocalDateTime.now().plusDays(1));
 		periodRequest.setStudentRegisterStart(LocalDateTime.now().plusDays(2));
@@ -130,7 +135,7 @@ class RegistrationCancelTest {
 				() -> registrationService.cancelByDean(topicNoTeam.getId(), "Thử hủy"));
 	}
 
-	private boolean hasNotification(project.qldt.model.Account recipient, String title) {
+	private boolean hasNotification(project.qldt.model.account.Account recipient, String title) {
 		return notificationService.findByRecipient(recipient).stream()
 				.anyMatch(item -> item.getType() == NotificationType.REJECTION && item.getTitle().equals(title));
 	}

@@ -1,4 +1,5 @@
 package project.qldt.service;
+import project.qldt.service.period.RegistrationPeriodService;
 import project.qldt.support.Beans;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -15,10 +16,10 @@ import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.Test;
 
-import project.qldt.dto.RegistrationPeriodRequest;
+import project.qldt.dto.period.RegistrationPeriodRequest;
 import project.qldt.exception.InvalidRegistrationPeriodException;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -71,7 +72,7 @@ class RegistrationPeriodServiceTest {
 	private RegistrationPeriodRequest hopLe() {
 		RegistrationPeriodRequest request = new RegistrationPeriodRequest();
 		request.setName("Đợt 1");
-		request.setType(PeriodType.COURSE);
+		request.setType(PeriodType.COURSE_PROJECT);
 		request.setTeacherRegisterStart(LocalDateTime.of(2027, 1, 5, 8, 0));
 		request.setTeacherRegisterEnd(LocalDateTime.of(2027, 1, 10, 17, 0));
 		request.setStudentRegisterStart(LocalDateTime.of(2027, 1, 11, 8, 0));

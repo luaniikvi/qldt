@@ -1,36 +1,154 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
 <head>
     <meta charset="UTF-8"/>
-    <title>Đăng nhập</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Đăng nhập - HCMUTE Quản lý Đề tài Sinh viên</title>
+
+    <!-- Favicon Khoa CNTT -->
+    <link rel="icon" type="image/png" th:href="@{/images/fit-logo.png}">
+    <link rel="shortcut icon" type="image/png" th:href="@{/images/fit-logo.png}">
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5.3 & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <!-- CSS System -->
+    <link rel="stylesheet" th:href="@{/css/design-tokens.css}">
     <style>
-        body { font-family: Segoe UI, sans-serif; margin: 0; display: flex; min-height: 100vh; align-items: center; justify-content: center; background: #f5f7fa; }
-        .card { background: #fff; padding: 28px 32px; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); width: 360px; }
-        h1 { margin: 0 0 4px; font-size: 1.4rem; }
-        p.sub { margin: 0 0 20px; color: #666; font-size: 0.9rem; }
-        label { display: block; margin-top: 14px; font-weight: 600; }
-        input { width: 100%; padding: 8px; box-sizing: border-box; }
-        button { margin-top: 20px; width: 100%; padding: 10px; }
-        .error { color: #b00020; background: #fdecea; padding: 8px 12px; border-radius: 4px; font-size: 0.9rem; }
-        .ok { color: #1b5e20; background: #e8f5e9; padding: 8px 12px; border-radius: 4px; font-size: 0.9rem; }
+        body {
+            background-color: var(--color-canvas);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: var(--space-4);
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        .login-card {
+            background-color: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-panel);
+            box-shadow: var(--shadow-card);
+            width: 100%;
+            max-width: 440px;
+            padding: 36px 32px;
+        }
+        .login-brand-header {
+            text-align: center;
+            margin-bottom: var(--space-6);
+        }
+        .login-logo {
+            max-height: 60px;
+            margin-bottom: var(--space-3);
+        }
+        .login-system-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--color-heading);
+            margin-bottom: 4px;
+            letter-spacing: -0.01em;
+        }
+        .login-subtitle {
+            font-size: 13.5px;
+            color: var(--color-muted);
+            margin: 0;
+        }
+        .password-field-wrapper {
+            position: relative;
+        }
+        .password-toggle-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: var(--color-muted);
+            cursor: pointer;
+            padding: 4px;
+            z-index: 10;
+        }
+        .login-footer-link {
+            text-align: center;
+            margin-top: var(--space-6);
+            padding-top: var(--space-4);
+            border-top: 1px solid var(--color-border-subtle);
+        }
     </style>
 </head>
 <body>
-<div class="card">
-    <h1>Hệ thống quản lý đề tài</h1>
 
-    <p class="error" th:if="${param.error}">Sai mã đăng nhập hoặc mật khẩu.</p>
-    <p class="ok" th:if="${param.logout}">Bạn đã đăng xuất.</p>
+<div class="login-card">
+    <!-- Brand & Identity -->
+    <div class="login-brand-header">
+        <a th:href="@{/home}" class="d-inline-flex flex-column align-items-center text-decoration-none mb-2">
+            <div style="width: 56px; height: 56px; border-radius: 14px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,0.08); border: 1px solid #E2E8F0; padding: 4px; margin-bottom: 12px;">
+                <img th:src="@{/images/hcmute-logo-vertical.png}" onerror="this.onerror=null; this.src='/css/images/hcmute-logo-vertical.png';" alt="Logo HCMUTE" style="max-height: 46px; max-width: 46px; width: auto; object-fit: contain;">
+            </div>
+            <div style="font-size: 13px; font-weight: 800; color: #0F172A; text-transform: uppercase; letter-spacing: 0.3px;">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</div>
+        </a>
+        <h1 class="login-system-name" style="margin-top: 4px;">Hệ thống quản lý đề tài</h1>
+        <p class="login-subtitle"><span class="badge-kcntt me-1">KHOA CNTT</span> Cổng thông tin xác thực</p>
+    </div>
 
+    <!-- Alert Messages -->
+    <div th:if="${param.error}" class="hcmute-alert hcmute-alert-danger" role="alert">
+        <i class="bi bi-x-circle-fill fs-5 flex-shrink-0"></i>
+        <div>Sai tên đăng nhập hoặc mật khẩu. Vui lòng kiểm tra lại.</div>
+    </div>
+
+    <div th:if="${param.logout}" class="hcmute-alert hcmute-alert-success" role="alert">
+        <i class="bi bi-check-circle-fill fs-5 flex-shrink-0"></i>
+        <div>Bạn đã đăng xuất khỏi hệ thống thành công.</div>
+    </div>
+
+    <!-- Login Form -->
     <form th:action="@{/login}" method="post">
-        <label>Tài khoản</label>
-        <input type="text" name="username" required autofocus/>
-        <label>Mật khẩu</label>
-        <input type="password" name="password" required/>
-        <button type="submit">Đăng nhập</button>
+        <div class="form-group mb-3">
+            <label class="form-label required" for="username">Tài khoản / Mã đăng nhập</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light text-muted border-end-0" style="border-radius: var(--radius-input) 0 0 var(--radius-input);"><i class="bi bi-person"></i></span>
+                <input type="text" id="username" name="username" class="form-control border-start-0"
+                       style="border-radius: 0 var(--radius-input) var(--radius-input) 0;"
+                       placeholder="Mã SV, GV hoặc tên đăng nhập" required autofocus />
+            </div>
+            <div class="form-hint">Ví dụ: SV001, GV001, admin</div>
+        </div>
+
+        <div class="form-group mb-4">
+            <label class="form-label required" for="password">Mật khẩu</label>
+            <div class="input-group password-field-wrapper">
+                <span class="input-group-text bg-light text-muted border-end-0" style="border-radius: var(--radius-input) 0 0 var(--radius-input);"><i class="bi bi-lock"></i></span>
+                <input type="password" id="password" name="password" class="form-control border-start-0"
+                       style="border-radius: 0 var(--radius-input) var(--radius-input) 0; padding-right: 40px;"
+                       placeholder="Nhập mật khẩu" required />
+                <button type="button" class="password-toggle-btn btn-toggle-password" data-target="#password" title="Hiện/ẩn mật khẩu">
+                    <i class="bi bi-eye"></i>
+                </button>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-hcmute-primary w-100" style="height: 44px;">
+            <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
+        </button>
     </form>
 
-    <p><a th:href="@{/home}">Về trang chủ</a></p>
+    <!-- Return to Homepage Link -->
+    <div class="login-footer-link">
+        <a th:href="@{/home}" class="text-decoration-none small text-muted">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại trang chủ công khai
+        </a>
+    </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/portal.js}"></script>
 </body>
 </html>

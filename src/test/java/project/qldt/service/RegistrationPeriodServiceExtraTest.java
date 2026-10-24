@@ -1,4 +1,5 @@
 package project.qldt.service;
+import project.qldt.service.period.RegistrationPeriodService;
 import project.qldt.support.Beans;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -17,11 +18,11 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import project.qldt.dto.RegistrationPeriodRequest;
+import project.qldt.dto.period.RegistrationPeriodRequest;
 import project.qldt.exception.InvalidRegistrationPeriodException;
 import project.qldt.exception.RegistrationPeriodNotFoundException;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -37,7 +38,7 @@ class RegistrationPeriodServiceExtraTest {
 
 	@Test
 	void dotTlcnThieuHanGvpbBiChan() {
-		RegistrationPeriodRequest req = baseRequest(PeriodType.SPECIALIZED_THESIS);
+		RegistrationPeriodRequest req = baseRequest(PeriodType.SPECIALIZED_PROJECT);
 		req.setReviewerScoreDeadline(null);
 
 		assertThrows(InvalidRegistrationPeriodException.class, () -> periodService.create(req));
@@ -45,7 +46,7 @@ class RegistrationPeriodServiceExtraTest {
 
 	@Test
 	void dotTlcnHanGvpbTruocNgaySvKetThucBiChan() {
-		RegistrationPeriodRequest req = baseRequest(PeriodType.SPECIALIZED_THESIS);
+		RegistrationPeriodRequest req = baseRequest(PeriodType.SPECIALIZED_PROJECT);
 		req.setReviewerScoreDeadline(req.getStudentRegisterEnd().toLocalDate().minusDays(1));
 
 		assertThrows(InvalidRegistrationPeriodException.class, () -> periodService.create(req));
@@ -53,7 +54,7 @@ class RegistrationPeriodServiceExtraTest {
 
 	@Test
 	void dotTlcnHopLeLuuHanGvpbVaBoTrongNgayHoiDong() {
-		RegistrationPeriodRequest req = baseRequest(PeriodType.SPECIALIZED_THESIS);
+		RegistrationPeriodRequest req = baseRequest(PeriodType.SPECIALIZED_PROJECT);
 		req.setReviewerScoreDeadline(LocalDate.of(2027, 2, 5));
 		req.setCouncilReportDate(LocalDate.of(2027, 2, 10));
 
@@ -106,8 +107,21 @@ class RegistrationPeriodServiceExtraTest {
 	}
 
 	@Test
+	void dotNckhKhongNhapMocGvpbVaHoiDongThanhCong() {
+		RegistrationPeriodRequest req = baseRequest(PeriodType.RESEARCH);
+		req.setReviewerScoreDeadline(null);
+		req.setCouncilReportDate(null);
+
+		RegistrationPeriod period = periodService.create(req);
+
+		assertNotNull(period);
+		assertNull(period.getReviewerScoreDeadline());
+		assertNull(period.getCouncilReportDate());
+	}
+
+	@Test
 	void thoiGianGvKetThucTruocHoacBangBatDauBiChan() {
-		RegistrationPeriodRequest req = baseRequest(PeriodType.COURSE);
+		RegistrationPeriodRequest req = baseRequest(PeriodType.COURSE_PROJECT);
 		req.setTeacherRegisterEnd(req.getTeacherRegisterStart());
 
 		assertThrows(InvalidRegistrationPeriodException.class, () -> periodService.create(req));
@@ -118,7 +132,7 @@ class RegistrationPeriodServiceExtraTest {
 
 	@Test
 	void thoiGianSvKetThucTruocHoacBangBatDauBiChan() {
-		RegistrationPeriodRequest req = baseRequest(PeriodType.COURSE);
+		RegistrationPeriodRequest req = baseRequest(PeriodType.COURSE_PROJECT);
 		req.setStudentRegisterEnd(req.getStudentRegisterStart());
 
 		assertThrows(InvalidRegistrationPeriodException.class, () -> periodService.create(req));
@@ -129,7 +143,7 @@ class RegistrationPeriodServiceExtraTest {
 
 	@Test
 	void thieuHanNopBaoCaoBiChan() {
-		RegistrationPeriodRequest req = baseRequest(PeriodType.COURSE);
+		RegistrationPeriodRequest req = baseRequest(PeriodType.COURSE_PROJECT);
 		req.setReportDeadline(null);
 
 		assertThrows(InvalidRegistrationPeriodException.class, () -> periodService.create(req));
@@ -142,9 +156,9 @@ class RegistrationPeriodServiceExtraTest {
 
 	@Test
 	void capNhatDotDangKy() {
-		RegistrationPeriod period = periodService.create(baseRequest(PeriodType.COURSE));
+		RegistrationPeriod period = periodService.create(baseRequest(PeriodType.COURSE_PROJECT));
 
-		RegistrationPeriodRequest updateReq = baseRequest(PeriodType.COURSE);
+		RegistrationPeriodRequest updateReq = baseRequest(PeriodType.COURSE_PROJECT);
 		updateReq.setName("Đợt 1 Cập Nhật");
 		updateReq.setReportDeadline(LocalDate.of(2027, 3, 1));
 
@@ -156,7 +170,7 @@ class RegistrationPeriodServiceExtraTest {
 
 	@Test
 	void xoaDotDangKyTheoId() {
-		RegistrationPeriod period = periodService.create(baseRequest(PeriodType.COURSE));
+		RegistrationPeriod period = periodService.create(baseRequest(PeriodType.COURSE_PROJECT));
 		Long id = period.getId();
 		assertNotNull(periodService.findById(id));
 
@@ -167,7 +181,7 @@ class RegistrationPeriodServiceExtraTest {
 
 	@Test
 	void findAllTraVeBanSaoBaoVe() {
-		periodService.create(baseRequest(PeriodType.COURSE));
+		periodService.create(baseRequest(PeriodType.COURSE_PROJECT));
 		List<RegistrationPeriod> list = periodService.findAll();
 		assertEquals(1, list.size());
 

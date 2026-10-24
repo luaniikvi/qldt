@@ -1,4 +1,9 @@
 package project.qldt.service;
+import project.qldt.service.account.AccountService;
+import project.qldt.service.period.RegistrationPeriodService;
+import project.qldt.service.team.TeamService;
+import project.qldt.service.topic.TopicRegistrationService;
+import project.qldt.service.topic.TopicService;
 import project.qldt.support.Beans;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -15,19 +20,18 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import project.qldt.dto.RegistrationPeriodRequest;
-import project.qldt.dto.RegistrationView;
-import project.qldt.dto.TopicRequest;
+import project.qldt.dto.period.RegistrationPeriodRequest;
+import project.qldt.dto.topic.RegistrationView;
+import project.qldt.dto.topic.TopicRequest;
 import project.qldt.exception.InvalidRegistrationException;
-import project.qldt.model.Lecturer;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
-import project.qldt.model.Student;
-import project.qldt.model.Team;
-import project.qldt.model.Topic;
-import project.qldt.model.TopicAvailability;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
+import project.qldt.model.account.Student;
+import project.qldt.model.team.Team;
+import project.qldt.model.topic.Topic;
+import project.qldt.model.topic.TopicAvailability;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -65,7 +69,7 @@ class TopicRegistrationServiceExtraTest {
 
 		RegistrationPeriodRequest pReq = new RegistrationPeriodRequest();
 		pReq.setName("Đợt test");
-		pReq.setType(PeriodType.COURSE);
+		pReq.setType(PeriodType.COURSE_PROJECT);
 		pReq.setTeacherRegisterStart(LocalDateTime.now().minusDays(1));
 		pReq.setTeacherRegisterEnd(LocalDateTime.now().plusDays(1));
 		pReq.setStudentRegisterStart(LocalDateTime.now().plusDays(2));
@@ -112,7 +116,7 @@ class TopicRegistrationServiceExtraTest {
 	void dangKyDeTaiCuaDotKhacBiChan() {
 		RegistrationPeriodRequest otherPReq = new RegistrationPeriodRequest();
 		otherPReq.setName("Đợt khác");
-		otherPReq.setType(PeriodType.COURSE);
+		otherPReq.setType(PeriodType.COURSE_PROJECT);
 		otherPReq.setTeacherRegisterStart(LocalDateTime.now().minusDays(1));
 		otherPReq.setTeacherRegisterEnd(LocalDateTime.now().plusDays(1));
 		otherPReq.setStudentRegisterStart(LocalDateTime.now().plusDays(2));

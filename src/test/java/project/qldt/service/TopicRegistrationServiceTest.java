@@ -1,4 +1,9 @@
 package project.qldt.service;
+import project.qldt.service.account.AccountService;
+import project.qldt.service.period.RegistrationPeriodService;
+import project.qldt.service.team.TeamService;
+import project.qldt.service.topic.TopicRegistrationService;
+import project.qldt.service.topic.TopicService;
 import project.qldt.support.Beans;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -12,18 +17,17 @@ import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import project.qldt.dto.RegistrationPeriodRequest;
-import project.qldt.dto.TopicRequest;
+import project.qldt.dto.period.RegistrationPeriodRequest;
+import project.qldt.dto.topic.TopicRequest;
 import project.qldt.exception.InvalidRegistrationException;
-import project.qldt.model.Lecturer;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
-import project.qldt.model.Student;
-import project.qldt.model.Team;
-import project.qldt.model.Topic;
-import project.qldt.model.TopicAvailability;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
+import project.qldt.model.account.Student;
+import project.qldt.model.team.Team;
+import project.qldt.model.topic.Topic;
+import project.qldt.model.topic.TopicAvailability;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -165,6 +169,22 @@ class TopicRegistrationServiceTest {
 				() -> registrationService.approve(topic.getId(), gv2));
 	}
 
+	@Test
+	void chiMotLanGianhDuocDeTai() {
+		assertEquals(1, topicService.claimForRegistration(topic.getId()));
+		assertEquals(0, topicService.claimForRegistration(topic.getId()));
+	}
+
+	@Test
+	void dangKyKhiDeTaiDaBiGianhThiBaoLoi() {
+		assertEquals(1, topicService.claimForRegistration(topic.getId()));
+
+		Team other = teamService.create(period.getId(), sv2);
+		InvalidRegistrationException ex = assertThrows(InvalidRegistrationException.class,
+				() -> registrationService.register(other.getId(), topic.getId(), sv2));
+		assertEquals("Đề tài đã có nhóm đăng ký", ex.getMessage());
+	}
+
 	private void moveToStudentPhase(RegistrationPeriod period) {
 		LocalDateTime now = LocalDateTime.now();
 		period.setTeacherRegisterStart(now.minusDays(10));
@@ -176,7 +196,7 @@ class TopicRegistrationServiceTest {
 	private RegistrationPeriodRequest periodRequest() {
 		RegistrationPeriodRequest request = new RegistrationPeriodRequest();
 		request.setName("Đợt đăng ký");
-		request.setType(PeriodType.COURSE);
+		request.setType(PeriodType.COURSE_PROJECT);
 		request.setTeacherRegisterStart(LocalDateTime.now().minusDays(1));
 		request.setTeacherRegisterEnd(LocalDateTime.now().plusDays(1));
 		request.setStudentRegisterStart(LocalDateTime.now().plusDays(2));

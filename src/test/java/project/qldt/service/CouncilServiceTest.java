@@ -1,4 +1,10 @@
 package project.qldt.service;
+import project.qldt.service.account.AccountService;
+import project.qldt.service.council.CouncilService;
+import project.qldt.service.period.RegistrationPeriodService;
+import project.qldt.service.team.TeamService;
+import project.qldt.service.topic.TopicRegistrationService;
+import project.qldt.service.topic.TopicService;
 import project.qldt.support.Beans;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -12,32 +18,37 @@ import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import project.qldt.dto.RegistrationPeriodRequest;
-import project.qldt.dto.TopicRequest;
+import project.qldt.dto.period.RegistrationPeriodRequest;
+import project.qldt.dto.topic.TopicRequest;
 import project.qldt.exception.InvalidCouncilException;
-import project.qldt.model.Council;
-import project.qldt.model.CouncilRole;
-import project.qldt.model.Lecturer;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
-import project.qldt.model.Student;
-import project.qldt.model.Team;
-import project.qldt.model.Topic;
-import project.qldt.model.TopicResult;
+import project.qldt.model.council.Council;
+import project.qldt.model.council.CouncilRole;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
+import project.qldt.model.account.Student;
+import project.qldt.model.team.Team;
+import project.qldt.model.topic.Topic;
+import project.qldt.model.council.TopicResult;
 
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
 class CouncilServiceTest {
 
-	private final AccountService accountService = Beans.get(AccountService.class);
-	private final RegistrationPeriodService periodService = Beans.get(RegistrationPeriodService.class);
-	private final TopicService topicService = Beans.get(TopicService.class);
-	private final TeamService teamService = Beans.get(TeamService.class);
-	private final TopicRegistrationService registrationService = Beans.get(TopicRegistrationService.class);
-	private final CouncilService councilService = Beans.get(CouncilService.class);
+	@org.springframework.beans.factory.annotation.Autowired
+	private AccountService accountService;
+	@org.springframework.beans.factory.annotation.Autowired
+	private RegistrationPeriodService periodService;
+	@org.springframework.beans.factory.annotation.Autowired
+	private TopicService topicService;
+	@org.springframework.beans.factory.annotation.Autowired
+	private TeamService teamService;
+	@org.springframework.beans.factory.annotation.Autowired
+	private TopicRegistrationService registrationService;
+	@org.springframework.beans.factory.annotation.Autowired
+	private CouncilService councilService;
 
 	private Lecturer gv1;
 	private Lecturer gv2;
@@ -76,7 +87,7 @@ class CouncilServiceTest {
 	}
 
 	private void scoreAll(double first, double second, double third) {
-		Council council = councilService.findAll().get(0);
+		Council council = councilService.findByTopicId(topic.getId());
 		councilService.score(council.getId(), gv2, first, "Nhận xét 1");
 		councilService.score(council.getId(), gv3, second, "Nhận xét 2");
 		councilService.score(council.getId(), gv4, third, "Nhận xét 3");
@@ -93,7 +104,7 @@ class CouncilServiceTest {
 	private RegistrationPeriodRequest periodRequest() {
 		RegistrationPeriodRequest request = new RegistrationPeriodRequest();
 		request.setName("Đợt đăng ký");
-		request.setType(PeriodType.COURSE);
+		request.setType(PeriodType.COURSE_PROJECT);
 		request.setTeacherRegisterStart(LocalDateTime.now().minusDays(1));
 		request.setTeacherRegisterEnd(LocalDateTime.now().plusDays(1));
 		request.setStudentRegisterStart(LocalDateTime.now().plusDays(2));

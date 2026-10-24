@@ -1,112 +1,122 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-
-<head>
-    <meta charset="UTF-8" />
-    <title>Tạo tài khoản</title>
-    <style>
-        body {
-            font-family: Segoe UI, sans-serif;
-            margin: 24px;
-            max-width: 560px;
-        }
-
-        label {
-            display: block;
-            margin-top: 12px;
-            font-weight: 600;
-        }
-
-        input,
-        select {
-            width: 100%;
-            padding: 6px;
-        }
-
-        .hint {
-            font-weight: 400;
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        .err {
-            color: #b00020;
-            font-size: 0.9rem;
-        }
-    </style>
-</head>
-
+<head th:replace="~{fragments/head :: head(title='Tạo tài khoản người dùng')}"></head>
 <body>
-    <h1>Tạo tài khoản</h1>
 
-    <form th:object="${account}" method="post" th:action="@{/admin/accounts}">
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='admin-accounts')}"></aside>
 
-        <div class="err" th:if="${#fields.hasGlobalErrors()}">
-            <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title='TẠO TÀI KHOẢN MỚI', icon='bi-person-plus-fill', actionUrl='/admin/accounts', actionText='Quay lại danh sách', actionIcon='bi-arrow-left')}"></div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="hcmute-card p-4">
+                <form th:object="${account}" method="post" th:action="@{/admin/accounts}">
+                    <div class="hcmute-alert hcmute-alert-danger" th:if="${#fields.hasGlobalErrors()}">
+                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                        <div>
+                            <div th:each="error : ${#fields.globalErrors()}" th:text="${error}">Lỗi</div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label required" for="type">Loại tài khoản</label>
+                            <select id="type" th:field="*{type}" class="form-select"
+                                    th:classappend="${#fields.hasErrors('type')} ? 'is-invalid' : ''" required>
+                                <option value="">-- Chọn loại tài khoản --</option>
+                                <option th:each="type : ${accountTypes}" th:value="${type}" th:text="${type.label}"></option>
+                            </select>
+                            <div class="invalid-feedback" th:errors="*{type}"></div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label required" for="code">Mã tài khoản / Đăng nhập</label>
+                            <input type="text" id="code" th:field="*{code}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('code')} ? 'is-invalid' : ''"
+                                   placeholder="GV: mã giảng viên, SV: mã sinh viên" required />
+                            <div class="invalid-feedback" th:errors="*{code}"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label required" for="fullName">Họ và tên đầy đủ</label>
+                        <input type="text" id="fullName" th:field="*{fullName}" class="form-control"
+                               th:classappend="${#fields.hasErrors('fullName')} ? 'is-invalid' : ''"
+                               placeholder="Ví dụ: Nguyễn Văn An" required />
+                        <div class="invalid-feedback" th:errors="*{fullName}"></div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label" for="email">Địa chỉ Email</label>
+                        <input type="email" id="email" th:field="*{email}" class="form-control"
+                               th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''"
+                               placeholder="user@qldt.local hoặc user@hcmute.edu.vn" />
+                        <div class="invalid-feedback" th:errors="*{email}"></div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label required" for="password">Mật khẩu khởi tạo</label>
+                            <input type="password" id="password" th:field="*{password}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('password')} ? 'is-invalid' : ''"
+                                   placeholder="Tối thiểu 6 ký tự" required />
+                            <div class="invalid-feedback" th:errors="*{password}"></div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label required" for="confirmPassword">Xác nhận mật khẩu</label>
+                            <input type="password" id="confirmPassword" th:field="*{confirmPassword}" class="form-control"
+                                   th:classappend="${#fields.hasErrors('confirmPassword')} ? 'is-invalid' : ''"
+                                   placeholder="Nhập lại mật khẩu" required />
+                            <div class="invalid-feedback" th:errors="*{confirmPassword}"></div>
+                        </div>
+                    </div>
+
+                    <div id="departmentBlock" class="form-group mb-4">
+                        <label class="form-label required" for="department">Bộ môn chuyên trách (Bắt buộc với Giảng viên)</label>
+                        <select id="department" th:field="*{department}" class="form-select"
+                                th:classappend="${#fields.hasErrors('department')} ? 'is-invalid' : ''">
+                            <option value="">-- Chọn bộ môn --</option>
+                            <option th:each="dept : ${departments}" th:value="${dept.code}" th:text="${dept.name}"></option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{department}"></div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 pt-3 border-top">
+                        <button type="submit" class="btn-hcmute-primary">
+                            <i class="bi bi-person-check-fill"></i> Tạo tài khoản
+                        </button>
+                        <a th:href="@{/admin/accounts}" class="btn-hcmute-secondary">Hủy bỏ</a>
+                    </div>
+                </form>
+            </div>
         </div>
+    </div>
+</main>
 
-        <label>Loại tài khoản</label>
-        <select th:field="*{type}">
-            <option value="">-- Chọn loại --</option>
-            <option th:each="type : ${accountTypes}" th:value="${type}" th:text="${type.label}"></option>
-        </select>
-        <div class="err" th:errors="*{type}"></div>
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
+<script>
+    (function () {
+        var typeSelect = document.getElementById('type');
+        var block = document.getElementById('departmentBlock');
+        var department = document.getElementById('department');
 
-        <label>Mã đăng nhập <span class="hint">(GV dùng mã GV, SV dùng mã SV)</span></label>
-        <input type="text" th:field="*{code}" />
-        <div class="err" th:errors="*{code}"></div>
-
-        <label>Họ tên</label>
-        <input type="text" th:field="*{fullName}" />
-        <div class="err" th:errors="*{fullName}"></div>
-
-        <label>Email</label>
-        <input type="text" th:field="*{email}" />
-        <div class="err" th:errors="*{email}"></div>
-
-        <label>Mật khẩu</label>
-        <input type="password" th:field="*{password}" />
-        <div class="err" th:errors="*{password}"></div>
-
-        <label>Xác nhận mật khẩu</label>
-        <input type="password" th:field="*{confirmPassword}" />
-        <div class="err" th:errors="*{confirmPassword}"></div>
-
-        <div id="departmentBlock">
-            <label>Bộ môn <span class="hint">(Bắt buộc với giảng viên)</span></label>
-            <select th:field="*{department}">
-                <option value="">-- Chọn bộ môn --</option>
-                <option th:each="dept : ${departmentTypes}" th:value="${dept.label}" th:text="${dept.label}"></option>
-            </select>
-            <div class="err" th:errors="*{department}"></div>
-        </div>
-
-
-        <p>
-            <button type="submit">Tạo tài khoản</button>
-            <a th:href="@{/admin/accounts}">Hủy</a>
-        </p>
-    </form>
-
-    <script>
-        (function () {
-            var typeSelect = document.getElementById('type');
-            var block = document.getElementById('departmentBlock');
-            var department = document.getElementById('department');
-
-            function syncDepartment() {
-                var isLecturer = typeSelect.value === 'LECTURER';
-                block.style.display = isLecturer ? '' : 'none';
+        function syncDepartment() {
+            var isLecturer = typeSelect && typeSelect.value === 'LECTURER';
+            if (block) block.style.display = isLecturer ? '' : 'none';
+            if (department) {
                 department.required = isLecturer;
-                if (!isLecturer) {
-                    department.value = '';
-                }
+                if (!isLecturer) department.value = '';
             }
+        }
 
+        if (typeSelect) {
             typeSelect.addEventListener('change', syncDepartment);
             syncDepartment();
-        })();
-    </script>
+        }
+    })();
+</script>
 </body>
-
 </html>

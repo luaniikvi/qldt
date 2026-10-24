@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="vi">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Bảng tra cứu Design Tokens &amp; Components - HCMUTE Relate System</title>
+
+    <!-- Favicon Khoa CNTT -->
+    <link rel="icon" type="image/png" th:href="@{/images/fit-logo.png}">
+    <link rel="shortcut icon" type="image/png" th:href="@{/images/fit-logo.png}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <link rel="stylesheet" th:href="@{/css/design-tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/portal.css}">
+    <style>
+        .color-swatch {
+            height: 60px;
+            border-radius: var(--radius-input);
+            display: flex;
+            align-items: flex-end;
+            padding: 8px;
+            font-size: 11px;
+            font-family: monospace;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body style="background-color: var(--color-canvas); padding: 40px 0;">
+
+<div class="container">
+    <!-- Header -->
+    <div class="hcmute-card p-4 mb-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <img th:src="@{/images/hcmute-logo.png}" alt="Logo HCMUTE" height="50" style="max-height: 50px; width: auto; object-fit: contain;">
+                <div>
+                    <h1 class="h2 mb-1">HCMUTE Design System — Relate Component &amp; Token Preview</h1>
+                    <div class="text-muted small">Hệ thống chuẩn thiết kế giao diện sáng, hiện đại • Khoa CNTT • HCMUTE</div>
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a th:href="@{/home}" class="btn-hcmute-secondary btn-hcmute-sm">
+                    <i class="bi bi-globe"></i> Trang chủ
+                </a>
+                <a th:href="@{/dashboard}" class="btn-hcmute-primary btn-hcmute-sm">
+                    <i class="bi bi-grid-fill"></i> Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1. Color Tokens -->
+    <div class="hcmute-card p-4 mb-4">
+        <h2 class="h2 mb-3"><i class="bi bi-palette-fill text-primary me-2"></i>1. Khóa Token Màu (Relate Color Tokens)</h2>
+        <div class="row g-3">
+            <div class="col-md-2 col-4">
+                <div class="color-swatch text-white" style="background-color: var(--color-primary);">primary</div>
+                <div class="small fw-bold mt-1">#145AFF</div>
+            </div>
+            <div class="col-md-2 col-4">
+                <div class="color-swatch text-white" style="background-color: var(--color-primary-soft-accent);">primary-soft</div>
+                <div class="small fw-bold mt-1">#3B82F6</div>
+            </div>
+            <div class="col-md-2 col-4">
+                <div class="color-swatch text-dark" style="background-color: var(--color-canvas);">canvas</div>
+                <div class="small fw-bold mt-1">#FCFCFC</div>
+            </div>
+            <div class="col-md-2 col-4">
+                <div class="color-swatch text-dark" style="background-color: var(--color-wash);">wash</div>
+                <div class="small fw-bold mt-1">#F0F4FE</div>
+            </div>
+            <div class="col-md-2 col-4">
+                <div class="color-swatch text-dark" style="background-color: var(--color-surface);">surface</div>
+                <div class="small fw-bold mt-1">#FFFFFF</div>
+            </div>
+            <div class="col-md-2 col-4">
+                <div class="color-swatch text-white" style="background-color: var(--color-heading);">heading</div>
+                <div class="small fw-bold mt-1">#020520</div>
+            </div>
+
+            <div class="col-md-2 col-4">
+                <div class="color-swatch text-white" style="background-color: var(--color-text);">text</div>
+                <div class="small fw-bold mt-1">#14141E</div>
+            </div>
+            <div class="col-md-2 col-4">
+                <div class="color-swatch text-white" style="background-color: var(--color-secondary-text);">secondary</div>
+                <div class="small fw-bold mt-1">#374151</div>
+            </div>
+            <div class="col-md-2 col-4">
+                <div class="color-swatch text-white" style="background-color: var(--color-muted);">muted</div>
+                <div class="small fw-bold mt-1">#6B7280</div>
+            </div>
+            <div class="col-md-2 col-4">
+                <div class="color-swatch text-dark" style="background-color: var(--color-border);">border</div>
+                <div class="small fw-bold mt-1">#E2E8F0</div>
+            </div>
+            <div class="col-md-2 col-4">
+                <div class="color-swatch text-white" style="background-color: var(--color-success);">success</div>
+                <div class="small fw-bold mt-1">#10B981</div>
+            </div>
+            <div class="col-md-2 col-4">
+                <div class="color-swatch text-white" style="background-color: var(--color-warning);">warning</div>
+                <div class="small fw-bold mt-1">#F59E0B</div>
+            </div>
+            <div class="col-md-2 col-4">
+                <div class="color-swatch text-white" style="background-color: var(--color-danger);">danger</div>
+                <div class="small fw-bold mt-1">#EF4444</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Buttons -->
+    <div class="hcmute-card p-4 mb-4">
+        <h2 class="h2 mb-3"><i class="bi bi-cursor-fill text-primary me-2"></i>2. Nút bấm (Relate Pill Buttons)</h2>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <button class="btn-hcmute-primary"><i class="bi bi-check2"></i> Primary Action</button>
+            <button class="btn-hcmute-outline"><i class="bi bi-pencil"></i> Outline Action</button>
+            <button class="btn-hcmute-secondary"><i class="bi bi-x-circle"></i> Secondary</button>
+            <button class="btn-hcmute-danger"><i class="bi bi-trash"></i> Danger Action</button>
+            <button class="btn-hcmute-primary" disabled>Disabled Action</button>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn-hcmute-primary btn-hcmute-sm"><i class="bi bi-plus"></i> Small Primary</button>
+            <button class="btn-hcmute-outline btn-hcmute-sm"><i class="bi bi-eye"></i> Small Outline</button>
+            <button class="btn-hcmute-secondary btn-hcmute-sm">Small Secondary</button>
+            <button class="btn-hcmute-danger btn-hcmute-sm">Small Danger</button>
+        </div>
+    </div>
+
+    <!-- 3. Status Badges -->
+    <div class="hcmute-card p-4 mb-4">
+        <h2 class="h2 mb-3"><i class="bi bi-tag-fill text-primary me-2"></i>3. Nhãn trạng thái (Status Badges)</h2>
+        <div class="d-flex flex-wrap gap-2">
+            <span class="badge-status badge-status-success"><i class="bi bi-check-circle-fill"></i> Đã phê duyệt / Hoàn thành</span>
+            <span class="badge-status badge-status-warning"><i class="bi bi-hourglass-split"></i> Đang chờ duyệt</span>
+            <span class="badge-status badge-status-danger"><i class="bi bi-x-circle-fill"></i> Đã từ chối / Bị hủy</span>
+            <span class="badge-status badge-status-info"><i class="bi bi-info-circle-fill"></i> Đã công bố</span>
+            <span class="badge-status badge-status-neutral"><i class="bi bi-clock-history"></i> Chưa bắt đầu</span>
+        </div>
+    </div>
+
+    <!-- 4. Form Controls -->
+    <div class="hcmute-card p-4 mb-4">
+        <h2 class="h2 mb-3"><i class="bi bi-ui-checks text-primary me-2"></i>4. Biểu mẫu &amp; Input (Form Controls bo 12px)</h2>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="form-label required">Tên đề tài</label>
+                    <input type="text" class="form-control" placeholder="Nhập tên đề tài nghiên cứu" value="Hệ thống quản lý đề tài sinh viên">
+                    <div class="form-hint">Tên đề tài cần ngắn gọn, rõ ràng theo đúng chuyên ngành.</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="form-label required">Bộ môn quản lý</label>
+                    <select class="form-select">
+                        <option>Hệ Thống Thông Tin</option>
+                        <option>Công Nghệ Phần Mềm</option>
+                        <option>Mạng &amp; An Ninh Mạng</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Tables -->
+    <div class="hcmute-card p-4">
+        <h2 class="h2 mb-3"><i class="bi bi-table text-primary me-2"></i>5. Bảng dữ liệu (Data Table bo 16px)</h2>
+        <div class="table-responsive">
+            <table class="hcmute-table">
+                <thead>
+                    <tr>
+                        <th>Mã</th>
+                        <th>Tên đề tài</th>
+                        <th>GVHD Chính</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>DT001</code></td>
+                        <td class="fw-bold">Nghiên cứu ứng dụng Deep Learning trong nhận dạng ảnh y tế</td>
+                        <td>TS. Nguyễn Văn A</td>
+                        <td><span class="badge-status badge-status-success"><i class="bi bi-check-circle-fill"></i> Đã công bố</span></td>
+                        <td class="text-end">
+                            <button class="btn-hcmute-outline btn-hcmute-sm">Chi tiết</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><code>DT002</code></td>
+                        <td class="fw-bold">Phát triển hệ sinh thái IoT quản lý nông nghiệp thông minh</td>
+                        <td>ThS. Trần Thị B</td>
+                        <td><span class="badge-status badge-status-warning"><i class="bi bi-hourglass-split"></i> Chờ duyệt</span></td>
+                        <td class="text-end">
+                            <button class="btn-hcmute-primary btn-hcmute-sm">Xét duyệt</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

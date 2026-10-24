@@ -1,37 +1,49 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"/>
-    <title>Tạo nhóm</title>
-    <style>
-        body { font-family: Segoe UI, sans-serif; margin: 24px; max-width: 560px; }
-        label { display: block; margin-top: 12px; font-weight: 600; }
-        select { width: 100%; padding: 6px; }
-        .hint { font-weight: 400; color: #666; font-size: 0.9rem; }
-        .err { color: #b00020; font-size: 0.9rem; }
-    </style>
-</head>
+<head th:replace="~{fragments/head :: head(title='Tạo nhóm học thuật mới')}"></head>
 <body>
-<h1>Tạo nhóm</h1>
 
-<form th:object="${team}" method="post" th:action="@{/teams}">
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='teams')}"></aside>
 
-    <div class="err" th:if="${#fields.hasGlobalErrors()}">
-        <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title='TẠO NHÓM MỚI', icon='bi-people-fill', actionUrl='/teams', actionText='Quay lại danh sách', actionIcon='bi-arrow-left')}"></div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="hcmute-card p-4">
+                <form th:object="${team}" method="post" th:action="@{/teams}">
+                    <div class="hcmute-alert hcmute-alert-danger" th:if="${#fields.hasGlobalErrors()}">
+                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                        <div>
+                            <div th:each="error : ${#fields.globalErrors()}" th:text="${error}">Lỗi</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label class="form-label required" for="periodId">Chọn đợt học thuật</label>
+                        <select id="periodId" th:field="*{periodId}" class="form-select"
+                                th:classappend="${#fields.hasErrors('periodId')} ? 'is-invalid' : ''" required>
+                            <option value="">-- Chọn đợt thực hiện --</option>
+                            <option th:each="period : ${periods}" th:value="${period.id}"
+                                    th:text="|${period.name} (${period.type.label})|"></option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{periodId}"></div>
+                        <div class="form-hint">Bạn sẽ trở thành nhóm trưởng sau khi tạo nhóm và có quyền mời thành viên (tối đa 3 SV) cũng như đăng ký đề tài.</div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 pt-3 border-top">
+                        <button type="submit" class="btn-hcmute-primary">
+                            <i class="bi bi-check-lg"></i> Xác nhận tạo nhóm
+                        </button>
+                        <a th:href="@{/teams}" class="btn-hcmute-secondary">Hủy bỏ</a>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
+</main>
 
-    <label>Đợt đăng ký <span class="hint">(nhóm không phụ thuộc thời gian đăng ký đề tài)</span></label>
-    <select th:field="*{periodId}">
-        <option value="">-- Chọn đợt --</option>
-        <option th:each="period : ${periods}" th:value="${period.id}"
-                th:text="|${period.name} (${period.type.label})|"></option>
-    </select>
-    <div class="err" th:errors="*{periodId}"></div>
-
-    <p>
-        <button type="submit">Tạo nhóm</button>
-        <a th:href="@{/teams}">Hủy</a>
-    </p>
-</form>
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
 </body>
 </html>

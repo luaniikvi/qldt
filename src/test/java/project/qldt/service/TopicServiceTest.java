@@ -1,4 +1,7 @@
 package project.qldt.service;
+import project.qldt.service.account.AccountService;
+import project.qldt.service.period.RegistrationPeriodService;
+import project.qldt.service.topic.TopicService;
 import project.qldt.support.Beans;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -13,18 +16,17 @@ import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import project.qldt.dto.RegistrationPeriodRequest;
-import project.qldt.dto.TopicRequest;
+import project.qldt.dto.period.RegistrationPeriodRequest;
+import project.qldt.dto.topic.TopicRequest;
 import project.qldt.exception.InvalidTopicException;
-import project.qldt.model.InvitationStatus;
-import project.qldt.model.Lecturer;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
-import project.qldt.model.Topic;
-import project.qldt.model.TopicAvailability;
-import project.qldt.model.TopicStatus;
+import project.qldt.model.topic.InvitationStatus;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
+import project.qldt.model.topic.Topic;
+import project.qldt.model.topic.TopicAvailability;
+import project.qldt.model.topic.TopicStatus;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -37,14 +39,12 @@ class TopicServiceTest {
 
 	private Lecturer gv1;
 	private Lecturer gv2;
-	private Lecturer gv3;
 	private RegistrationPeriod period;
 
 	@BeforeEach
 	void setUp() {
 		gv1 = accountService.createLecturer("123456", "GV 1", "gv1@qldt.local", "GV901", "Công nghệ phần mềm");
 		gv2 = accountService.createLecturer("123456", "GV 2", "gv2@qldt.local", "GV902", "Công nghệ phần mềm");
-		gv3 = accountService.createLecturer("123456", "GV 3", "gv3@qldt.local", "GV903", "Hệ thống thông tin");
 		period = periodService.create(periodRequest(LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1)));
 	}
 
@@ -52,7 +52,7 @@ class TopicServiceTest {
 	void taoDeTaiLayBoMonCuaNguoiTao() {
 		Topic topic = topicService.create(topicRequest(period.getId()), gv1);
 
-		assertEquals("Công nghệ phần mềm", topic.getDepartment());
+		assertEquals("Công nghệ phần mềm", topic.getDepartment().getName());
 		assertEquals(1, topic.getAdvisors().size());
 		assertEquals(TopicStatus.PENDING, topic.getStatus());
 		assertEquals(TopicAvailability.AVAILABLE, topic.getAvailability());
@@ -78,6 +78,7 @@ class TopicServiceTest {
 
 	@Test
 	void moiGiangVienKhacBoMonBiChan() {
+		accountService.createLecturer("123456", "GV 3", "gv3@qldt.local", "GV903", "Hệ thống thông tin");
 		Topic topic = topicService.create(topicRequest(period.getId()), gv1);
 
 		assertThrows(InvalidTopicException.class, () -> topicService.inviteAdvisor(topic.getId(), "GV903", gv1));
@@ -215,7 +216,7 @@ class TopicServiceTest {
 	private RegistrationPeriodRequest periodRequest(LocalDateTime teacherStart, LocalDateTime teacherEnd) {
 		RegistrationPeriodRequest request = new RegistrationPeriodRequest();
 		request.setName("Đợt giảng viên");
-		request.setType(PeriodType.COURSE);
+		request.setType(PeriodType.COURSE_PROJECT);
 		request.setTeacherRegisterStart(teacherStart);
 		request.setTeacherRegisterEnd(teacherEnd);
 		request.setStudentRegisterStart(teacherEnd.plusDays(1));

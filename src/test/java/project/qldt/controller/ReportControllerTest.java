@@ -1,5 +1,5 @@
 package project.qldt.controller;
-import project.qldt.support.Beans;
+
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,13 +11,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
-import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,21 +23,21 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import project.qldt.dto.RegistrationPeriodRequest;
-import project.qldt.dto.TopicRequest;
-import project.qldt.model.Lecturer;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
-import project.qldt.model.Report;
-import project.qldt.model.Student;
-import project.qldt.model.Team;
-import project.qldt.model.Topic;
-import project.qldt.service.AccountService;
-import project.qldt.service.RegistrationPeriodService;
-import project.qldt.service.ReportService;
-import project.qldt.service.TeamService;
-import project.qldt.service.TopicRegistrationService;
-import project.qldt.service.TopicService;
+import project.qldt.dto.period.RegistrationPeriodRequest;
+import project.qldt.dto.topic.TopicRequest;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
+import project.qldt.model.report.Report;
+import project.qldt.model.account.Student;
+import project.qldt.model.team.Team;
+import project.qldt.model.topic.Topic;
+import project.qldt.service.account.AccountService;
+import project.qldt.service.period.RegistrationPeriodService;
+import project.qldt.service.report.ReportService;
+import project.qldt.service.team.TeamService;
+import project.qldt.service.topic.TopicRegistrationService;
+import project.qldt.service.topic.TopicService;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -77,7 +75,7 @@ class ReportControllerTest {
 
 		RegistrationPeriodRequest pReq = new RegistrationPeriodRequest();
 		pReq.setName("Đợt Report Controller Test");
-		pReq.setType(PeriodType.COURSE);
+		pReq.setType(PeriodType.COURSE_PROJECT);
 		pReq.setTeacherRegisterStart(LocalDateTime.now().minusDays(1));
 		pReq.setTeacherRegisterEnd(LocalDateTime.now().plusDays(1));
 		pReq.setStudentRegisterStart(LocalDateTime.now().plusDays(2));
@@ -143,5 +141,24 @@ class ReportControllerTest {
 				.andExpect(status().is3xxRedirection())
 				.andExpect(redirectedUrl("/reports"))
 				.andExpect(flash().attributeExists("error"));
+	}
+
+	@Test
+	@WithMockUser(username = "GV001", roles = "LECTURER")
+	void giangVienXemBaoCaoInline() throws Exception {
+		mockMvc.perform(get("/reports/" + report.getId() + "/view"))
+				.andExpect(status().isOk())
+				.andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.allOf(
+						org.hamcrest.Matchers.containsString("inline"),
+						org.hamcrest.Matchers.containsString("filename*=UTF-8''"),
+						org.hamcrest.Matchers.containsString("baocao_download.pdf"))));
+	}
+
+	@Test
+	@WithMockUser(username = "GV001", roles = "LECTURER")
+	void xemBaoCaoTheoTopicId() throws Exception {
+		mockMvc.perform(get("/reports/topic/" + report.getTeam().getTopic().getId() + "/view"))
+				.andExpect(status().isOk())
+				.andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("inline")));
 	}
 }

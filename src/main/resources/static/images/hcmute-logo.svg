@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="320" height="80">
+  <defs>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#005A8D" />
+      <stop offset="100%" stop-color="#003B60" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F3C744" />
+      <stop offset="100%" stop-color="#D9A316" />
+    </linearGradient>
+  </defs>
+
+  <!-- Circular University Emblem -->
+  <g transform="translate(10, 6)">
+    <!-- Outer Gear / Circle -->
+    <circle cx="34" cy="34" r="32" fill="#FFFFFF" stroke="#005A8D" stroke-width="3"/>
+    <circle cx="34" cy="34" r="26" fill="url(#blueGrad)"/>
+
+    <!-- Gear teeth details -->
+    <path d="M34 14 L36 18 L32 18 Z M34 54 L36 50 L32 50 Z M14 34 L18 36 L18 32 Z M54 34 L50 36 L50 32 Z" fill="#F3C744"/>
+
+    <!-- Flame / Book Emblem -->
+    <path d="M34 22 C29 27 27 34 34 43 C41 34 39 27 34 22 Z" fill="#E11D48"/>
+    <path d="M34 26 C31 30 30 35 34 40 C38 35 37 30 34 26 Z" fill="url(#goldGrad)"/>
+
+    <!-- Atom / Compass Ring -->
+    <ellipse cx="34" cy="34" rx="20" ry="7" fill="none" stroke="#FFFFFF" stroke-width="1.5" transform="rotate(-30 34 34)"/>
+    <ellipse cx="34" cy="34" rx="20" ry="7" fill="none" stroke="#FFFFFF" stroke-width="1.5" transform="rotate(30 34 34)"/>
+  </g>
+
+  <!-- Typography: HCMUTE -->
+  <g transform="translate(86, 26)">
+    <text x="0" y="0" font-family="'Be Vietnam Pro', Arial, sans-serif" font-weight="900" font-size="24" fill="#005A8D" letter-spacing="1">HCMUTE</text>
+    <text x="0" y="16" font-family="'Be Vietnam Pro', Arial, sans-serif" font-weight="700" font-size="10.5" fill="#003B60" letter-spacing="0.4">ĐH SƯ PHẠM KỸ THUẬT TP.HCM</text>
+    <text x="0" y="30" font-family="'Be Vietnam Pro', Arial, sans-serif" font-weight="600" font-size="9.5" fill="#667085" letter-spacing="0.2">KHOA CÔNG NGHỆ THÔNG TIN</text>
+  </g>
+</svg>

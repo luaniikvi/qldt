@@ -1,81 +1,1040 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
 <head>
-    <meta charset="UTF-8"/>
-    <title>Hệ thống quản lý đề tài sinh viên</title>
-    <style>
-        body { font-family: Segoe UI, sans-serif; margin: 24px; }
-        li { margin: 8px 0; }
-        .bar { display: flex; gap: 16px; align-items: center; }
-        .ok { color: #1b5e20; background: #e8f5e9; padding: 8px 12px; border-radius: 4px; }
-    </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hệ thống Quản lý Đề tài Sinh viên - HCMUTE</title>
+
+    <!-- Favicon Khoa CNTT -->
+    <link rel="icon" type="image/png" th:href="@{/images/fit-logo.png}">
+    <link rel="shortcut icon" type="image/png" th:href="@{/images/fit-logo.png}">
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5.3 & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <!-- CSS System -->
+    <link rel="stylesheet" th:href="@{/css/design-tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/public.css}">
 </head>
+
 <body>
-<h1>Hệ thống quản lý đề tài sinh viên</h1>
 
-<div class="bar">
-    <span sec:authorize="isAuthenticated()">Xin chào <strong sec:authentication="name">user</strong></span>
-    <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post">
-        <button type="submit">Đăng xuất</button>
-    </form>
-    <a sec:authorize="!isAuthenticated()" th:href="@{/login}">Đăng nhập</a>
-</div>
+    <!-- ============================================================== -->
+    <!-- PUBLIC NAVIGATION (Simplified from Image 1)                     -->
+    <!-- ============================================================== -->
+    <!-- ============================================================== -->
+    <!-- PUBLIC NAVIGATION (Simplified from Image 1)                     -->
+    <!-- ============================================================== -->
+    <header class="public-navbar">
+        <div class="container public-navbar-container">
+            <a th:href="@{/home}" class="public-brand-identity" title="Hệ thống Quản lý Đề tài HCMUTE">
+                <div class="brand-emblem-badge">
+                    <img th:src="@{/images/hcmute-logo-vertical.png}"
+                        onerror="this.onerror=null; this.src='/css/images/hcmute-logo-vertical.png';" alt="Logo HCMUTE"
+                        class="brand-emblem-img">
+                </div>
+                <div class="brand-text-block">
+                    <span class="brand-uni-name">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</span>
+                    <span class="brand-sub-name"><span class="badge-kcntt">KHOA CNTT</span> HỆ THỐNG QUẢN LÝ ĐỀ TÀI SINH
+                        VIÊN</span>
+                </div>
+            </a>
 
-<p class="ok" th:if="${param.logout}">Bạn đã đăng xuất thành công.</p>
+            <!-- Desktop Nav Links with Smooth Scrolling -->
+            <ul class="public-nav-links">
+                <li><a th:href="@{/home}" class="public-nav-link active" id="navHome">Trang chủ</a></li>
+                <li><a href="#gioi-thieu" class="public-nav-link" id="navIntro">Giới thiệu</a></li>
+                <li><a href="#quy-trinh" class="public-nav-link" id="navProcess">Quy trình</a></li>
+                <li><a href="#huong-dan" class="public-nav-link" id="navGuide">Hướng dẫn</a></li>
+            </ul>
 
-<ul>
-    <li sec:authorize="isAuthenticated()">
-        <a th:href="@{/periods}">Danh sách đợt đăng ký</a>
-    </li>
-    <li sec:authorize="hasRole('DEAN')">
-        <a th:href="@{/periods/new}">Tạo đợt đăng ký</a>
-    </li>
-    <li sec:authorize="hasRole('DEAN')">
-        <a th:href="@{/dean/topics}">Duyệt và công bố đề tài</a>
-    </li>
-    <li sec:authorize="hasRole('ADMIN')">
-        <a th:href="@{/admin/accounts}">Quản trị tài khoản</a>
-    </li>
-    <li sec:authorize="hasRole('LECTURER')">
-        <a th:href="@{/topics}">Đề tài của tôi</a>
-    </li>
-    <li sec:authorize="hasRole('LECTURER')">
-        <a th:href="@{/registrations}">Duyệt đăng ký đề tài</a>
-    </li>
-    <li sec:authorize="hasRole('LECTURER')">
-        <a th:href="@{/reports}">Báo cáo đề tài</a>
-    </li>
-    <li sec:authorize="hasRole('DEAN')">
-        <a th:href="@{/dean/councils}">Lập hội đồng và công bố điểm</a>
-    </li>
-    <li sec:authorize="isAuthenticated()">
-        <a th:href="@{/notifications}">Thông báo (<span th:text="${unreadNotifications}">0</span>)</a>
-    </li>
-    <li sec:authorize="hasRole('DEAN')">
-        <a th:href="@{/dean/registrations}">Hủy đăng ký đề tài</a>
-    </li>
-    <li sec:authorize="hasRole('DEAN')">
-        <a th:href="@{/dean/reminders}">Gửi nhắc hạn</a>
-    </li>
-    <li sec:authorize="hasRole('DEAN')">
-        <a th:href="@{/dean/statistics}">Thống kê &amp; xuất kết quả</a>
-    </li>
-    <li sec:authorize="hasRole('LECTURER')">
-        <a th:href="@{/councils}">Hội đồng của tôi</a>
-    </li>
-    <li sec:authorize="hasRole('LECTURER')">
-        <a th:href="@{/results}">Kết quả đề tài tôi hướng dẫn</a>
-    </li>
-    <li sec:authorize="hasRole('STUDENT')">
-        <a th:href="@{/results}">Kết quả bảo vệ đề tài</a>
-    </li>
-    <li sec:authorize="hasRole('STUDENT')">
-        <a th:href="@{/teams}">Nhóm của tôi</a>
-    </li>
-    <li sec:authorize="hasRole('STUDENT')">
-        <a th:href="@{/published-topics}">Danh sách đề tài đã công bố</a>
-    </li>
-</ul>
+            <!-- Action / Login CTA -->
+            <div class="d-flex align-items-center gap-2">
+                <th:block sec:authorize="!isAuthenticated()">
+                    <a th:href="@{/login}" class="btn-hcmute-primary">
+                        <i class="bi bi-box-arrow-in-right"></i> Đăng nhập
+                    </a>
+                </th:block>
+                <th:block sec:authorize="isAuthenticated()">
+                    <a th:href="@{/announcements}" class="btn-hcmute-primary">
+                        <i class="bi bi-grid-fill"></i> Trang làm việc
+                    </a>
+                    <form th:action="@{/logout}" method="post" class="m-0" data-no-disable>
+                        <button type="submit" class="btn-hcmute-secondary btn-hcmute-sm" title="Đăng xuất">
+                            <i class="bi bi-box-arrow-right"></i>
+                        </button>
+                    </form>
+                </th:block>
+            </div>
+        </div>
+    </header>
+
+    <!-- Alert for logout if present -->
+    <div class="container mt-3" th:if="${param.logout}">
+        <div class="hcmute-alert hcmute-alert-success">
+            <i class="bi bi-check-circle-fill fs-5"></i>
+            <div>Bạn đã đăng xuất khỏi hệ thống thành công.</div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 1. HERO CAROUSEL SECTION (Large, Interactive Academic Slider)   -->
+    <!-- ============================================================== -->
+    <section class="public-hero-carousel" id="homeHeroCarousel"
+        aria-label="Banner hình ảnh giới thiệu hệ thống quản lý đề tài HCMUTE">
+        <div class="public-hero-track" id="heroTrack">
+            <!-- Slide 1: Không gian học tập & nghiên cứu HCMUTE -->
+            <div class="public-hero-slide" aria-hidden="false">
+                <img th:src="@{/images/hcmute-slide-school.png}" alt="Khuôn viên và thư viện trường HCMUTE"
+                    class="public-hero-slide-bg" fetchpriority="high">
+                <div class="public-hero-overlay"></div>
+                <div class="container public-hero-content">
+                    <div class="row">
+                        <div class="col-lg-8 col-xl-7">
+                            <span class="hero-tagline">
+                                <i class="bi bi-mortarboard-fill text-warning"></i> Khoa Công nghệ Thông tin • HCMUTE
+                            </span>
+                            <h1 class="hero-title">
+                                Hệ thống quản lý đề tài sinh viên
+                            </h1>
+                            <p class="hero-description">
+                                Nền tảng số hóa toàn diện quy trình đăng ký, thực hiện và bảo vệ đề tài
+                                <strong>Nghiên cứu khoa học (NCKH)</strong>, <strong>Tiểu luận chuyên ngành (TLCN)</strong> và
+                                <strong>Khóa luận tốt nghiệp (KLTN)</strong> dành cho sinh viên 3 ngành:
+                                <strong>Công nghệ Thông tin</strong>, <strong>An toàn Thông tin</strong> và <strong>Kỹ thuật Dữ liệu</strong> tại Khoa CNTT - HCMUTE.
+                            </p>
+                            <div class="hero-actions">
+                                <th:block sec:authorize="!isAuthenticated()">
+                                    <a th:href="@{/login}" class="hero-btn-accent">
+                                        <i class="bi bi-box-arrow-in-right"></i> Đăng nhập hệ thống
+                                    </a>
+                                </th:block>
+                                <th:block sec:authorize="isAuthenticated()">
+                                    <a th:href="@{/announcements}" class="hero-btn-accent">
+                                        <i class="bi bi-grid-fill"></i> Truy cập trang làm việc
+                                    </a>
+                                </th:block>
+                                <a href="#quy-trinh" class="hero-btn-outline">
+                                    <i class="bi bi-diagram-3"></i> Xem quy trình
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2: Nghiên cứu khoa học & Đổi mới sáng tạo -->
+            <div class="public-hero-slide" aria-hidden="true">
+                <img th:src="@{/images/nghiencuu.jpg}" alt="Nghiên cứu khoa học và phát triển công nghệ"
+                    class="public-hero-slide-bg" loading="lazy">
+                <div class="public-hero-overlay"></div>
+                <div class="container public-hero-content">
+                    <div class="row">
+                        <div class="col-lg-8 col-xl-7">
+                            <span class="hero-tagline">
+                                <i class="bi bi-lightbulb-fill text-warning"></i> Nghiên cứu &amp; Đổi mới sáng tạo
+                            </span>
+                            <h2 class="hero-title">
+                                Phát triển công nghệ mũi nhọn &amp; Làm chủ dữ liệu tương lai
+                            </h2>
+                            <p class="hero-description">
+                                Thúc đẩy các công trình nghiên cứu và đề tài ứng dụng thực tiễn chuyên sâu trong 3 định hướng trọng điểm:
+                                <strong>Công nghệ Thông tin</strong>, <strong>An toàn Thông tin</strong> và <strong>Kỹ thuật Dữ liệu</strong>
+                                cùng 4 chuyên ngành mũi nhọn tại Khoa CNTT.
+                            </p>
+                            <div class="hero-actions">
+                                <th:block sec:authorize="!isAuthenticated()">
+                                    <a th:href="@{/login}" class="hero-btn-accent">
+                                        <i class="bi bi-journal-check"></i> Đăng nhập đề xuất đề tài
+                                    </a>
+                                </th:block>
+                                <th:block sec:authorize="isAuthenticated()">
+                                    <a th:href="@{/announcements}" class="hero-btn-accent">
+                                        <i class="bi bi-grid-fill"></i> Vào cổng quản lý
+                                    </a>
+                                </th:block>
+                                <a href="#gioi-thieu" class="hero-btn-outline">
+                                    <i class="bi bi-info-circle"></i> Tìm hiểu chức năng
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Hợp tác nhóm & Thực hiện đồ án -->
+            <div class="public-hero-slide" aria-hidden="true">
+                <img th:src="@{/images/hoptac.png}" alt="Hợp tác nhóm sinh viên thực hiện đồ án"
+                    class="public-hero-slide-bg" loading="lazy">
+                <div class="public-hero-overlay"></div>
+                <div class="container public-hero-content">
+                    <div class="row">
+                        <div class="col-lg-8 col-xl-7">
+                            <span class="hero-tagline">
+                                <i class="bi bi-people-fill text-warning"></i> Làm việc nhóm &amp; Hướng dẫn khoa học
+                            </span>
+                            <h2 class="hero-title">
+                                Đồng hành nghiên cứu &amp; Chinh phục đề tài đỉnh cao
+                            </h2>
+                            <p class="hero-description">
+                                Không gian kết nối nhóm nghiên cứu năng động, đồng hành chặt chẽ cùng Giảng viên hướng dẫn qua từng chặng đường: từ định hình ý tưởng, hoàn thiện sản phẩm công nghệ đến tự tin bảo vệ đề tài xuất sắc.
+                            </p>
+                            <div class="hero-actions">
+                                <a href="#huong-dan" class="hero-btn-accent">
+                                    <i class="bi bi-person-lines-fill"></i> Hướng dẫn sinh viên
+                                </a>
+                                <th:block sec:authorize="!isAuthenticated()">
+                                    <a th:href="@{/login}" class="hero-btn-outline">
+                                        <i class="bi bi-box-arrow-in-right"></i> Đăng nhập ngay
+                                    </a>
+                                </th:block>
+                                <th:block sec:authorize="isAuthenticated()">
+                                    <a th:href="@{/announcements}" class="hero-btn-outline">
+                                        <i class="bi bi-grid-fill"></i> Quản lý nhóm
+                                    </a>
+                                </th:block>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: Khoa CNTT - Hội đồng bảo vệ & Đánh giá -->
+            <div class="public-hero-slide" aria-hidden="true">
+                <img th:src="@{/images/CNTT_1.jpg}" alt="Hội đồng bảo vệ đề tài và khóa luận tốt nghiệp"
+                    class="public-hero-slide-bg" loading="lazy">
+                <div class="public-hero-overlay"></div>
+                <div class="container public-hero-content">
+                    <div class="row">
+                        <div class="col-lg-8 col-xl-7">
+                            <span class="hero-tagline">
+                                <i class="bi bi-award-fill text-warning"></i> Hội đồng phản biện &amp; Đánh giá
+                            </span>
+                            <h2 class="hero-title">
+                                Quy trình bảo vệ minh bạch &amp; Đánh giá công bằng
+                            </h2>
+                            <p class="hero-description">
+                                Hội đồng chuyên môn gồm 03 - 05 giảng viên phản biện đánh giá độc lập, tổng hợp điểm số
+                                tự động theo quy chế đào tạo và công bố kết quả bảo vệ đề tài chính xác, nhanh chóng.
+                            </p>
+                            <div class="hero-actions">
+                                <a href="#quy-trinh" class="hero-btn-accent">
+                                    <i class="bi bi-diagram-3-fill"></i> Lộ trình 6 bước
+                                </a>
+                                <th:block sec:authorize="!isAuthenticated()">
+                                    <a th:href="@{/login}" class="hero-btn-outline">
+                                        <i class="bi bi-box-arrow-in-right"></i> Cổng đăng nhập
+                                    </a>
+                                </th:block>
+                                <th:block sec:authorize="isAuthenticated()">
+                                    <a th:href="@{/announcements}" class="hero-btn-outline">
+                                        <i class="bi bi-grid-fill"></i> Vào cổng quản lý
+                                    </a>
+                                </th:block>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Side Navigation Arrows -->
+        <button type="button" class="hero-nav-arrow prev" id="heroPrevBtn" aria-label="Chuyển slide trước">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+        <button type="button" class="hero-nav-arrow next" id="heroNextBtn" aria-label="Chuyển slide sau">
+            <i class="bi bi-chevron-right"></i>
+        </button>
+
+        <!-- Minimalist Slide Indicators (Sleek Dash Bars) -->
+        <div class="hero-indicators" id="heroIndicators" aria-label="Bộ chọn trang banner">
+            <button type="button" class="hero-indicator active" data-slide="0" aria-label="Chuyển đến Slide 1"></button>
+            <button type="button" class="hero-indicator" data-slide="1" aria-label="Chuyển đến Slide 2"></button>
+            <button type="button" class="hero-indicator" data-slide="2" aria-label="Chuyển đến Slide 3"></button>
+            <button type="button" class="hero-indicator" data-slide="3" aria-label="Chuyển đến Slide 4"></button>
+        </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- ACADEMIC HIGHLIGHT STATS STRIP                                  -->
+    <!-- ============================================================== -->
+    <section class="academic-stats-strip">
+        <div class="container">
+            <div class="row g-3 g-lg-4 align-items-center">
+                <!-- 1. 3 Ngành đào tạo -->
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="stat-strip-item">
+                        <div class="stat-strip-icon color-blue">
+                            <i class="bi bi-cpu-fill"></i>
+                        </div>
+                        <div class="stat-strip-text">
+                            <div class="stat-strip-number">3</div>
+                            <div class="stat-strip-label">Ngành đào tạo trọng điểm</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. 4 Bộ môn chuyên biệt -->
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="stat-strip-item">
+                        <div class="stat-strip-icon color-purple">
+                            <i class="bi bi-diagram-3-fill"></i>
+                        </div>
+                        <div class="stat-strip-text">
+                            <div class="stat-strip-number">4</div>
+                            <div class="stat-strip-label">Bộ môn chuyên biệt</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. 500+ Sinh viên -->
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="stat-strip-item">
+                        <div class="stat-strip-icon color-emerald">
+                            <i class="bi bi-mortarboard-fill"></i>
+                        </div>
+                        <div class="stat-strip-text">
+                            <div class="stat-strip-number">500+</div>
+                            <div class="stat-strip-label">Sinh viên làm đề tài/năm</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. 50+ Giảng viên -->
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="stat-strip-item">
+                        <div class="stat-strip-icon color-cyan">
+                            <i class="bi bi-person-workspace"></i>
+                        </div>
+                        <div class="stat-strip-text">
+                            <div class="stat-strip-number">50+</div>
+                            <div class="stat-strip-label">Giảng viên hướng dẫn</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. 200+ Đề tài xuất sắc -->
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="stat-strip-item">
+                        <div class="stat-strip-icon color-amber">
+                            <i class="bi bi-journal-check"></i>
+                        </div>
+                        <div class="stat-strip-text">
+                            <div class="stat-strip-number">200+</div>
+                            <div class="stat-strip-label">Đề tài xuất sắc hằng năm</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. 100% Số hóa -->
+                <div class="col-6 col-md-4 col-xl-2">
+                    <div class="stat-strip-item">
+                        <div class="stat-strip-icon color-rose">
+                            <i class="bi bi-patch-check-fill"></i>
+                        </div>
+                        <div class="stat-strip-text">
+                            <div class="stat-strip-number">100%</div>
+                            <div class="stat-strip-label">Quy trình số hóa trực tuyến</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+
+
+    <!-- ============================================================== -->
+    <!-- 2. GIỚI THIỆU HỆ THỐNG (3 Pillars)                             -->
+    <!-- ============================================================== -->
+    <section id="gioi-thieu" class="public-section">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-subtitle"><i class="bi bi-info-circle-fill"></i> GIỚI THIỆU HỆ THỐNG</span>
+                <h2 class="section-title">Hệ thống đồng hành cùng giảng viên &amp; sinh viên</h2>
+            </div>
+
+            <div class="row g-4">
+                <!-- Pillar 1 -->
+                <div class="col-md-4">
+                    <div class="pillar-card pillar-blue">
+                        <div class="pillar-icon-box pillar-icon-blue">
+                            <i class="bi bi-journal-bookmark-fill"></i>
+                        </div>
+                        <h3 class="h4 fw-bold mb-3">Đăng ký &amp; Quản lý đề tài</h3>
+                        <p class="text-muted small mb-4" style="line-height: 1.65;">
+                            Giảng viên chủ động đề xuất đề tài theo bộ môn chuyên trách; Trưởng khoa phê duyệt và công
+                            bố danh sách chính thức theo từng đợt đào tạo.
+                        </p>
+                        <div class="pillar-tags">
+                            <span class="pillar-tag">Đề tài Môn học</span>
+                            <span class="pillar-tag">NCKH</span>
+                            <span class="pillar-tag">TLCN &amp; KLTN</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pillar 2 -->
+                <div class="col-md-4">
+                    <div class="pillar-card pillar-emerald">
+                        <div class="pillar-icon-box pillar-icon-emerald">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <h3 class="h4 fw-bold mb-3">Quản lý nhóm &amp; Giảng viên HD</h3>
+                        <p class="text-muted small mb-4" style="line-height: 1.65;">
+                            Sinh viên tạo nhóm nghiên cứu, mời thành viên tham gia, phân công nhóm trưởng và chọn nguyện
+                            vọng đăng ký đề tài trực tiếp với giảng viên.
+                        </p>
+                        <div class="pillar-tags">
+                            <span class="pillar-tag">Ghép nhóm trực tuyến</span>
+                            <span class="pillar-tag">Tối đa 3 SV</span>
+                            <span class="pillar-tag">Mời GVHD</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pillar 3 -->
+                <div class="col-md-4">
+                    <div class="pillar-card pillar-purple">
+                        <div class="pillar-icon-box pillar-icon-purple">
+                            <i class="bi bi-award-fill"></i>
+                        </div>
+                        <h3 class="h4 fw-bold mb-3">Nộp báo cáo &amp; Đánh giá kết quả</h3>
+                        <p class="text-muted small mb-4" style="line-height: 1.65;">
+                            Nhóm trưởng nộp tài liệu báo cáo đúng hạn; hội đồng phản biện chấm điểm khách quan và công
+                            bố kết quả bảo vệ trực tiếp trên cổng thông tin.
+                        </p>
+                        <div class="pillar-tags">
+                            <span class="pillar-tag">Nộp báo cáo 24/7</span>
+                            <span class="pillar-tag">Hội đồng 3-5 GV</span>
+                            <span class="pillar-tag">Điểm công khai</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- 3. QUY TRÌNH THỰC HIỆN ĐỀ TÀI (Interactive 6-Step Roadmap)     -->
+    <!-- ============================================================== -->
+    <section id="quy-trinh" class="public-section public-process-section">
+        <div class="container">
+            <div class="section-header text-center">
+                <span class="section-subtitle"><i class="bi bi-diagram-3-fill me-1"></i> QUY TRÌNH THỰC HIỆN</span>
+                <h2 class="section-title">Quy trình 6 bước từ đăng ký đến bảo vệ đề tài</h2>
+                <p class="section-desc">Quy trình khép kín và minh bạch: từ khâu mở đợt, đăng ký nhóm, xét duyệt đề cương
+                    cho đến nộp báo cáo tiến độ và chấm điểm bảo vệ trước hội đồng.</p>
+            </div>
+
+            <div class="process-journey-grid">
+                <!-- Bước 1 -->
+                <div class="process-card">
+                    <div class="process-card-header">
+                        <span class="process-badge phase-1">Giai đoạn 1</span>
+                        <span class="process-step-indicator">01</span>
+                    </div>
+                    <div class="process-icon-wrapper color-blue">
+                        <i class="bi bi-calendar2-range-fill"></i>
+                    </div>
+                    <h3 class="process-card-title">Mở đợt đăng ký</h3>
+                    <p class="process-card-text">Trưởng khoa thiết lập đợt với khung thời gian đề xuất cho GV và đăng ký
+                        cho SV theo học kỳ.</p>
+                    <div class="process-card-meta">
+                        <i class="bi bi-person-fill-gear"></i> Phụ trách: <strong>Trưởng khoa</strong>
+                    </div>
+                </div>
+
+                <!-- Bước 2 -->
+                <div class="process-card">
+                    <div class="process-card-header">
+                        <span class="process-badge phase-1">Giai đoạn 1</span>
+                        <span class="process-step-indicator">02</span>
+                    </div>
+                    <div class="process-icon-wrapper color-cyan">
+                        <i class="bi bi-journal-plus"></i>
+                    </div>
+                    <h3 class="process-card-title">GV đăng ký đề tài</h3>
+                    <p class="process-card-text">Giảng viên đăng ký tên đề tài, mục tiêu, bộ môn và mời đồng hướng dẫn
+                        (tối đa 2 GV phụ trách).</p>
+                    <div class="process-card-meta">
+                        <i class="bi bi-person-badge-fill"></i> Phụ trách: <strong>Giảng viên</strong>
+                    </div>
+                </div>
+
+                <!-- Bước 3 -->
+                <div class="process-card">
+                    <div class="process-card-header">
+                        <span class="process-badge phase-1">Giai đoạn 1</span>
+                        <span class="process-step-indicator">03</span>
+                    </div>
+                    <div class="process-icon-wrapper color-indigo">
+                        <i class="bi bi-patch-check-fill"></i>
+                    </div>
+                    <h3 class="process-card-title">Duyệt &amp; Công bố</h3>
+                    <p class="process-card-text">Trưởng khoa thẩm định chất lượng khoa học, duyệt và công bố danh mục đề
+                        tài công khai.</p>
+                    <div class="process-card-meta">
+                        <i class="bi bi-shield-check"></i> Phụ trách: <strong>Trưởng khoa</strong>
+                    </div>
+                </div>
+
+                <!-- Bước 4 -->
+                <div class="process-card">
+                    <div class="process-card-header">
+                        <span class="process-badge phase-2">Giai đoạn 2</span>
+                        <span class="process-step-indicator">04</span>
+                    </div>
+                    <div class="process-icon-wrapper color-amber">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <h3 class="process-card-title">Nhóm SV đăng ký</h3>
+                    <p class="process-card-text">Sinh viên ghép nhóm (có nhóm trưởng), chọn nguyện vọng đề tài và chờ
+                        GVHD phê duyệt.</p>
+                    <div class="process-card-meta">
+                        <i class="bi bi-mortarboard-fill"></i> Phụ trách: <strong>Sinh viên &amp; GVHD</strong>
+                    </div>
+                </div>
+
+                <!-- Bước 5 -->
+                <div class="process-card">
+                    <div class="process-card-header">
+                        <span class="process-badge phase-2">Giai đoạn 2</span>
+                        <span class="process-step-indicator">05</span>
+                    </div>
+                    <div class="process-icon-wrapper color-emerald">
+                        <i class="bi bi-cloud-arrow-up-fill"></i>
+                    </div>
+                    <h3 class="process-card-title">Thực hiện &amp; Báo cáo</h3>
+                    <p class="process-card-text">Nhóm triển khai nghiên cứu, trao đổi tiến độ với GVHD và nhóm trưởng
+                        nộp các phiên bản báo cáo.</p>
+                    <div class="process-card-meta">
+                        <i class="bi bi-file-earmark-text-fill"></i> Phụ trách: <strong>Nhóm sinh viên</strong>
+                    </div>
+                </div>
+
+                <!-- Bước 6 -->
+                <div class="process-card">
+                    <div class="process-card-header">
+                        <span class="process-badge phase-3">Giai đoạn 3</span>
+                        <span class="process-step-indicator">06</span>
+                    </div>
+                    <div class="process-icon-wrapper color-purple">
+                        <i class="bi bi-award-fill"></i>
+                    </div>
+                    <h3 class="process-card-title">Bảo vệ &amp; Công bố điểm</h3>
+                    <p class="process-card-text">Hội đồng chấm điểm độc lập, chủ tịch tổng hợp điểm và Khoa công bố kết
+                        quả bảo vệ trực tuyến.</p>
+                    <div class="process-card-meta">
+                        <i class="bi bi-star-fill text-warning"></i> Phụ trách: <strong>Hội đồng phản biện</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- 4. HƯỚNG DẪN SỬ DỤNG THEO VAI TRÒ (Modern Role Hubs)          -->
+    <!-- ============================================================== -->
+    <section id="huong-dan" class="public-section public-guide-section">
+        <div class="container">
+            <div class="section-header text-center">
+                <span class="section-subtitle"><i class="bi bi-compass-fill me-1"></i> HỖ TRỢ VÀ HƯỚNG DẪN</span>
+                <h2 class="section-title">Cẩm nang tác vụ dành cho từng vai trò</h2>
+                <p class="section-desc">Hệ thống tối ưu hóa giao diện và quy trình riêng biệt phù hợp với nhiệm vụ của
+                    từng đối tượng sử dụng.</p>
+            </div>
+
+            <div class="row g-4">
+                <!-- Sinh viên -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="role-hub-card student-card">
+                        <div class="role-hub-banner student-banner">
+                            <div class="role-hub-icon">
+                                <i class="bi bi-mortarboard-fill"></i>
+                            </div>
+                            <div>
+                                <span class="role-hub-tag">HỌC TẬP &amp; NGHIÊN CỨU</span>
+                                <h3 class="role-hub-title">Dành cho Sinh viên</h3>
+                            </div>
+                        </div>
+                        <div class="role-hub-body">
+                            <p class="role-hub-desc">Dành cho sinh viên thực hiện Môn học, NCKH, Tiểu luận chuyên ngành
+                                và Khóa luận tốt nghiệp.</p>
+                            <div class="role-checklist">
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Đăng nhập nhanh bằng Mã số sinh viên (MSSV) được cấp</span>
+                                </div>
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Tạo nhóm hoặc gửi lời mời ghép nhóm nghiên cứu</span>
+                                </div>
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Tra cứu danh mục đề tài đã công bố và nộp đơn đăng ký</span>
+                                </div>
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Nhóm trưởng tải lên tệp báo cáo tiến độ và nghiệm thu</span>
+                                </div>
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Tra cứu điểm bảo vệ và nhận xét của hội đồng tức thì</span>
+                                </div>
+                            </div>
+                            <div class="role-hub-action">
+                                <a th:href="@{/login}" class="btn-role-action student-btn">
+                                    <span>Truy cập Cổng Sinh viên</span>
+                                    <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Giảng viên -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="role-hub-card lecturer-card">
+                        <div class="role-hub-banner lecturer-banner">
+                            <div class="role-hub-icon">
+                                <i class="bi bi-person-workspace"></i>
+                            </div>
+                            <div>
+                                <span class="role-hub-tag">HƯỚNG DẪN &amp; HỘI ĐỒNG</span>
+                                <h3 class="role-hub-title">Dành cho Giảng viên</h3>
+                            </div>
+                        </div>
+                        <div class="role-hub-body">
+                            <p class="role-hub-desc">Dành cho giảng viên hướng dẫn chuyên môn và thành viên hội đồng
+                                chấm thi phản biện.</p>
+                            <div class="role-checklist">
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Đăng ký đề tài mới và mô tả yêu cầu trong đợt mở</span>
+                                </div>
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Mời và đồng thuận giảng viên cùng hướng dẫn chuyên môn</span>
+                                </div>
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Xét duyệt đơn đăng ký của các nhóm sinh viên</span>
+                                </div>
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Theo dõi lịch sử nộp và đánh giá chất lượng tài liệu</span>
+                                </div>
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Tham gia hội đồng phản biện và nhập điểm đánh giá chuẩn quy chế</span>
+                                </div>
+                            </div>
+                            <div class="role-hub-action">
+                                <a th:href="@{/login}" class="btn-role-action lecturer-btn">
+                                    <span>Truy cập Cổng Giảng viên</span>
+                                    <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quản lý / Trưởng khoa -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="role-hub-card admin-card">
+                        <div class="role-hub-banner admin-banner">
+                            <div class="role-hub-icon">
+                                <i class="bi bi-shield-lock-fill"></i>
+                            </div>
+                            <div>
+                                <span class="role-hub-tag">QUẢN TRỊ &amp; ĐIỀU HÀNH</span>
+                                <h3 class="role-hub-title">Trưởng khoa &amp; Quản trị</h3>
+                            </div>
+                        </div>
+                        <div class="role-hub-body">
+                            <p class="role-hub-desc">Dành cho Ban chủ nhiệm Khoa CNTT và Ban quản trị hệ thống quản lý
+                                tổng thể đào tạo.</p>
+                            <div class="role-checklist">
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Khởi tạo các đợt đăng ký và thiết lập hạn chót các giai đoạn</span>
+                                </div>
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Thẩm định, duyệt và công bố danh mục đề tài khoa học</span>
+                                </div>
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Thành lập các hội đồng chấm điểm gồm 03 - 05 giảng viên</span>
+                                </div>
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Phát thông báo nhắc nhở hạn chót nộp báo cáo và nộp điểm</span>
+                                </div>
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Xuất báo cáo thống kê kết quả toàn khóa ra tệp Excel chuẩn</span>
+                                </div>
+                            </div>
+                            <div class="role-hub-action">
+                                <a th:href="@{/login}" class="btn-role-action admin-btn">
+                                    <span>Truy cập Cổng Quản lý</span>
+                                    <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- 5. FOOTER (HCMUTE Official Identity)                           -->
+    <!-- ============================================================== -->
+    <footer class="public-footer">
+        <div class="container">
+            <div class="row g-5">
+                <!-- Brand & University Info -->
+                <div class="col-lg-5 col-md-12">
+                    <div class="footer-brand-identity mb-3">
+                        <div class="footer-emblem-badge">
+                            <img th:src="@{/images/fit-logo.png}"
+                                onerror="this.onerror=null; this.src='/images/hcmute-logo-vertical.png';"
+                                alt="Logo Khoa Công nghệ Thông tin - HCMUTE" class="footer-emblem-img">
+                        </div>
+                        <div class="footer-brand-text">
+                            <span class="footer-uni-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</span>
+                            <span class="footer-dept-title"><span class="badge-kcntt-footer">KHOA CNTT</span> HỆ THỐNG
+                                QUẢN LÝ ĐỀ TÀI SINH VIÊN</span>
+                        </div>
+                    </div>
+                    <ul class="footer-contact-list">
+                        <li><i class="bi bi-geo-alt-fill text-primary me-2"></i>Số 1 Võ Văn Ngân, phường Thủ Đức, TPHCM
+                        </li>
+                        <li><i class="bi bi-envelope-fill text-primary me-2"></i>fit@hcmute.edu.vn</li>
+                        <li><i class="bi bi-telephone-fill text-primary me-2"></i>(028) 3896 8641 — (028) 3722 1223</li>
+                    </ul>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="col-lg-3 col-md-6">
+                    <h5 class="footer-heading">ĐIỀU HƯỚNG NHANH</h5>
+                    <ul class="footer-links">
+                        <li><a th:href="@{/home}"><i class="bi bi-chevron-right me-1"></i>Trang chủ</a></li>
+                        <li><a href="#gioi-thieu"><i class="bi bi-chevron-right me-1"></i>Giới thiệu hệ thống</a></li>
+                        <li><a href="#quy-trinh"><i class="bi bi-chevron-right me-1"></i>Quy trình thực hiện đề tài</a>
+                        </li>
+                        <li><a href="#huong-dan"><i class="bi bi-chevron-right me-1"></i>Hướng dẫn theo vai trò</a></li>
+                    </ul>
+                </div>
+
+                <!-- Academic Types & Portal Entry -->
+                <div class="col-lg-4 col-md-6">
+                    <h5 class="footer-heading">CỔNG THÔNG TIN ĐÀO TẠO</h5>
+                    <p class="footer-portal-desc">Nền tảng quản trị và số hóa toàn bộ đề tài Môn học, Nghiên cứu khoa
+                        học (NCKH), Tiểu luận chuyên ngành (TLCN) và Khóa luận tốt nghiệp (KLTN).</p>
+                    <div class="mt-3">
+                        <th:block sec:authorize="!isAuthenticated()">
+                            <a th:href="@{/login}" class="btn-hcmute-primary w-100 justify-content-center">
+                                <i class="bi bi-box-arrow-in-right"></i> Đăng nhập hệ thống
+                            </a>
+                        </th:block>
+                        <th:block sec:authorize="isAuthenticated()">
+                            <a th:href="@{/announcements}" class="btn-hcmute-primary w-100 justify-content-center">
+                                <i class="bi bi-grid-fill"></i> Truy cập trang làm việc
+                            </a>
+                        </th:block>
+                    </div>
+                </div>
+            </div>
+
+            <div class="public-footer-bottom">
+                <div class="row align-items-center">
+                    <div class="col-md-8 text-center text-md-start mb-2 mb-md-0">
+                        &copy; 2026 Khoa Công nghệ Thông tin — Trường Đại học Công nghệ Kỹ thuật TP.HCM. Bảo lưu mọi
+                        quyền.
+                    </div>
+                    <div class="col-md-4 text-center text-md-end">
+                        <span class="text-white-50 small">Phiên bản 2.0 • Hệ thống Quản lý Đề tài</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Public Page Script: Hero Carousel & Smooth Anchor Scroll -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // 1. Silky Smooth Scrolling with Fixed Navbar Offset (80px)
+            function smoothScrollTo(targetEl) {
+                if (!targetEl) return;
+                const navbar = document.querySelector('.public-navbar');
+                const headerOffset = navbar ? navbar.offsetHeight : 80;
+                const elementPosition = targetEl.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
+
+            const anchorLinks = document.querySelectorAll('a[href^="#"], a[href*="/home#"]');
+            anchorLinks.forEach(link => {
+                link.addEventListener('click', function (e) {
+                    const rawHref = this.getAttribute('href');
+                    const hashIndex = rawHref.indexOf('#');
+                    if (hashIndex !== -1) {
+                        const targetId = rawHref.substring(hashIndex);
+                        if (targetId.length > 1) {
+                            const targetEl = document.querySelector(targetId);
+                            if (targetEl) {
+                                e.preventDefault();
+                                smoothScrollTo(targetEl);
+                                history.pushState(null, '', targetId);
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Clicking "Trang chủ" smoothly scrolls to the top
+            const navHome = document.getElementById('navHome');
+            if (navHome) {
+                navHome.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    history.pushState(null, '', '/home');
+                    updateActiveNav('navHome');
+                });
+            }
+
+            // 2. ScrollSpy: Automatically highlight active navbar item on scroll
+            const sections = [
+                { id: 'gioi-thieu', navId: 'navIntro' },
+                { id: 'quy-trinh', navId: 'navProcess' },
+                { id: 'huong-dan', navId: 'navGuide' }
+            ];
+
+            function updateActiveNav(activeId) {
+                document.querySelectorAll('.public-nav-link').forEach(link => {
+                    link.classList.remove('active');
+                });
+                const activeLink = document.getElementById(activeId);
+                if (activeLink) activeLink.classList.add('active');
+            }
+
+            let scrollTimeout;
+            window.addEventListener('scroll', function () {
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(function () {
+                    const scrollPos = window.pageYOffset + 120;
+                    if (scrollPos < 400) {
+                        updateActiveNav('navHome');
+                        return;
+                    }
+
+                    for (let i = sections.length - 1; i >= 0; i--) {
+                        const sectionEl = document.getElementById(sections[i].id);
+                        if (sectionEl && sectionEl.offsetTop <= scrollPos) {
+                            updateActiveNav(sections[i].navId);
+                            return;
+                        }
+                    }
+                }, 30);
+            }, { passive: true });
+
+            // 2. Public Hero Carousel (Auto-Play & Touch/Mouse Draggable)
+            const carousel = document.getElementById('homeHeroCarousel');
+            if (!carousel) return;
+
+            const track = document.getElementById('heroTrack');
+            const slides = carousel.querySelectorAll('.public-hero-slide');
+            const prevBtn = document.getElementById('heroPrevBtn');
+            const nextBtn = document.getElementById('heroNextBtn');
+            const indicators = carousel.querySelectorAll('.hero-indicator');
+
+            if (!track || slides.length === 0) return;
+
+            const totalSlides = slides.length;
+            let currentIndex = 0;
+            let autoPlayTimer = null;
+            const autoPlayDelay = 5000; // Tự động chuyển sau 5s
+
+            function updateSlide() {
+                track.style.transition = 'transform 0.65s cubic-bezier(0.16, 1, 0.3, 1)';
+                track.style.transform = `translateX(-${currentIndex * 100}%)`;
+
+                slides.forEach((slide, idx) => {
+                    const isActive = idx === currentIndex;
+                    slide.setAttribute('aria-hidden', !isActive);
+                    slide.querySelectorAll('a, button').forEach(el => {
+                        if (isActive) {
+                            el.removeAttribute('tabindex');
+                        } else {
+                            el.setAttribute('tabindex', '-1');
+                        }
+                    });
+                });
+
+                // Cập nhật thanh chỉ báo thanh lịch
+                indicators.forEach((indicator, idx) => {
+                    indicator.classList.toggle('active', idx === currentIndex);
+                });
+            }
+
+            function goToSlide(index) {
+                currentIndex = (index + totalSlides) % totalSlides;
+                updateSlide();
+            }
+
+            function nextSlide() {
+                goToSlide(currentIndex + 1);
+            }
+
+            function prevSlide() {
+                goToSlide(currentIndex - 1);
+            }
+
+            function startAutoPlay() {
+                stopAutoPlay();
+                autoPlayTimer = setInterval(nextSlide, autoPlayDelay);
+            }
+
+            function stopAutoPlay() {
+                if (autoPlayTimer) {
+                    clearInterval(autoPlayTimer);
+                    autoPlayTimer = null;
+                }
+            }
+
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    prevSlide();
+                    startAutoPlay();
+                });
+            }
+
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    nextSlide();
+                    startAutoPlay();
+                });
+            }
+
+            // Gắn sự kiện click cho các thanh chỉ báo (indicators)
+            indicators.forEach(indicator => {
+                indicator.addEventListener('click', function () {
+                    const slideIndex = parseInt(this.getAttribute('data-slide'), 10);
+                    if (!isNaN(slideIndex)) {
+                        goToSlide(slideIndex);
+                        startAutoPlay();
+                    }
+                });
+            });
+
+            // --- Tự do kéo qua kéo lại (Drag & Swipe bằng chuột và cảm ứng) ---
+            let isDragging = false;
+            let startX = 0;
+            let currentX = 0;
+            let dragDeltaX = 0;
+            let hasMoved = false;
+
+            function getPointerX(e) {
+                return e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            }
+
+            function onDragStart(e) {
+                if (e.type === 'mousedown' && e.button !== 0) return;
+                isDragging = true;
+                hasMoved = false;
+                startX = getPointerX(e);
+                dragDeltaX = 0;
+                stopAutoPlay();
+                track.style.transition = 'none';
+                carousel.classList.add('is-dragging');
+            }
+
+            function onDragMove(e) {
+                if (!isDragging) return;
+                currentX = getPointerX(e);
+                dragDeltaX = currentX - startX;
+
+                if (Math.abs(dragDeltaX) > 6) {
+                    hasMoved = true;
+                }
+
+                const basePercent = -currentIndex * 100;
+                track.style.transform = `translateX(calc(${basePercent}% + ${dragDeltaX}px))`;
+            }
+
+            function onDragEnd(e) {
+                if (!isDragging) return;
+                isDragging = false;
+                carousel.classList.remove('is-dragging');
+
+                const threshold = 50; // Kéo hơn 50px sẽ đổi sang slide tiếp
+                if (dragDeltaX < -threshold) {
+                    nextSlide();
+                } else if (dragDeltaX > threshold) {
+                    prevSlide();
+                } else {
+                    updateSlide(); // Snap trở lại vị trí cũ
+                }
+
+                startAutoPlay();
+            }
+
+            // Gắn sự kiện chuột cho Desktop
+            carousel.addEventListener('mousedown', onDragStart);
+            window.addEventListener('mousemove', onDragMove);
+            window.addEventListener('mouseup', onDragEnd);
+
+            // Gắn sự kiện cảm ứng cho Mobile / Touch
+            carousel.addEventListener('touchstart', onDragStart, { passive: true });
+            carousel.addEventListener('touchmove', onDragMove, { passive: true });
+            carousel.addEventListener('touchend', onDragEnd, { passive: true });
+            carousel.addEventListener('touchcancel', onDragEnd, { passive: true });
+
+            // Tránh click nhầm link khi người dùng đang kéo trượt
+            carousel.addEventListener('click', function (e) {
+                if (hasMoved) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    hasMoved = false;
+                }
+            }, true);
+
+            // Điều hướng phím mũi tên
+            carousel.setAttribute('tabindex', '0');
+            carousel.addEventListener('keydown', function (e) {
+                if (e.key === 'ArrowLeft') {
+                    prevSlide();
+                    startAutoPlay();
+                    e.preventDefault();
+                } else if (e.key === 'ArrowRight') {
+                    nextSlide();
+                    startAutoPlay();
+                    e.preventDefault();
+                }
+            });
+
+            updateSlide();
+            startAutoPlay();
+        });
+    </script>
 </body>
+
 </html>

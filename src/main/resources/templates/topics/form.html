@@ -1,46 +1,68 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"/>
-    <title>Đề tài</title>
-    <style>
-        body { font-family: Segoe UI, sans-serif; margin: 24px; max-width: 640px; }
-        label { display: block; margin-top: 12px; font-weight: 600; }
-        input, select, textarea { width: 100%; padding: 6px; box-sizing: border-box; }
-        .hint { font-weight: 400; color: #666; font-size: 0.9rem; }
-        .err { color: #b00020; font-size: 0.9rem; }
-    </style>
-</head>
+<head th:replace="~{fragments/head :: head(title=${topicId == null ? 'Đăng đề tài mới' : 'Chỉnh sửa đề tài'})}"></head>
 <body>
-<h1 th:text="${topicId == null} ? 'Đăng đề tài mới' : 'Sửa đề tài'">Đăng đề tài mới</h1>
 
-<form th:object="${topic}" method="post"
-      th:action="${topicId == null} ? @{/topics} : @{/topics/{id}(id=${topicId})}">
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='topics')}"></aside>
 
-    <div class="err" th:if="${#fields.hasGlobalErrors()}">
-        <p th:each="error : ${#fields.globalErrors()}" th:text="${error}"></p>
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title=${topicId == null ? 'ĐĂNG ĐỀ TÀI MỚI' : 'CHỈNH SỬA ĐỀ TÀI'}, icon='bi-journal-plus', actionUrl='/topics', actionText='Quay lại danh sách', actionIcon='bi-arrow-left')}"></div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="hcmute-card p-4">
+                <form th:object="${topic}" method="post"
+                      th:action="${topicId == null} ? @{/topics} : @{/topics/{id}(id=${topicId})}">
+
+                    <div class="hcmute-alert hcmute-alert-danger" th:if="${#fields.hasGlobalErrors()}">
+                        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                        <div>
+                            <div th:each="error : ${#fields.globalErrors()}" th:text="${error}">Lỗi</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label required" for="name">Tên đề tài</label>
+                        <input type="text" id="name" th:field="*{name}" class="form-control"
+                               th:classappend="${#fields.hasErrors('name')} ? 'is-invalid' : ''"
+                               placeholder="Nhập tên đề tài nghiên cứu hoặc ứng dụng" required />
+                        <div class="invalid-feedback" th:errors="*{name}"></div>
+                        <div class="form-hint">Tên đề tài cần ngắn gọn, rõ ràng và phản ánh đúng mục tiêu nghiên cứu.</div>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label class="form-label required" for="periodId">Đợt đăng ký</label>
+                        <select id="periodId" th:field="*{periodId}" class="form-select"
+                                th:classappend="${#fields.hasErrors('periodId')} ? 'is-invalid' : ''" required>
+                            <option value="">-- Chọn đợt đang mở --</option>
+                            <option th:each="period : ${periods}" th:value="${period.id}"
+                                    th:text="|${period.name} (${period.type.label})|"></option>
+                        </select>
+                        <div class="invalid-feedback" th:errors="*{periodId}"></div>
+                        <div class="form-hint">Chỉ các đợt đang trong thời gian cho phép giảng viên đăng ký mới hiển thị.</div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label class="form-label required" for="description">Mô tả nội dung &amp; Yêu cầu đề tài</label>
+                        <textarea id="description" th:field="*{description}" rows="6" class="form-control"
+                                  th:classappend="${#fields.hasErrors('description')} ? 'is-invalid' : ''"
+                                  placeholder="Mô tả chi tiết mục tiêu, phạm vi nghiên cứu, công nghệ sử dụng và yêu cầu kỹ năng đối với sinh viên..." required></textarea>
+                        <div class="invalid-feedback" th:errors="*{description}"></div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 pt-3 border-top">
+                        <button type="submit" class="btn-hcmute-primary">
+                            <i class="bi bi-save"></i> Lưu thông tin đề tài
+                        </button>
+                        <a th:href="@{/topics}" class="btn-hcmute-secondary">Hủy bỏ</a>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
+</main>
 
-    <label>Tên đề tài</label>
-    <input type="text" th:field="*{name}"/>
-    <div class="err" th:errors="*{name}"></div>
-
-    <label>Nội dung đề tài</label>
-    <textarea th:field="*{description}" rows="6"></textarea>
-    <div class="err" th:errors="*{description}"></div>
-
-    <label>Đợt đăng ký</label>
-    <select th:field="*{periodId}">
-        <option value="">-- Chọn đợt --</option>
-        <option th:each="period : ${periods}" th:value="${period.id}"
-                th:text="|${period.name} (${period.type.label})|"></option>
-    </select>
-    <div class="err" th:errors="*{periodId}"></div>
-
-    <p>
-        <button type="submit">Lưu</button>
-        <a th:href="@{/topics}">Hủy</a>
-    </p>
-</form>
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
 </body>
 </html>

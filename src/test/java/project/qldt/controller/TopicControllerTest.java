@@ -1,5 +1,4 @@
 package project.qldt.controller;
-import project.qldt.support.Beans;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,15 +22,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import project.qldt.dto.RegistrationPeriodRequest;
-import project.qldt.dto.TopicRequest;
-import project.qldt.model.Lecturer;
-import project.qldt.model.PeriodType;
-import project.qldt.model.RegistrationPeriod;
-import project.qldt.model.Topic;
-import project.qldt.service.AccountService;
-import project.qldt.service.RegistrationPeriodService;
-import project.qldt.service.TopicService;
+import project.qldt.dto.period.RegistrationPeriodRequest;
+import project.qldt.dto.topic.TopicRequest;
+import project.qldt.model.account.Lecturer;
+import project.qldt.model.period.PeriodType;
+import project.qldt.model.period.RegistrationPeriod;
+import project.qldt.model.topic.Topic;
+import project.qldt.service.account.AccountService;
+import project.qldt.service.period.RegistrationPeriodService;
+import project.qldt.service.topic.TopicService;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -61,7 +60,7 @@ class TopicControllerTest {
 
 		RegistrationPeriodRequest pReq = new RegistrationPeriodRequest();
 		pReq.setName("Đợt Topic Controller Test");
-		pReq.setType(PeriodType.COURSE);
+		pReq.setType(PeriodType.COURSE_PROJECT);
 		pReq.setTeacherRegisterStart(LocalDateTime.now().minusDays(2));
 		pReq.setTeacherRegisterEnd(LocalDateTime.now().plusDays(2));
 		pReq.setStudentRegisterStart(LocalDateTime.now().plusDays(3));
@@ -177,5 +176,19 @@ class TopicControllerTest {
 				.andExpect(status().isOk())
 				.andExpect(view().name("topics/published"))
 				.andExpect(model().attributeExists("topics"));
+	}
+
+	@Test
+	@WithMockUser(username = "SV001", roles = "STUDENT")
+	void xemDanhSachDeTaiDaCongBoHienThiDungTinhTrang() throws Exception {
+		topicService.approve(topic.getId());
+		topicService.publish(period.getId());
+
+		mockMvc.perform(get("/published-topics"))
+				.andExpect(status().isOk())
+				.andExpect(view().name("topics/published"))
+				.andExpect(model().attributeExists("topics"))
+				.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+						.string(org.hamcrest.Matchers.containsString("Chưa có nhóm đăng ký")));
 	}
 }

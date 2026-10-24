@@ -1,38 +1,96 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"/>
-    <title>Kết quả đề tài</title>
-    <style>
-        body { font-family: Segoe UI, sans-serif; margin: 24px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
-    </style>
-</head>
+<head th:replace="~{fragments/head :: head(title='Kết quả bảo vệ đề tài')}"></head>
 <body>
-<h1>Kết quả bảo vệ đề tài</h1>
-<p><a th:href="@{/home}">Về trang chủ</a></p>
 
-<table>
-    <thead>
-    <tr>
-        <th>Đề tài</th>
-        <th>Hội đồng</th>
-        <th>Điểm trung bình</th>
-        <th>Công bố lúc</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="r : ${results}">
-        <td th:text="${r.council.topic.name}">Đề tài</td>
-        <td th:text="${r.council.name}">Hội đồng</td>
-        <td th:text="${r.averageScore}">0</td>
-        <td th:text="${#temporals.format(r.publishedAt, 'dd/MM/yyyy HH:mm')}">01/01/2026 08:00</td>
-    </tr>
-    <tr th:if="${#lists.isEmpty(results)}">
-        <td colspan="4">Chưa có kết quả nào được công bố.</td>
-    </tr>
-    </tbody>
-</table>
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='results')}"></aside>
+
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title='KẾT QUẢ BẢO VỆ ĐỀ TÀI', icon='bi-award-fill', actionUrl=null, actionText=null, actionIcon=null)}"></div>
+
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <div class="hcmute-card p-4">
+        <div class="hcmute-card-header">
+            <div>
+                <h2 class="h2 mb-1"><i class="bi bi-patch-check-fill text-success me-2"></i>Điểm đánh giá &amp; Nhận xét chính thức từ Hội đồng</h2>
+                <div class="small text-muted">Kết quả chỉ hiển thị sau khi Hội đồng hoàn tất chấm điểm và Trưởng khoa duyệt công bố chính thức.</div>
+            </div>
+            <span class="badge bg-success px-3 py-2 rounded-pill fs-6" th:text="${#lists.size(results)} + ' kết quả'">0 kết quả</span>
+        </div>
+
+        <!-- Search bar -->
+        <div class="search-bar-box">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" id="tableSearchInput" class="form-control search-bar-input"
+                   placeholder="Tìm kiếm kết quả theo tên đề tài hoặc hội đồng..." aria-label="Tìm kiếm kết quả">
+        </div>
+
+        <div class="table-responsive">
+            <table class="hcmute-table">
+                <thead>
+                <tr>
+                    <th style="width: 50px;" class="text-center">STT</th>
+                    <th>Tên đề tài nghiên cứu</th>
+                    <th style="width: 180px;">Hội đồng chấm</th>
+                    <th style="width: 160px;" class="text-center">Điểm tổng kết</th>
+                    <th style="width: 180px;">Thời gian công bố</th>
+                    <th>Ý kiến nhận xét của Hội đồng</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r, stat : ${results}">
+                    <td class="text-center text-muted fw-semibold" th:text="${stat.count}">1</td>
+                    <td>
+                        <strong class="text-primary-dark fs-6" th:text="${r.council.topic.name}">Tên đề tài</strong>
+                        <div class="small text-muted" th:text="|Bộ môn: ${r.council.topic.department != null ? r.council.topic.department.name : ''}|">Bộ môn</div>
+                    </td>
+                    <td>
+                        <span class="fw-semibold text-dark" th:text="${r.council.name}">Hội đồng 1</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-primary fs-5 px-3 py-2 fw-bold"
+                              th:text="${r.finalScore != null ? r.finalScore : r.averageScore}">8.5</span>
+                        <div class="small text-muted mt-1">Tổng kết = PB×0.4 + HĐ×0.6</div>
+                        <div class="small text-secondary">
+                            PB:
+                            <span th:text="${r.council.topic.reviewerScore != null ? r.council.topic.reviewerScore : '—'}">—</span>
+                            • HĐ: <span th:text="${r.averageScore}">—</span>
+                        </div>
+                    </td>
+                    <td class="small text-muted">
+                        <i class="bi bi-calendar3 me-1"></i>
+                        <span th:text="${#temporals.format(r.publishedAt, 'dd/MM/yyyy HH:mm')}">01/01/2026 08:00</span>
+                    </td>
+                    <td class="small">
+                        <div th:each="m, iter : ${r.council.members}" class="p-2 mb-2 bg-light rounded border border-light">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <strong class="text-primary-dark" th:text="|Thành viên #${iter.count}|">Thành viên #1</strong>
+                                <span th:if="${m.score != null}" class="fw-bold text-success" th:text="|${m.score} điểm|">8.5 điểm</span>
+                            </div>
+                            <div th:if="${m.comment != null and !m.comment.isBlank()}" class="text-secondary" th:text="${m.comment}">Nhận xét chi tiết</div>
+                            <div th:if="${m.comment == null or m.comment.isBlank()}" class="text-muted fst-italic">Không có ghi chú nhận xét thêm.</div>
+                        </div>
+                        <div th:if="${#lists.isEmpty(r.council.members)}" class="text-muted fst-italic">Chưa có nhận xét nào.</div>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(results)}" class="empty-row">
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <i class="bi bi-award empty-state-icon"></i>
+                            <div class="empty-state-title">Chưa có kết quả nào được công bố</div>
+                            <div class="empty-state-desc">Sau khi hội đồng phản biện tổng hợp điểm và Trưởng khoa phê duyệt công bố, kết quả sẽ xuất hiện tại đây.</div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
 </body>
 </html>

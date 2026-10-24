@@ -1,92 +1,163 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"/>
-    <title>Duyệt đề tài</title>
-    <style>
-        body { font-family: Segoe UI, sans-serif; margin: 24px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
-        form { margin: 4px 0; }
-        input[type=text] { padding: 4px; width: 190px; }
-        .ok { color: #1b5e20; background: #e8f5e9; padding: 8px 12px; }
-        .error { color: #b00020; background: #fdecea; padding: 8px 12px; }
-        .hint { color: #666; font-size: 0.9rem; }
-        h2 { margin-top: 28px; }
-    </style>
-</head>
+<head th:replace="~{fragments/head :: head(title='Duyệt & Công bố đề tài')}"></head>
 <body>
-<h1>Duyệt đề tài</h1>
-<p><a th:href="@{/home}">Về trang chủ</a></p>
 
-<p class="ok" th:if="${message}" th:text="${message}"></p>
-<p class="error" th:if="${error}" th:text="${error}"></p>
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='dean-topics')}"></aside>
 
-<h2>Đề tài chờ duyệt</h2>
-<table>
-    <thead>
-    <tr>
-        <th>Tên đề tài</th>
-        <th>Đợt</th>
-        <th>Bộ môn</th>
-        <th>Giảng viên hướng dẫn</th>
-        <th>Duyệt</th>
-        <th>Từ chối</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="topic : ${topics}">
-        <td>
-            <div th:text="${topic.name}">Tên đề tài</div>
-            <div class="hint" th:text="${topic.description}">Nội dung</div>
-        </td>
-        <td th:text="${topic.period.name}">Đợt 1</td>
-        <td th:text="${topic.department}">Công nghệ phần mềm</td>
-        <td>
-            <div th:each="advisor : ${topic.advisors}"
-                 th:text="|${advisor.fullName} (${advisor.lecturerCode})|"></div>
-        </td>
-        <td>
-            <form th:action="@{/dean/topics/{id}/approve(id=${topic.id})}" method="post">
-                <button type="submit">Duyệt</button>
-            </form>
-        </td>
-        <td>
-            <form th:action="@{/dean/topics/{id}/reject(id=${topic.id})}" method="post">
-                <input type="text" name="reason" placeholder="Lý do từ chối" required/>
-                <button type="submit">Từ chối</button>
-            </form>
-        </td>
-    </tr>
-    <tr th:if="${#lists.isEmpty(topics)}">
-        <td colspan="6">Không có đề tài nào đang chờ duyệt.</td>
-    </tr>
-    </tbody>
-</table>
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title='DUYỆT & CÔNG BỐ ĐỀ TÀI', icon='bi-patch-check-fill', actionUrl=null, actionText=null, actionIcon=null)}"></div>
 
-<h2>Công bố danh sách đề tài</h2>
-<table>
-    <thead>
-    <tr>
-        <th>Đợt</th>
-        <th>Loại</th>
-        <th>Công bố</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="period : ${periods}">
-        <td th:text="${period.name}">Đợt 1</td>
-        <td th:text="${period.type.label}">KLTN</td>
-        <td>
-            <form th:action="@{/dean/topics/publish/{id}(id=${period.id})}" method="post">
-                <button type="submit">Công bố đề tài của đợt</button>
-            </form>
-        </td>
-    </tr>
-    <tr th:if="${#lists.isEmpty(periods)}">
-        <td colspan="3">Chưa có đề tài nào đã duyệt để công bố.</td>
-    </tr>
-    </tbody>
-</table>
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <!-- Section 1: Pending Topics Approval -->
+    <div class="hcmute-card p-4 mb-4">
+        <div class="hcmute-card-header">
+            <div>
+                <h2 class="h2 mb-1"><i class="bi bi-hourglass-split text-warning me-2"></i>Danh sách đề tài đang chờ Trưởng khoa phê duyệt</h2>
+                <div class="small text-muted">Thẩm định tính hợp lệ, phạm vi nghiên cứu và bộ môn chuyên trách trước khi công bố cho sinh viên.</div>
+            </div>
+            <span class="badge bg-primary px-3 py-2 fs-6 rounded-pill" th:text="${#lists.size(topics)} + ' đề tài'">0 đề tài</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="hcmute-table">
+                <thead>
+                <tr>
+                    <th style="width: 50px;" class="text-center">STT</th>
+                    <th>Tên đề tài &amp; Mô tả nội dung</th>
+                    <th style="width: 180px;">Đợt</th>
+                    <th style="width: 160px;">Bộ môn</th>
+                    <th style="width: 200px;">Giảng viên hướng dẫn</th>
+                    <th style="width: 280px;" class="text-center">Quyết định phê duyệt</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="topic, stat : ${topics}">
+                    <td class="text-center text-muted fw-semibold" th:text="${stat.count}">1</td>
+                    <td>
+                        <div class="fw-bold text-primary-dark fs-6 mb-1" th:text="${topic.name}">Tên đề tài</div>
+                        <div class="small text-muted" style="line-height: 1.5;" th:text="${topic.description}">Mô tả đề tài chi tiết...</div>
+                    </td>
+                    <td class="small">
+                        <span class="badge-period" th:text="${topic.period.name}">Đợt 1</span>
+                    </td>
+                    <td class="small fw-medium" th:text="${topic.department != null ? topic.department.name : ''}">Công nghệ phần mềm</td>
+                    <td class="small">
+                        <div th:each="advisor : ${topic.advisors}" class="d-flex align-items-center gap-1 mb-1">
+                            <i class="bi bi-person-fill text-muted"></i>
+                            <span class="fw-medium" th:text="${advisor.fullName}">ThS. Nguyễn Văn A</span>
+                            <span class="text-muted" th:text="'(' + ${advisor.lecturerCode} + ')'">(GV001)</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column gap-2">
+                            <!-- Approve button -->
+                            <form th:action="@{/dean/topics/{id}/approve(id=${topic.id})}" method="post" class="m-0">
+                                <button type="submit" class="btn-hcmute-primary btn-hcmute-sm w-100" style="background-color: var(--color-success); border-color: var(--color-success);">
+                                    <i class="bi bi-check-circle-fill"></i> Phê duyệt đề tài
+                                </button>
+                            </form>
+
+                            <!-- Reject button with reason input -->
+                            <form th:action="@{/dean/topics/{id}/reject(id=${topic.id})}" method="post" class="d-flex gap-1 m-0">
+                                <input type="text" name="reason" class="form-control form-control-sm"
+                                       placeholder="Nhập lý do từ chối..." required />
+                                <button type="submit" class="btn-hcmute-danger btn-hcmute-sm text-nowrap">
+                                    <i class="bi bi-x-circle"></i> Từ chối
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(topics)}" class="empty-row">
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <i class="bi bi-check-all empty-state-icon text-success"></i>
+                            <div class="empty-state-title">Không có đề tài nào đang chờ duyệt</div>
+                            <div class="empty-state-desc">Tất cả đề tài gửi lên đã được xử lý hoặc chưa có giảng viên nào gửi đề tài mới.</div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Section 2: Publish Topics by Period -->
+    <div class="hcmute-card p-4">
+        <div class="hcmute-card-header">
+            <div>
+                <h2 class="h2 mb-1"><i class="bi bi-megaphone text-primary me-2"></i>Công bố danh sách đề tài theo đợt</h2>
+                <div class="small text-muted">Sau khi công bố, sinh viên trong khoa sẽ nhìn thấy danh mục đề tài và có thể đăng ký theo nhóm.</div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="hcmute-table">
+                <thead>
+                <tr>
+                    <th style="width: 50px;" class="text-center">STT</th>
+                    <th style="width: 180px;">Đợt đăng ký</th>
+                    <th style="width: 120px;" class="text-center">Loại hình</th>
+                    <th>Đề tài đã duyệt trong đợt</th>
+                    <th style="width: 240px;" class="text-center">Hành động công bố</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="period, stat : ${periods}">
+                    <td class="text-center text-muted fw-semibold" th:text="${stat.count}">1</td>
+                    <td>
+                        <strong class="text-primary-dark fs-6" th:text="${period.name}">Đợt 1</strong>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge-status badge-status-info" th:text="${period.type.label}">KLTN</span>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column gap-1">
+                            <div class="mb-1">
+                                <span class="badge bg-success-subtle text-success border border-success-subtle fw-semibold">
+                                    <i class="bi bi-check2-circle me-1"></i><span th:text="${approvedTopicsByPeriod != null and approvedTopicsByPeriod[period.id] != null ? approvedTopicsByPeriod[period.id].size() : 0}">0</span> đề tài đã duyệt
+                                </span>
+                            </div>
+                            <ul class="list-unstyled mb-0 d-flex flex-column gap-1" th:if="${approvedTopicsByPeriod != null and approvedTopicsByPeriod[period.id] != null}">
+                                <li th:each="t : ${approvedTopicsByPeriod[period.id]}" class="small text-muted d-flex align-items-start gap-1">
+                                    <i class="bi bi-dot text-primary fs-5 lh-1"></i>
+                                    <div>
+                                        <strong class="text-dark" th:text="${t.name}">Tên đề tài</strong>
+                                        <span class="text-muted ms-1" th:if="${t.primaryAdvisor != null}" th:text="'(GVHD: ' + ${t.primaryAdvisor.fullName} + ')'">(GVHD: ...)</span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <form th:action="@{/dean/topics/publish/{id}(id=${period.id})}" method="post" class="m-0"
+                              data-confirm="Bạn có chắc chắn muốn công bố toàn bộ đề tài đã duyệt của đợt này cho sinh viên xem?">
+                            <button type="submit" class="btn-hcmute-primary btn-hcmute-sm w-100">
+                                <i class="bi bi-broadcast"></i> Công bố đề tài đợt này
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(periods)}" class="empty-row">
+                    <td colspan="5">
+                        <div class="empty-state">
+                            <i class="bi bi-info-circle empty-state-icon"></i>
+                            <div class="empty-state-title">Chưa có đợt nào có đề tài sẵn sàng công bố</div>
+                            <div class="empty-state-desc">Hãy duyệt các đề tài chờ ở phía trên trước khi tiến hành công bố theo đợt.</div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
 </body>
 </html>

@@ -1,65 +1,95 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8"/>
-    <title>Duyệt đăng ký đề tài</title>
-    <style>
-        body { font-family: Segoe UI, sans-serif; margin: 24px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; vertical-align: top; }
-        form { margin: 4px 0; }
-        input[type=text] { padding: 4px; width: 190px; }
-        .ok { color: #1b5e20; background: #e8f5e9; padding: 8px 12px; }
-        .error { color: #b00020; background: #fdecea; padding: 8px 12px; }
-        .hint { color: #666; font-size: 0.9rem; }
-    </style>
-</head>
+<head th:replace="~{fragments/head :: head(title='Duyệt đăng ký đề tài')}"></head>
 <body>
-<h1>Duyệt đăng ký đề tài</h1>
-<p><a th:href="@{/home}">Về trang chủ</a></p>
 
-<p class="ok" th:if="${message}" th:text="${message}"></p>
-<p class="error" th:if="${error}" th:text="${error}"></p>
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='registrations')}"></aside>
 
-<table>
-    <thead>
-    <tr>
-        <th>Đề tài</th>
-        <th>Nhóm</th>
-        <th>Nhóm trưởng</th>
-        <th>Thành viên</th>
-        <th>Duyệt</th>
-        <th>Từ chối</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="r : ${registrations}">
-        <td>
-            <div th:text="${r.topic.name}">Tên đề tài</div>
-            <div class="hint" th:text="${r.topic.department}">Bộ môn</div>
-        </td>
-        <td th:text="|Nhóm của ${r.team.leader.fullName}|">Nhóm của A</td>
-        <td th:text="|${r.team.leader.fullName} (${r.team.leader.studentCode})|">A (SV001)</td>
-        <td>
-            <div th:each="member : ${r.team.members}"
-                 th:text="|${member.fullName} (${member.studentCode})|"></div>
-        </td>
-        <td>
-            <form th:action="@{/registrations/{id}/approve(id=${r.topic.id})}" method="post">
-                <button type="submit">Duyệt</button>
-            </form>
-        </td>
-        <td>
-            <form th:action="@{/registrations/{id}/reject(id=${r.topic.id})}" method="post">
-                <input type="text" name="reason" placeholder="Lý do từ chối" required/>
-                <button type="submit">Từ chối</button>
-            </form>
-        </td>
-    </tr>
-    <tr th:if="${#lists.isEmpty(registrations)}">
-        <td colspan="6">Không có đăng ký nào đang chờ duyệt.</td>
-    </tr>
-    </tbody>
-</table>
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title='DUYỆT ĐĂNG KÝ ĐỀ TÀI', icon='bi-person-check-fill', actionUrl=null, actionText=null, actionIcon=null)}"></div>
+
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <div class="hcmute-card p-4">
+        <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+            <div>
+                <h2 class="h2 mb-1"><i class="bi bi-inbox-fill text-primary me-2"></i>Danh sách nhóm sinh viên đăng ký đề tài</h2>
+                <div class="small text-muted">Xem xét năng lực, số lượng thành viên và duyệt tiếp nhận nhóm nghiên cứu theo đề tài của bạn.</div>
+            </div>
+            <span class="badge bg-primary px-3 py-2 rounded-pill fs-6" th:text="${#lists.size(registrations)} + ' yêu cầu'">0 yêu cầu</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="hcmute-table">
+                <thead>
+                <tr>
+                    <th style="width: 50px;" class="text-center">STT</th>
+                    <th>Đề tài đăng ký</th>
+                    <th style="width: 180px;">Tên nhóm</th>
+                    <th style="width: 180px;">Nhóm trưởng</th>
+                    <th style="width: 220px;">Thành viên nhóm</th>
+                    <th style="width: 260px;" class="text-center">Quyết định tiếp nhận</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r, stat : ${registrations}">
+                    <td class="text-center text-muted fw-semibold" th:text="${stat.count}">1</td>
+                    <td>
+                        <div class="fw-bold text-primary-dark fs-6" th:text="${r.topic.name}">Tên đề tài</div>
+                        <div class="small text-muted" th:text="|Bộ môn: ${r.topic.department != null ? r.topic.department.name : ''}|">Bộ môn</div>
+                    </td>
+                    <td>
+                        <strong class="text-dark" th:text="|Nhóm của ${r.team.leader.fullName}|">Nhóm của A</strong>
+                    </td>
+                    <td class="small">
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <span class="fw-bold text-dark" th:text="${r.team.leader.fullName}">A</span>
+                        </div>
+                        <div class="text-muted ms-3" th:text="'(' + ${r.team.leader.studentCode} + ')'">(SV001)</div>
+                    </td>
+                    <td class="small">
+                        <div th:each="member : ${r.team.members}" class="d-flex align-items-center gap-1 py-1">
+                            <i class="bi bi-person text-muted"></i>
+                            <span th:text="|${member.fullName} (${member.studentCode})|"></span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column gap-2">
+                            <form th:action="@{/registrations/{id}/approve(id=${r.topic.id})}" method="post" class="m-0">
+                                <button type="submit" class="btn-hcmute-primary btn-hcmute-sm w-100"
+                                        style="background-color: var(--color-success); border-color: var(--color-success);">
+                                    <i class="bi bi-check-circle-fill"></i> Chấp thuận nhóm
+                                </button>
+                            </form>
+
+                            <form th:action="@{/registrations/{id}/reject(id=${r.topic.id})}" method="post" class="d-flex gap-1 m-0">
+                                <input type="text" name="reason" class="form-control form-control-sm"
+                                       placeholder="Lý do từ chối..." required />
+                                <button type="submit" class="btn-hcmute-danger btn-hcmute-sm text-nowrap">
+                                    <i class="bi bi-x-circle"></i> Từ chối
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(registrations)}" class="empty-row">
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <i class="bi bi-check-circle-fill empty-state-icon text-success"></i>
+                            <div class="empty-state-title">Không có đăng ký nào đang chờ duyệt</div>
+                            <div class="empty-state-desc">Khi có nhóm sinh viên đăng ký đề tài của bạn, danh sách sẽ hiển thị tại đây để bạn phản hồi.</div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
 </body>
 </html>
