@@ -176,8 +176,16 @@ public class TopicRegistrationService {
 
 	@Transactional(readOnly = true)
 	public List<RegistrationView> findRegistrationsForDean() {
+		return findRegistrationsForDean(null);
+	}
+
+	@Transactional(readOnly = true)
+	public List<RegistrationView> findRegistrationsForDean(Long periodId) {
+		List<Team> teams = periodId == null
+				? teamService.findAllWithTopic()
+				: teamService.findWithTopicByPeriod(periodId);
 		List<RegistrationView> views = new ArrayList<>();
-		for (Team team : teamService.findAllWithTopic()) {
+		for (Team team : teams) {
 			views.add(new RegistrationView(team.getTopic(), team));
 		}
 		return views;

@@ -70,6 +70,11 @@ public class TeamService {
 	}
 
 	@Transactional(readOnly = true)
+	public List<Team> findWithTopicByPeriod(Long periodId) {
+		return teamRepository.findByPeriodIdAndTopicIsNotNullOrderByIdAsc(periodId);
+	}
+
+	@Transactional(readOnly = true)
 	public List<Team> findByTopicIds(Collection<Long> topicIds) {
 		return topicIds.isEmpty() ? List.of() : teamRepository.findByTopicIdIn(topicIds);
 	}
@@ -98,6 +103,15 @@ public class TeamService {
 	public Team findForLeader(Long teamId, Student actor) {
 		Team team = findById(teamId);
 		requireLeader(team, actor);
+		return team;
+	}
+
+	@Transactional(readOnly = true)
+	public Team findForMember(Long teamId, Student actor) {
+		Team team = findById(teamId);
+		if (!team.isLeader(actor.getId()) && !team.isMember(actor.getId())) {
+			throw new InvalidTeamException("Bạn không thuộc nhóm này");
+		}
 		return team;
 	}
 
@@ -153,7 +167,8 @@ public class TeamService {
 			throw new InvalidTeamException("Sinh viên này đã được mời và đang chờ phản hồi");
 		}
 		if (team.getMembers().size() + team.pendingInvitationCount() >= MAX_MEMBERS) {
-			throw new InvalidTeamException("Nhóm đã đạt sĩ số tối đa " + MAX_MEMBERS + " người (bao gồm lời mời đang chờ)");
+			throw new InvalidTeamException(
+					"Nhóm đã đạt sĩ số tối đa " + MAX_MEMBERS + " người (bao gồm lời mời đang chờ)");
 		}
 		ensureNotInTeam(team.getPeriod(), invited);
 		TeamInvitation invitation = new TeamInvitation();

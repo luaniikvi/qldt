@@ -46,4 +46,6 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
 
 	@Query("select t from Team t where t.topic is not null order by t.id")
 	List<Team> findAllWithTopic();
+
+	List<Team> findByPeriodIdAndTopicIsNotNullOrderByIdAsc(Long periodId);
 }

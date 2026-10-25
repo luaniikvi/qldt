@@ -9,11 +9,14 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 import project.qldt.repository.department.DepartmentRepository;
+import project.qldt.security.RestAccessDeniedHandler;
+import project.qldt.security.RestAuthenticationEntryPoint;
 import project.qldt.service.account.AccountService;
 import project.qldt.service.department.DepartmentService;
 
@@ -22,12 +25,18 @@ import project.qldt.service.department.DepartmentService;
 public class SecurityConfig {
 
 	private final DepartmentRepository departmentRepository;
+	private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+	private final RestAccessDeniedHandler restAccessDeniedHandler;
 
-    SecurityConfig(DepartmentRepository departmentRepository) {
-        this.departmentRepository = departmentRepository;
-    }
+	SecurityConfig(DepartmentRepository departmentRepository,
+			RestAuthenticationEntryPoint restAuthenticationEntryPoint,
+			RestAccessDeniedHandler restAccessDeniedHandler) {
+		this.departmentRepository = departmentRepository;
+		this.restAuthenticationEntryPoint = restAuthenticationEntryPoint;
+		this.restAccessDeniedHandler = restAccessDeniedHandler;
+	}
 
-    @Bean
+	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
@@ -47,18 +56,18 @@ public class SecurityConfig {
 			}
 			seedLecturer(accountService, "Lê Văn Vinh", "GV001", "Công nghệ phần mềm");
 			// accountService.setDean(accountService.findLecturerByCode("GV001").getId(),true);
-			seedLecturer(accountService, "Nguyễn Minh Đạo", "GV002","Công nghệ phần mềm");
-			seedLecturer(accountService, "Nguyễn Trần Thi Văn", "GV003","Công nghệ phần mềm");
-			seedLecturer(accountService, "Hoàng Thái Xuân Khoa", "GV004","Công nghệ phần mềm");
-			seedLecturer(accountService, "Vũ Đình Bảo", "GV005","Công nghệ phần mềm");
-			seedLecturer(accountService, "Nguyễn Thanh Tuấn", "GV006","Hệ thống thông tin");
-			seedLecturer(accountService, "Phan Thị Thể", "GV007","Hệ thống thông tin");
-			seedLecturer(accountService, "Trần Quang Khải", "GV008","Hệ thống thông tin");
-			seedLecturer(accountService, "Nguyễn Thị Thanh Vân", "GV009","Mạng và an ninh mạng");
-			seedLecturer(accountService, "Đinh Công Đoan", "GV010","Mạng và an ninh mạng");
-			seedLecturer(accountService, "Nguyễn Đăng Quang", "GV011","Mạng và an ninh mạng");
-			seedLecturer(accountService, "Phan Thị Huyền Trang", "GV012","Trí tuệ nhân tạo");
-			seedLecturer(accountService, "Hoàng Văn Dũng", "GV013","Trí tuệ nhân tạo");
+			seedLecturer(accountService, "Nguyễn Minh Đạo", "GV002", "Công nghệ phần mềm");
+			seedLecturer(accountService, "Nguyễn Trần Thi Văn", "GV003", "Công nghệ phần mềm");
+			seedLecturer(accountService, "Hoàng Thái Xuân Khoa", "GV004", "Công nghệ phần mềm");
+			seedLecturer(accountService, "Vũ Đình Bảo", "GV005", "Công nghệ phần mềm");
+			seedLecturer(accountService, "Nguyễn Thanh Tuấn", "GV006", "Hệ thống thông tin");
+			seedLecturer(accountService, "Phan Thị Thể", "GV007", "Hệ thống thông tin");
+			seedLecturer(accountService, "Trần Quang Khải", "GV008", "Hệ thống thông tin");
+			seedLecturer(accountService, "Nguyễn Thị Thanh Vân", "GV009", "Mạng và an ninh mạng");
+			seedLecturer(accountService, "Đinh Công Đoan", "GV010", "Mạng và an ninh mạng");
+			seedLecturer(accountService, "Nguyễn Đăng Quang", "GV011", "Mạng và an ninh mạng");
+			seedLecturer(accountService, "Phan Thị Huyền Trang", "GV012", "Trí tuệ nhân tạo");
+			seedLecturer(accountService, "Hoàng Văn Dũng", "GV013", "Trí tuệ nhân tạo");
 
 			seedStudent(accountService, "Nguyễn Văn An", "SV001");
 			seedStudent(accountService, "Trần Nguyên Bảo", "SV002");
@@ -98,6 +107,22 @@ public class SecurityConfig {
 	}
 
 	@Bean
+	@Order(1)
+	public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
+		http
+				.securityMatcher("/api/**")
+				.authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+				.httpBasic(Customizer.withDefaults())
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.requestCache(cache -> cache.disable())
+				.csrf(csrf -> csrf.disable())
+				.exceptionHandling(ex -> ex.authenticationEntryPoint(restAuthenticationEntryPoint)
+						.accessDeniedHandler(restAccessDeniedHandler));
+		return http.build();
+	}
+
+	@Bean
+	@Order(2)
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http
 				.authorizeHttpRequests(auth -> auth
@@ -115,14 +140,12 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.GET, "/periods/new", "/periods/*/edit").hasRole("DEAN")
 						.requestMatchers(HttpMethod.GET, "/periods/**").authenticated()
 						.requestMatchers("/periods/**").hasRole("DEAN")
-						.requestMatchers("/api/**").authenticated()
 						.anyRequest().authenticated())
 				.formLogin(form -> form.loginPage("/login").defaultSuccessUrl("/", true))
 				.httpBasic(Customizer.withDefaults())
 				.logout(logout -> logout.logoutSuccessHandler(
 						(request, response, authentication) -> response
-								.sendRedirect(request.getContextPath() + "/home?logout")))
-				.csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"));
+								.sendRedirect(request.getContextPath() + "/home?logout")));
 		return http.build();
 	}
 }

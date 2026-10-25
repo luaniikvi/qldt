@@ -227,9 +227,11 @@ public class CouncilService {
 				throw new InvalidCouncilException("Giảng viên bị trùng trong hội đồng");
 			}
 			if (topic.isAdvisorOf(lecturer.getId())) {
-				throw new InvalidCouncilException("Giảng viên " + lecturer.getFullName() + " (" + lecturer.getLecturerCode() + ") là cán bộ hướng dẫn của đề tài, không được tham gia hội đồng");
+				throw new InvalidCouncilException(
+						"Giảng viên " + lecturer.getFullName() + " (" + lecturer.getLecturerCode()
+								+ ") là cán bộ hướng dẫn của đề tài, không được tham gia hội đồng");
 			}
-			
+
 			usedIds.add(lecturer.getId());
 			CouncilMember member = new CouncilMember();
 			member.setCouncil(council);
@@ -325,6 +327,12 @@ public class CouncilService {
 	@Transactional(readOnly = true)
 	public TopicResult findResultByCouncilId(Long councilId) {
 		return resultRepository.findByCouncilId(councilId).orElse(null);
+	}
+
+	@Transactional(readOnly = true)
+	public TopicResult findResultById(Long id) {
+		return resultRepository.findById(id)
+				.orElseThrow(() -> new CouncilNotFoundException("Không tìm thấy kết quả có id: " + id));
 	}
 
 	@Transactional(readOnly = true)

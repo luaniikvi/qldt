@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(title='Lập hội đồng & Công bố kết quả')}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='dean-councils')}"></aside>
+
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title='LẬP HỘI ĐỒNG & CÔNG BỐ ĐIỂM', icon='bi-person-workspace', actionUrl=null, actionText=null, actionIcon=null)}"></div>
+
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <!-- Section 1: Create Council Form -->
+    <div class="hcmute-card p-4 mb-4">
+        <div class="hcmute-card-header">
+            <div>
+                <h2 class="h2 mb-1"><i class="bi bi-people-fill text-primary me-2"></i>Thành lập hội đồng phản biện &amp; bảo vệ</h2>
+                <div class="small text-muted">Quy định nghiệp vụ: Mỗi hội đồng gồm từ 03 đến 05 giảng viên, có đúng 1 Chủ tịch và 1 Thư ký. Giảng viên hướng dẫn không được tham gia hội đồng của đề tài mình.</div>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(topics)}" class="hcmute-alert hcmute-alert-info">
+            <i class="bi bi-info-circle-fill fs-5"></i>
+            <div>Hiện tại không còn đề tài nào đã được duyệt đăng ký cần lập hội đồng.</div>
+        </div>
+
+        <form th:if="${not #lists.isEmpty(topics)}" th:action="@{/dean/councils}" method="post">
+            <div class="row g-3 mb-3">
+                <div class="col-md-7">
+                    <label class="form-label required" for="topicId">Chọn đề tài bảo vệ</label>
+                    <select id="topicId" name="topicId" class="form-select" required>
+                        <option value="">-- Chọn đề tài đã duyệt tiếp nhận nhóm --</option>
+                        <option th:each="t : ${topics}" th:value="${t.id}"
+                                th:selected="${formTopicId != null and formTopicId == t.id}"
+                                th:attr="data-advisors=${#strings.listJoin(t.advisors.![lecturerCode], ',')}, data-advisor-names=${#strings.listJoin(t.advisors.![fullName + ' (' + lecturerCode + ')'], ', ')}"
+                                th:text="|${t.name} (${t.period.name})|"></option>
+                    </select>
+                </div>
+
+                <div class="col-md-5">
+                    <label class="form-label required" for="councilName">Tên hội đồng</label>
+                    <input type="text" id="councilName" name="name" class="form-control"
+                           placeholder="Ví dụ: Hội đồng Chuyên ngành 1" required
+                           th:value="${formName}" />
+                </div>
+            </div>
+
+            <div class="table-responsive mb-3">
+                <table class="hcmute-table">
+                    <thead>
+                    <tr>
+                        <th style="width: 50px;" class="text-center">#</th>
+                        <th>Mã / Tên giảng viên thành viên</th>
+                        <th style="width: 240px;">Vai trò trong hội đồng</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="i : ${#numbers.sequence(0, 4)}">
+                        <td class="text-center fw-semibold text-muted" th:text="${i + 1}">1</td>
+                        <td>
+                            <input type="text" name="lecturerCode" list="lecturerCodes" class="form-control lecturer-input"
+                                   th:placeholder="${i < 3 ? 'Chọn giảng viên (Bắt buộc ít nhất 3 GV)...' : 'Chọn giảng viên thứ ' + (i + 1) + ' (nếu có)...'}"
+                                   th:required="${i < 3}"
+                                   th:value="${formLecturerCodes != null and i < formLecturerCodes.size() ? formLecturerCodes.get(i) : ''}" />
+                            <div class="lecturer-error-msg small text-danger mt-1" style="display: none;"></div>
+                        </td>
+                        <td>
+                            <select name="role" class="form-select">
+                                <option th:each="r : ${roles}" th:value="${r}" th:text="${r.label}"
+                                        th:selected="${formRoles != null and i < formRoles.size() ? (formRoles.get(i) == r.name() or formRoles.get(i) == r.toString()) : ((i == 0 and r.name() == 'CHAIR') or (i == 1 and r.name() == 'SECRETARY') or (i >= 2 and r.name() == 'MEMBER'))}"></option>
+                            </select>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <datalist id="lecturerCodes">
+                <option th:each="l : ${lecturers}" th:value="${l.lecturerCode}"
+                        th:text="|${l.lecturerCode} - ${l.fullName} (${l.department != null ? l.department.name : ''})|"></option>
+            </datalist>
+
+            <div class="form-hint mb-4">
+                <i class="bi bi-lightbulb me-1"></i> Bỏ trống những dòng thành viên thứ 4 hoặc 5 nếu hội đồng chỉ có 3 thành viên. Hệ thống tự động gợi ý thứ tự: dòng 1 là Chủ tịch, dòng 2 là Thư ký, các dòng sau là Thành viên.
+            </div>
+
+            <button type="submit" class="btn-hcmute-primary">
+                <i class="bi bi-check2-circle"></i> Thành lập hội đồng
+            </button>
+        </form>
+    </div>
+
+    <!-- Section 2: Council List & Result Publication -->
+    <div class="hcmute-card p-4">
+        <div class="hcmute-card-header">
+            <div>
+                <h2 class="h2 mb-1"><i class="bi bi-table text-primary me-2"></i>Danh sách hội đồng &amp; Kết quả đánh giá</h2>
+                <div class="small text-muted">Theo dõi tiến độ chấm điểm, điểm trung bình tổng hợp và thực hiện công bố kết quả cho sinh viên.</div>
+            </div>
+            <span class="badge bg-primary px-3 py-2 rounded-pill fs-6" th:text="${#lists.size(councils)} + ' hội đồng'">0 hội đồng</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="hcmute-table">
+                <thead>
+                <tr>
+                    <th style="width: 150px;">Tên hội đồng</th>
+                    <th>Đề tài bảo vệ</th>
+                    <th style="width: 100px;" class="text-center">Loại hình</th>
+                    <th style="width: 250px;">Thành viên &amp; Điểm số</th>
+                    <th style="width: 180px;">GVPB &amp; Điểm phản biện</th>
+                    <th style="width: 140px;" class="text-center">Điểm TB / Tổng kết</th>
+                    <th style="width: 150px;" class="text-center">Trạng thái</th>
+                    <th style="width: 140px;" class="text-center">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="v : ${councils}">
+                    <td>
+                        <strong class="text-primary-dark fs-6" th:text="${v.council.name}">Hội đồng 1</strong>
+                    </td>
+                    <td>
+                        <div class="fw-semibold text-dark mb-1" th:text="${v.council.topic.name}">Đề tài nghiên cứu</div>
+                        <div class="small text-muted" th:text="|Bộ môn: ${v.council.topic.department != null ? v.council.topic.department.name : ''}|">Bộ môn</div>
+                        <div th:if="${v.report != null}" class="mt-1">
+                            <a th:href="@{/reports/{id}/download(id=${v.report.id})}" class="small text-primary text-decoration-none">
+                                <i class="bi bi-download me-1"></i> Tải báo cáo (v<span th:text="${v.report.version}">1</span>)
+                            </a>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge-status"
+                              th:classappend="${v.council.topic.period.type.name() == 'RESEARCH'} ? 'badge-status-info' : (${v.council.topic.period.type.name() == 'SPECIALIZED_PROJECT'} ? 'badge-status-warning' : 'badge-status-success')"
+                              th:text="${v.council.topic.period.type.label}">KLTN</span>
+                    </td>
+                    <td class="small">
+                        <div th:each="m : ${v.council.members}" class="py-1 border-bottom border-light">
+                            <span class="fw-medium" th:text="${m.lecturer.fullName}">GV</span>
+                            <span class="text-muted" th:text="'(' + ${m.role.label} + ')'"></span>
+                            <span th:if="${m.score != null}" class="fw-bold text-primary float-end" th:text="${m.score}">8.5</span>
+                            <span th:if="${m.score == null}" class="text-muted small fst-italic float-end">Chưa chấm</span>
+                        </div>
+                    </td>
+                    <td class="small">
+                        <!-- Nếu là NCKH: không có GVPB -->
+                        <div th:if="${v.council.topic.period.type.name() == 'RESEARCH' or !v.council.topic.period.type.requiresReviewerScoreDeadline()}">
+                            <span class="badge-status badge-status-neutral text-muted">
+                                <i class="bi bi-dash-circle me-1"></i>Không có
+                            </span>
+                        </div>
+                        <!-- Nếu là TLCN hoặc KLTN: có GVPB -->
+                        <div th:unless="${v.council.topic.period.type.name() == 'RESEARCH' or !v.council.topic.period.type.requiresReviewerScoreDeadline()}">
+                            <div class="fw-semibold" th:text="${v.council.topic.reviewer != null ? v.council.topic.reviewer.fullName : 'Chưa phân công'}">GVPB</div>
+                            <div class="text-muted" th:text="${v.council.topic.reviewer != null ? v.council.topic.reviewer.lecturerCode : ''}">GV003</div>
+                            <div th:if="${v.council.topic.reviewerScore != null}" class="fw-bold text-success"
+                                 th:text="|${v.council.topic.reviewerScore} điểm|">8.0 điểm</div>
+                            <div th:if="${v.council.topic.reviewerScore == null}" class="text-muted fst-italic">Chưa chấm</div>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span th:if="${v.result != null}" class="fs-5 fw-bold text-primary" th:text="${v.result.averageScore}">8.5</span>
+                        <span th:if="${v.result == null}" class="text-muted small fst-italic">-</span>
+                        <div th:if="${v.result != null and v.result.finalScore != null}" class="small text-success fw-bold"
+                             th:text="|Tổng kết: ${v.result.finalScore}|">Tổng kết: 8.2</div>
+                    </td>
+                    <td class="text-center">
+                        <span th:if="${v.result == null}" class="badge-status badge-status-neutral">
+                            <i class="bi bi-clock"></i> Chưa tổng hợp
+                        </span>
+                        <span th:if="${v.result != null and !v.result.published}" class="badge-status badge-status-warning">
+                            <i class="bi bi-hourglass-split"></i> Chờ công bố
+                        </span>
+                        <span th:if="${v.result != null and v.result.published}" class="badge-status badge-status-success">
+                            <i class="bi bi-check-circle-fill"></i> Đã công bố
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <form th:if="${v.result != null and !v.result.published}"
+                              th:action="@{/dean/councils/results/{id}/publish(id=${v.result.id})}" method="post" class="m-0"
+                              data-confirm="Bạn có chắc muốn công bố kết quả này cho sinh viên xem?">
+                            <button type="submit" class="btn-hcmute-primary btn-hcmute-sm">
+                                <i class="bi bi-broadcast"></i> Công bố điểm
+                            </button>
+                        </form>
+                        <span th:if="${v.result != null and v.result.published}" class="small text-muted">
+                            <i class="bi bi-check2-all text-success me-1"></i>Hoàn tất
+                        </span>
+                        <span th:if="${v.result == null}" class="small text-muted">-</span>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(councils)}" class="empty-row">
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <i class="bi bi-people-fill empty-state-icon"></i>
+                            <div class="empty-state-title">Chưa có hội đồng nào được thành lập</div>
+                            <div class="empty-state-desc">Hãy sử dụng biểu mẫu phía trên để thành lập hội đồng phản biện cho các đề tài đã duyệt tiếp nhận nhóm.</div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const topicSelect = document.getElementById('topicId');
+    const councilForm = topicSelect ? topicSelect.closest('form') : null;
+    const lecturerInputs = document.querySelectorAll('.lecturer-input');
+
+    if (!topicSelect || !councilForm) return;
+
+    // Lấy danh sách mã GVHD của đề tài đang được chọn
+    function getSelectedAdvisors() {
+        const selectedOpt = topicSelect.options[topicSelect.selectedIndex];
+        if (!selectedOpt || !selectedOpt.value) return [];
+        const advisorsStr = selectedOpt.getAttribute('data-advisors') || '';
+        return advisorsStr.split(',').map(function (s) { return s.trim().toUpperCase(); }).filter(Boolean);
+    }
+
+    function getAdvisorNames() {
+        const selectedOpt = topicSelect.options[topicSelect.selectedIndex];
+        if (!selectedOpt || !selectedOpt.value) return '';
+        return selectedOpt.getAttribute('data-advisor-names') || '';
+    }
+
+    // Kiểm tra 1 ô giảng viên cụ thể
+    function validateInput(input, showFeedback) {
+        const val = input.value.trim().toUpperCase();
+        const errorDiv = input.parentElement.querySelector('.lecturer-error-msg');
+        const advisors = getSelectedAdvisors();
+
+        if (!val) {
+            input.classList.remove('is-invalid');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+                errorDiv.textContent = '';
+            }
+            return true;
+        }
+
+        // 1. Kiểm tra có phải là GVHD của đề tài không
+        if (advisors.includes(val)) {
+            if (showFeedback) {
+                input.classList.add('is-invalid');
+                if (errorDiv) {
+                    errorDiv.style.display = 'block';
+                    errorDiv.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i><strong>Giảng viên này là người hướng dẫn của đề tài</strong>, không được tham gia hội đồng!';
+                }
+            }
+            return 'ADVISOR';
+        }
+
+        // 2. Kiểm tra có bị trùng lặp với các ô khác không
+        let duplicateCount = 0;
+        lecturerInputs.forEach(function (other) {
+            if (other.value.trim().toUpperCase() === val) {
+                duplicateCount++;
+            }
+        });
+
+        if (duplicateCount > 1) {
+            if (showFeedback) {
+                input.classList.add('is-invalid');
+                if (errorDiv) {
+                    errorDiv.style.display = 'block';
+                    errorDiv.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>Giảng viên này đã được chọn ở vị trí khác trong hội đồng!';
+                }
+            }
+            return 'DUPLICATE';
+        }
+
+        // Hợp lệ
+        input.classList.remove('is-invalid');
+        if (errorDiv) {
+            errorDiv.style.display = 'none';
+            errorDiv.textContent = '';
+        }
+        return true;
+    }
+
+    // Gắn sự kiện cho từng ô input
+    lecturerInputs.forEach(function (input) {
+        input.addEventListener('input', function () {
+            validateInput(input, true);
+        });
+
+        input.addEventListener('change', function () {
+            const status = validateInput(input, true);
+            if (status === 'ADVISOR') {
+                const advNames = getAdvisorNames();
+                alert('⚠️ Cảnh báo: Giảng viên ' + input.value.trim() + ' là người hướng dẫn của đề tài (' + advNames + ')!\n\nQuy định: Giảng viên hướng dẫn không được tham gia hội đồng của đề tài mình.\nHệ thống chỉ xóa ô giảng viên này để bạn chọn lại, tất cả các mục khác vẫn được giữ nguyên.');
+                input.value = '';
+                validateInput(input, false);
+                input.focus();
+            }
+        });
+    });
+
+    // Khi đổi đề tài bảo vệ, kiểm tra lại toàn bộ các ô giảng viên hiện có
+    topicSelect.addEventListener('change', function () {
+        lecturerInputs.forEach(function (input) {
+            validateInput(input, true);
+        });
+    });
+
+    // Chặn submit nếu có ô nào vi phạm để không bao giờ bị mất form
+    councilForm.addEventListener('submit', function (e) {
+        let hasError = false;
+        let firstErrorInput = null;
+
+        lecturerInputs.forEach(function (input) {
+            const status = validateInput(input, true);
+            if (status !== true && !hasError) {
+                hasError = true;
+                firstErrorInput = input;
+            }
+        });
+
+        if (hasError) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            if (firstErrorInput) {
+                firstErrorInput.focus();
+                alert('⚠️ Không thể thành lập hội đồng: Có giảng viên là người hướng dẫn của đề tài hoặc bị trùng lặp. Vui lòng kiểm tra lại dòng được đánh dấu đỏ!');
+            }
+        }
+    });
+
+    // Kiểm tra ban đầu nếu có dữ liệu cũ
+    lecturerInputs.forEach(function (input) {
+        if (input.value.trim()) {
+            validateInput(input, true);
+        }
+    });
+});
+</script>
+</body>
+</html>

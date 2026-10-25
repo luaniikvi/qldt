@@ -74,6 +74,12 @@ public class TopicService {
 	}
 
 	@Transactional(readOnly = true)
+	public List<Topic> search(Long periodId, TopicStatus status, TopicAvailability availability, Long advisorId,
+			Long reviewerId) {
+		return topicRepository.search(periodId, status, availability, advisorId, reviewerId);
+	}
+
+	@Transactional(readOnly = true)
 	public List<Topic> findAvailablePublishedFor(Long periodId) {
 		return topicRepository.findByStatusAndAvailabilityAndPeriodIdOrderByIdAsc(TopicStatus.PUBLISHED,
 				TopicAvailability.AVAILABLE, periodId);

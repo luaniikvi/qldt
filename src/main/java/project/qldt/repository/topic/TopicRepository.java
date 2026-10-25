@@ -57,6 +57,21 @@ public interface TopicRepository extends JpaRepository<Topic, Long> {
 	@Query("select distinct t from Topic t join t.advisors a where a.id = :lecturerId order by t.id")
 	List<Topic> findByAdvisorId(@Param("lecturerId") Long lecturerId);
 
+	@Query("""
+			select distinct t from Topic t
+			left join t.advisors a
+			left join t.reviewer r
+			where (:periodId is null or t.period.id = :periodId)
+			  and (:status is null or t.status = :status)
+			  and (:availability is null or t.availability = :availability)
+			  and (:advisorId is null or a.id = :advisorId)
+			  and (:reviewerId is null or r.id = :reviewerId)
+			order by t.id
+			""")
+	List<Topic> search(@Param("periodId") Long periodId, @Param("status") TopicStatus status,
+			@Param("availability") TopicAvailability availability, @Param("advisorId") Long advisorId,
+			@Param("reviewerId") Long reviewerId);
+
 	@Query("select distinct t from Topic t join t.advisors a where a.id = :lecturerId and t.availability = :availability order by t.id")
 	List<Topic> findByAdvisorIdAndAvailability(@Param("lecturerId") Long lecturerId,
 			@Param("availability") TopicAvailability availability);

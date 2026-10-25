@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(title='Quản trị bảng tin thông báo')}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='admin-announcements')}"></aside>
+
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title='QUẢN LÝ BẢNG TIN THÔNG BÁO', icon='bi-newspaper', actionUrl='/admin/announcements/new', actionText='Đăng thông báo mới', actionIcon='bi-plus-circle-fill')}"></div>
+
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <div class="hcmute-card p-4">
+        <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+            <div>
+                <h2 class="h2 mb-1"><i class="bi bi-megaphone text-primary me-2"></i>Bảng tin thông báo chung toàn hệ thống</h2>
+                <div class="small text-muted">Các thông báo xuất bản tại đây sẽ hiển thị công khai trên Cổng thông tin cho tất cả người dùng (Giảng viên, Sinh viên).</div>
+            </div>
+            <a th:href="@{/announcements}" class="btn-hcmute-secondary btn-hcmute-sm">
+                <i class="bi bi-eye"></i> Xem giao diện người dùng
+            </a>
+        </div>
+
+        <!-- Search bar -->
+        <div class="search-bar-box">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" id="tableSearchInput" class="form-control search-bar-input"
+                   placeholder="Tìm kiếm thông báo theo tiêu đề hoặc nội dung..." aria-label="Tìm kiếm">
+        </div>
+
+        <div class="table-responsive">
+            <table class="hcmute-table">
+                <thead>
+                <tr>
+                    <th style="width: 50px;" class="text-center">ID</th>
+                    <th>Tiêu đề thông báo</th>
+                    <th>Nội dung tóm tắt</th>
+                    <th style="width: 170px;">Thời gian đăng</th>
+                    <th style="width: 140px;" class="text-center">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="a : ${announcements}">
+                    <td class="text-center text-muted fw-semibold" th:text="${a.id}">1</td>
+                    <td>
+                        <strong class="text-primary-dark fs-6" th:text="${a.title}">Tiêu đề</strong>
+                    </td>
+                    <td class="small text-secondary" style="max-width: 380px;"
+                        th:text="${#strings.abbreviate(a.content, 120)}">Nội dung...</td>
+                    <td class="small text-muted">
+                        <i class="bi bi-calendar3 me-1"></i>
+                        <span th:text="${#temporals.format(a.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2026 08:00</span>
+                    </td>
+                    <td class="text-center">
+                        <div class="d-inline-flex gap-1">
+                            <a th:href="@{/admin/announcements/{id}/edit(id=${a.id})}" class="btn-hcmute-outline btn-hcmute-sm" title="Sửa thông báo">
+                                <i class="bi bi-pencil"></i> Sửa
+                            </a>
+                            <form th:action="@{/admin/announcements/{id}/delete(id=${a.id})}" method="post" class="m-0"
+                                  data-confirm="Bạn có chắc chắn muốn xóa thông báo này?">
+                                <button type="submit" class="btn-hcmute-danger btn-hcmute-sm" title="Xóa thông báo">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(announcements)}" class="empty-row">
+                    <td colspan="5">
+                        <div class="empty-state">
+                            <i class="bi bi-newspaper empty-state-icon"></i>
+                            <div class="empty-state-title">Chưa có thông báo nào</div>
+                            <div class="empty-state-desc">Hãy nhấn "Đăng thông báo mới" ở phía trên để phát hành tin tức đầu tiên.</div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
+</body>
+</html>

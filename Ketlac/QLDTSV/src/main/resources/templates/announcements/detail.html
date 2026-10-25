@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(title=${announcement.title})}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='announcements')}"></aside>
+
+<main class="portal-main">
+    <!-- Page Header Banner -->
+    <div th:replace="~{fragments/layout :: portal-page-header(title='CHI TIẾT THÔNG BÁO', icon='bi-newspaper', actionUrl='/announcements', actionText='Quay lại danh sách', actionIcon='bi-arrow-left')}"></div>
+
+    <div class="hcmute-card p-4">
+        <div class="mb-3">
+            <a th:href="@{/announcements}" class="text-decoration-none text-muted small">
+                <i class="bi bi-arrow-left"></i> Quay lại bảng tin thông báo
+            </a>
+        </div>
+
+        <h1 class="h1 mb-2 text-primary-dark" th:text="${announcement.title}">Tiêu đề thông báo</h1>
+
+        <div class="d-flex align-items-center gap-3 text-muted small mb-4 pb-3 border-bottom">
+            <span><i class="bi bi-building me-1"></i> Khoa Công nghệ Thông tin</span>
+            <span>•</span>
+            <span><i class="bi bi-calendar3 me-1"></i> Thời gian đăng: <strong th:text="${#temporals.format(announcement.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2026 08:00</strong></span>
+        </div>
+
+        <div class="p-3 bg-light rounded-3 mb-4" style="line-height: 1.8; white-space: pre-line; font-size: 15.5px;"
+             th:text="${announcement.content}">
+            Nội dung chi tiết thông báo...
+        </div>
+
+        <div class="pt-3 border-top">
+            <a th:href="@{/announcements}" class="btn-hcmute-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Trở về danh sách thông báo
+            </a>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
+</body>
+</html>

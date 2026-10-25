@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(title='Điểm phản biện')}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='reviewer-scores')}"></aside>
+
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title='ĐIỂM GIẢNG VIÊN PHẢN BIỆN', icon='bi-journal-check', actionUrl=null, actionText=null, actionIcon=null)}"></div>
+
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <div class="hcmute-card p-4">
+        <div class="hcmute-card-header">
+            <div>
+                <h2 class="h2 mb-1"><i class="bi bi-journal-check text-success me-2"></i>Điểm phản biện đã công bố</h2>
+                <div class="small text-muted">Điểm phản biện chiếm 40% điểm tổng kết; 60% còn lại là điểm trung bình của hội đồng.</div>
+            </div>
+            <span class="badge bg-success px-3 py-2 rounded-pill fs-6" th:text="${#lists.size(topics)} + ' đề tài'">0 đề tài</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="hcmute-table">
+                <thead>
+                <tr>
+                    <th style="width: 50px;" class="text-center">STT</th>
+                    <th>Tên đề tài</th>
+                    <th style="width: 200px;">Giảng viên phản biện</th>
+                    <th style="width: 120px;" class="text-center">Điểm</th>
+                    <th>Nhận xét phản biện</th>
+                    <th style="width: 160px;">Thời điểm chấm</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="t, stat : ${topics}">
+                    <td class="text-center text-muted fw-semibold" th:text="${stat.count}">1</td>
+                    <td>
+                        <strong class="text-primary-dark fs-6" th:text="${t.name}">Tên đề tài</strong>
+                        <div class="small text-muted" th:text="|Đợt: ${t.period.name}|">Đợt</div>
+                    </td>
+                    <td class="small">
+                        <div class="fw-semibold" th:text="${t.reviewer != null ? t.reviewer.fullName : '—'}">Giảng viên</div>
+                        <div class="text-muted" th:text="${t.reviewer != null ? t.reviewer.lecturerCode : ''}">GV002</div>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-primary fs-5 px-3 py-2 fw-bold" th:text="${t.reviewerScore}">8.0</span>
+                    </td>
+                    <td class="small text-secondary" th:text="${t.reviewerComment != null and !t.reviewerComment.isBlank() ? t.reviewerComment : '—'}">Nhận xét</td>
+                    <td class="small text-muted"
+                        th:text="${t.reviewerScoredAt != null ? #temporals.format(t.reviewerScoredAt, 'dd/MM/yyyy HH:mm') : '—'}">01/01/2026 08:00</td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(topics)}" class="empty-row">
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <i class="bi bi-journal-x empty-state-icon"></i>
+                            <div class="empty-state-title">Chưa có điểm phản biện nào</div>
+                            <div class="empty-state-desc">Trưởng khoa xem toàn bộ điểm phản biện của các đề tài. Giảng viên xem các đề tài do chính mình thực hiện phản biện.</div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
+</body>
+</html>

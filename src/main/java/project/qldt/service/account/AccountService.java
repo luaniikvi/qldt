@@ -10,6 +10,7 @@ import project.qldt.dto.account.AccountRequest;
 import project.qldt.exception.AccountNotFoundException;
 import project.qldt.exception.InvalidAccountException;
 import project.qldt.model.account.Account;
+import project.qldt.model.account.AccountType;
 import project.qldt.model.account.Admin;
 import project.qldt.model.account.Lecturer;
 import project.qldt.model.account.Role;
@@ -45,6 +46,20 @@ public class AccountService {
 	@Transactional(readOnly = true)
 	public List<Account> findAll() {
 		return accountRepository.findAll();
+	}
+
+	@Transactional(readOnly = true)
+	public List<Account> search(AccountType type, Boolean enabled, String q) {
+		Class<? extends Account> typeClass = null;
+		if (type == AccountType.ADMIN) {
+			typeClass = Admin.class;
+		} else if (type == AccountType.LECTURER) {
+			typeClass = Lecturer.class;
+		} else if (type == AccountType.STUDENT) {
+			typeClass = Student.class;
+		}
+		String keyword = q == null || q.isBlank() ? null : q.trim();
+		return accountRepository.search(typeClass, enabled, keyword);
 	}
 
 	@Transactional(readOnly = true)
@@ -211,7 +226,8 @@ public class AccountService {
 			accountRepository.delete(account);
 			accountRepository.flush();
 		} catch (Exception ex) {
-			throw new InvalidAccountException("Không thể xóa tài khoản này do đã có dữ liệu liên quan (đề tài, nhóm sinh viên hoặc hội đồng). Bạn có thể sử dụng chức năng Khóa tài khoản.");
+			throw new InvalidAccountException(
+					"Không thể xóa tài khoản này do đã có dữ liệu liên quan (đề tài, nhóm sinh viên hoặc hội đồng). Bạn có thể sử dụng chức năng Khóa tài khoản.");
 		}
 	}
 

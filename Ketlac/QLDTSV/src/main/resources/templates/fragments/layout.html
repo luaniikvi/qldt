@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<body>
+
+<!-- ============================================================== -->
+<!-- PORTAL HEADER (Crisp White Toolbar with Context Breadcrumbs)   -->
+<!-- ============================================================== -->
+<header th:fragment="portal-header" class="portal-header"><style>.portal-sidebar{top:0!important;bottom:0!important;left:0!important;height:100vh!important;border-radius:0!important;border:none!important;border-right:1px solid rgba(255,255,255,0.08)!important;width:260px!important}.portal-header{background:rgba(237,242,247,0.98)!important;left:260px!important;border-bottom:1px solid rgba(203,213,225,0.8)!important;color:#0F172A!important}.portal-user-btn{background:#FFFFFF!important;border:1px solid #E2E8F0!important;color:#1E293B!important}.portal-user-btn span:not(.portal-user-avatar){color:#1E293B!important}.portal-user-avatar{background:#EBF3FF!important;color:#1D4ED8!important;border:1px solid #BFDBFE!important;box-shadow:none!important}.btn-header-action,.header-icon-btn,.btn-mobile-sidebar{background:#FFFFFF!important;border:1px solid #E2E8F0!important;color:#334155!important}.portal-system-title{color:#1E293B!important}.portal-header-divider{color:#94A3B8!important}.portal-main,.portal-footer{margin-left:260px!important}@media (max-width:991.98px){.portal-header{left:0!important}.portal-main,.portal-footer{margin-left:0!important}.portal-sidebar{transform:translateX(-100%)!important;border-radius:0!important;top:0!important;left:0!important}.portal-sidebar.show{transform:translateX(0)!important}}</style>
+    <div class="d-flex align-items-center gap-3">
+        <!-- Mobile Toggle Button -->
+        <button id="btnMobileSidebar" class="btn-mobile-sidebar" type="button" aria-label="Mở menu điều hướng">
+            <i class="bi bi-list"></i>
+        </button>
+
+        <!-- System & Context Title -->
+        <div class="portal-header-context d-none d-sm-flex align-items-center">
+            <span class="portal-system-title">Hệ thống Quản lý Đề tài Sinh viên</span>
+        </div>
+    </div>
+
+    <div class="portal-header-actions">
+        <!-- Public Portal Link -->
+        <a th:href="@{/home}" class="btn-header-action d-none d-md-inline-flex" title="Về trang chủ công khai">
+            <i class="bi bi-globe2"></i> <span>Trang chủ</span>
+        </a>
+
+        <!-- Notification Bell -->
+        <a th:href="@{/notifications}" class="header-icon-btn" title="Thông báo cá nhân" aria-label="Thông báo cá nhân">
+            <i class="bi bi-bell-fill fs-6"></i>
+            <span class="header-badge" th:if="${unreadNotifications != null and unreadNotifications > 0}" th:text="${unreadNotifications}">0</span>
+        </a>
+
+        <!-- User Dropdown Menu -->
+        <div class="dropdown">
+            <button class="portal-user-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="portal-user-avatar"
+                      th:text="${currentUserInitials != null ? currentUserInitials : (#authorization.expression('hasRole(''ADMIN'')') or #authentication.name == 'admin' ? 'AD' : (#authorization.expression('hasRole(''STUDENT'')') ? 'SV' : 'GV'))}">AD</span>
+                <span class="d-none d-sm-inline fw-semibold text-dark fs-7"
+                      th:text="${currentUserAccount != null ? currentUserAccount.fullName : (#authentication.name == 'admin' ? 'Quản trị hệ thống' : #authentication.name)}">Họ và Tên</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                <li class="px-3 py-2 border-bottom">
+                    <div class="fw-bold text-dark" th:text="${currentUserAccount != null ? currentUserAccount.fullName : (#authentication.name == 'admin' ? 'Quản trị hệ thống' : #authentication.name)}">User</div>
+                    <div class="small text-muted" th:text="${currentUserRoleName != null ? currentUserRoleName : (#authorization.expression('hasRole(''ADMIN'')') or #authentication.name == 'admin' ? 'Quản trị viên' : (#authorization.expression('hasRole(''STUDENT'')') ? 'Sinh viên' : 'Giảng viên'))}">Vai trò</div>
+                </li>
+                <li><a class="dropdown-item py-2" th:href="@{/announcements}"><i class="bi bi-megaphone me-2 text-primary"></i>Bảng tin thông báo</a></li>
+                <li><a class="dropdown-item py-2" th:href="@{/account/change-password}"><i class="bi bi-key me-2 text-muted"></i>Đổi mật khẩu</a></li>
+                <li><a class="dropdown-item py-2" th:href="@{/notifications}"><i class="bi bi-bell me-2 text-muted"></i>Thông báo của tôi</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" class="m-0" data-no-disable>
+                        <button type="submit" class="dropdown-item py-2 text-danger"><i class="bi bi-box-arrow-right me-2"></i>Đăng xuất</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</header>
+
+
+<!-- ============================================================== -->
+<!-- PORTAL SIDEBAR (Deep Midnight Navy, Single Brand Identity)     -->
+<!-- ============================================================== -->
+<aside th:fragment="portal-sidebar(active)" id="portalSidebar" class="portal-sidebar">
+    <!-- University Identity Brand Header (THE ONLY LOGO ANCHOR) -->
+    <div class="sidebar-brand-box">
+        <a th:href="@{/announcements}" class="sidebar-brand-wrapper" title="Hệ thống Quản lý Đề tài HCMUTE">
+            <div class="sidebar-emblem-badge">
+                <img th:src="@{/images/hcmute-logo-vertical.png}" onerror="this.onerror=null; this.src='/css/images/hcmute-logo-vertical.png';" alt="HCMUTE Emblem">
+            </div>
+            <div class="sidebar-brand-text">
+                <span class="sidebar-brand-name">HCM-UTE</span>
+                <span class="sidebar-brand-dept">KHOA CÔNG NGHỆ THÔNG TIN</span>
+            </div>
+        </a>
+    </div>
+
+    <!-- User Profile Card -->
+    <div class="sidebar-user-card">
+        <div class="sidebar-avatar"
+             th:text="${currentUserInitials != null ? currentUserInitials : (#authorization.expression('hasRole(''ADMIN'')') or #authentication.name == 'admin' ? 'AD' : (#authorization.expression('hasRole(''STUDENT'')') ? 'SV' : 'GV'))}">AD</div>
+        <div class="sidebar-user-info">
+            <div class="sidebar-user-name"
+                 th:text="${currentUserAccount != null ? currentUserAccount.fullName : (#authentication.name == 'admin' ? 'Quản trị hệ thống' : #authentication.name)}"
+                 title="Họ và tên">Quản trị hệ thống</div>
+            <div class="sidebar-user-meta">
+                <span th:text="${currentUserRoleName != null ? currentUserRoleName : (#authorization.expression('hasRole(''ADMIN'')') or #authentication.name == 'admin' ? 'Quản trị viên' : (#authorization.expression('hasRole(''STUDENT'')') ? 'Sinh viên' : 'Giảng viên'))}">Quản trị viên</span>
+            </div>
+            <div class="sidebar-user-status">
+                <span class="status-pulse-dot"></span>
+                <span th:text="${(currentUserAccount != null ? currentUserAccount.enabled : true) ? 'Đang hoạt động' : 'Tạm khóa'}">Đang hoạt động</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="sidebar-nav">
+        <!-- GROUP: TRANG CÁ NHÂN -->
+        <div class="sidebar-nav-group-title">TRANG CÁ NHÂN</div>
+
+        <a th:href="@{/announcements}" class="sidebar-nav-item" th:classappend="${active == 'announcements'} ? 'active' : ''">
+            <i class="bi bi-megaphone-fill sidebar-nav-icon"></i>
+            <span>Bảng tin thông báo</span>
+        </a>
+
+        <a th:href="@{/account/change-password}" class="sidebar-nav-item" th:classappend="${active == 'change-password'} ? 'active' : ''">
+            <i class="bi bi-shield-lock-fill sidebar-nav-icon"></i>
+            <span>Đổi mật khẩu</span>
+        </a>
+
+        <!-- GROUP: SINH VIÊN -->
+        <th:block sec:authorize="hasRole('STUDENT')">
+            <div class="sidebar-nav-group-title">QUẢN LÝ ĐỀ TÀI</div>
+
+            <a th:href="@{/published-topics}" class="sidebar-nav-item" th:classappend="${active == 'published-topics'} ? 'active' : ''">
+                <i class="bi bi-journal-check sidebar-nav-icon"></i>
+                <span>Đề tài đã công bố</span>
+            </a>
+
+            <a th:href="@{/teams}" class="sidebar-nav-item" th:classappend="${active == 'teams'} ? 'active' : ''">
+                <i class="bi bi-people-fill sidebar-nav-icon"></i>
+                <span>Nhóm &amp; Đăng ký đề tài</span>
+            </a>
+
+            <a th:href="@{/results}" class="sidebar-nav-item" th:classappend="${active == 'results'} ? 'active' : ''">
+                <i class="bi bi-award-fill sidebar-nav-icon"></i>
+                <span>Kết quả bảo vệ đề tài</span>
+            </a>
+
+            <a th:href="@{/reviewer-scores}" class="sidebar-nav-item" th:classappend="${active == 'reviewer-scores'} ? 'active' : ''">
+                <i class="bi bi-journal-check sidebar-nav-icon"></i>
+                <span>Điểm phản biện</span>
+            </a>
+        </th:block>
+
+        <!-- GROUP: GIẢNG VIÊN -->
+        <th:block sec:authorize="hasRole('LECTURER')">
+            <div class="sidebar-nav-group-title">HƯỚNG DẪN ĐỀ TÀI</div>
+
+            <a th:href="@{/topics}" class="sidebar-nav-item" th:classappend="${active == 'topics'} ? 'active' : ''">
+                <i class="bi bi-journal-text sidebar-nav-icon"></i>
+                <span>Đề tài của tôi</span>
+            </a>
+
+            <a th:href="@{/registrations}" class="sidebar-nav-item" th:classappend="${active == 'registrations'} ? 'active' : ''">
+                <i class="bi bi-person-check-fill sidebar-nav-icon"></i>
+                <span>Duyệt đăng ký đề tài</span>
+            </a>
+
+            <a th:href="@{/reports}" class="sidebar-nav-item" th:classappend="${active == 'reports'} ? 'active' : ''">
+                <i class="bi bi-file-earmark-arrow-up-fill sidebar-nav-icon"></i>
+                <span>Báo cáo đề tài</span>
+            </a>
+
+            <div class="sidebar-nav-group-title">HỘI ĐỒNG &amp; ĐÁNH GIÁ</div>
+
+            <a th:href="@{/councils}" class="sidebar-nav-item" th:classappend="${active == 'councils'} ? 'active' : ''">
+                <i class="bi bi-clipboard2-check-fill sidebar-nav-icon"></i>
+                <span>Hội đồng của tôi</span>
+            </a>
+
+            <a th:href="@{/reviewer/topics}" class="sidebar-nav-item" th:classappend="${active == 'reviewer-topics'} ? 'active' : ''">
+                <i class="bi bi-person-check-fill sidebar-nav-icon"></i>
+                <span>Chấm điểm phản biện</span>
+            </a>
+
+            <a th:href="@{/reviewer-scores}" class="sidebar-nav-item" th:classappend="${active == 'reviewer-scores'} ? 'active' : ''">
+                <i class="bi bi-journal-check sidebar-nav-icon"></i>
+                <span>Điểm phản biện</span>
+            </a>
+
+            <a th:href="@{/results}" class="sidebar-nav-item" th:classappend="${active == 'results'} ? 'active' : ''">
+                <i class="bi bi-award-fill sidebar-nav-icon"></i>
+                <span>Kết quả đề tài hướng dẫn</span>
+            </a>
+        </th:block>
+
+        <!-- GROUP: TRƯỞNG KHOA (DEAN) -->
+        <th:block sec:authorize="hasRole('DEAN')">
+            <div class="sidebar-nav-group-title">QUẢN LÝ KHOA (TRƯỞNG KHOA)</div>
+
+            <a th:href="@{/periods}" class="sidebar-nav-item" th:classappend="${active == 'periods'} ? 'active' : ''">
+                <i class="bi bi-calendar3-range-fill sidebar-nav-icon"></i>
+                <span>Quản lý đợt đăng ký</span>
+            </a>
+
+            <a th:href="@{/dean/topics}" class="sidebar-nav-item" th:classappend="${active == 'dean-topics'} ? 'active' : ''">
+                <i class="bi bi-patch-check-fill sidebar-nav-icon"></i>
+                <span>Duyệt &amp; Công bố đề tài</span>
+            </a>
+
+            <a th:href="@{/dean/registrations}" class="sidebar-nav-item" th:classappend="${active == 'dean-registrations'} ? 'active' : ''">
+                <i class="bi bi-journal-text sidebar-nav-icon"></i>
+                <span>Quản lý danh sách đề tài</span>
+            </a>
+
+            <a th:href="@{/dean/councils}" class="sidebar-nav-item" th:classappend="${active == 'dean-councils'} ? 'active' : ''">
+                <i class="bi bi-person-workspace sidebar-nav-icon"></i>
+                <span>Lập hội đồng &amp; Điểm</span>
+            </a>
+
+            <a th:href="@{/dean/reviewers}" class="sidebar-nav-item" th:classappend="${active == 'dean-reviewers'} ? 'active' : ''">
+                <i class="bi bi-person-badge-fill sidebar-nav-icon"></i>
+                <span>Phân công phản biện</span>
+            </a>
+
+            <a th:href="@{/dean/statistics}" class="sidebar-nav-item" th:classappend="${active == 'dean-statistics'} ? 'active' : ''">
+                <i class="bi bi-bar-chart-line-fill sidebar-nav-icon"></i>
+                <span>Thống kê &amp; Xuất kết quả</span>
+            </a>
+
+            <a th:href="@{/dean/reminders}" class="sidebar-nav-item" th:classappend="${active == 'dean-reminders'} ? 'active' : ''">
+                <i class="bi bi-send-exclamation-fill sidebar-nav-icon"></i>
+                <span>Gửi thông báo nhắc hạn</span>
+            </a>
+        </th:block>
+
+        <!-- GROUP: QUẢN TRỊ VIÊN (ADMIN) -->
+        <th:block sec:authorize="hasRole('ADMIN')">
+            <div class="sidebar-nav-group-title">QUẢN TRỊ HỆ THỐNG</div>
+
+            <a th:href="@{/admin/accounts}" class="sidebar-nav-item" th:classappend="${active == 'admin-accounts'} ? 'active' : ''">
+                <i class="bi bi-people-fill sidebar-nav-icon"></i>
+                <span>Quản trị tài khoản</span>
+            </a>
+
+            <a th:href="@{/admin/announcements}" class="sidebar-nav-item" th:classappend="${active == 'admin-announcements'} ? 'active' : ''">
+                <i class="bi bi-newspaper sidebar-nav-icon"></i>
+                <span>Quản lý bảng tin thông báo</span>
+            </a>
+        </th:block>
+    </nav>
+</aside>
+
+<!-- Mobile Sidebar Backdrop -->
+<div id="portalBackdrop" class="portal-sidebar-backdrop"></div>
+
+
+<!-- ============================================================== -->
+<!-- PAGE HEADER BANNER (Relate Light Panel)                        -->
+<!-- ============================================================== -->
+<div th:fragment="portal-page-header(title, icon, actionUrl, actionText, actionIcon)" class="portal-page-header">
+    <h1 class="portal-page-title">
+        <span th:text="${title}">TIÊU ĐỀ TRANG</span>
+    </h1>
+    <div th:if="${actionUrl != null}">
+        <a th:href="@{${actionUrl}}" class="btn-portal-header-action">
+            <i th:if="${actionIcon != null}" th:class="'bi ' + ${actionIcon}"></i>
+            <span th:text="${actionText}">Hành động</span>
+        </a>
+    </div>
+</div>
+
+
+<!-- ============================================================== -->
+<!-- PORTAL ANNOUNCEMENT TABS (Pill Style Matching Mockup)         -->
+<!-- ============================================================== -->
+<div th:fragment="portal-notice-tabs(activeTab)" class="portal-tabs">
+    <a th:href="@{/announcements}" class="portal-tab-pill" th:classappend="${activeTab == 'announcements'} ? 'active' : ''">
+        <i class="bi bi-newspaper"></i> THÔNG BÁO CHUNG
+    </a>
+    <a th:href="@{/notifications}" class="portal-tab-pill" th:classappend="${activeTab == 'notifications'} ? 'active' : ''">
+        <i class="bi bi-bell-fill"></i> THÔNG BÁO CÁ NHÂN
+        <span class="badge bg-danger rounded-pill ms-1" th:if="${unreadNotifications != null and unreadNotifications > 0}" th:text="${unreadNotifications}">0</span>
+    </a>
+</div>
+
+
+<!-- ============================================================== -->
+<!-- FLASH & ALERT MESSAGES                                         -->
+<!-- ============================================================== -->
+<div th:fragment="flash-messages">
+    <!-- Success Message -->
+    <div th:if="${message}" class="hcmute-alert hcmute-alert-success" role="alert">
+        <i class="bi bi-check-circle-fill fs-5 flex-shrink-0"></i>
+        <div class="flex-grow-1" th:text="${message}">Thao tác thành công.</div>
+    </div>
+
+    <!-- Error Message -->
+    <div th:if="${error}" class="hcmute-alert hcmute-alert-danger" role="alert">
+        <i class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0"></i>
+        <div class="flex-grow-1" th:text="${error}">Đã có lỗi xảy ra.</div>
+    </div>
+
+    <!-- Spring Security param alerts -->
+    <div th:if="${param.logout}" class="hcmute-alert hcmute-alert-success" role="alert">
+        <i class="bi bi-check-circle-fill fs-5 flex-shrink-0"></i>
+        <div class="flex-grow-1">Bạn đã đăng xuất khỏi hệ thống thành công.</div><script>if(window.history.replaceState){const cleanUrl=window.location.pathname+window.location.search.replace(/[?&]logout(=[^&]*)?/,'').replace(/^&/,'?').replace(/\?$/,'');window.history.replaceState({},document.title,cleanUrl);}</script>
+    </div>
+
+    <div th:if="${param.error}" class="hcmute-alert hcmute-alert-danger" role="alert">
+        <i class="bi bi-x-circle-fill fs-5 flex-shrink-0"></i>
+        <div class="flex-grow-1">Sai tên đăng nhập hoặc mật khẩu. Vui lòng thử lại.</div>
+    </div>
+</div>
+
+
+<!-- ============================================================== -->
+<!-- PORTAL FOOTER (Midnight Navy Matching System Identity)         -->
+<!-- ============================================================== -->
+<footer th:fragment="portal-footer" class="portal-footer">
+    <div class="container-fluid px-3 px-xl-4">
+        <div class="row g-4 g-lg-5">
+            <!-- Brand & University Info -->
+            <div class="col-lg-5 col-md-12">
+                <div class="footer-brand-identity mb-3">
+                    <div class="footer-emblem-badge">
+                        <img th:src="@{/images/hcmute-logo-vertical.png}"
+                             onerror="this.onerror=null; this.src='/images/hcmute-logo-vertical.png';"
+                             alt="Logo Khoa Công nghệ Thông tin - HCMUTE" class="footer-emblem-img">
+                    </div>
+                    <div class="footer-brand-text">
+                        <span class="footer-uni-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</span>
+                        <span class="footer-dept-title"><span class="badge-kcntt-footer">KHOA CNTT</span> HỆ THỐNG QUẢN LÝ ĐỀ TÀI SINH VIÊN</span>
+                    </div>
+                </div>
+                <ul class="footer-contact-list">
+                    <li><i class="bi bi-geo-alt-fill text-primary me-2"></i>Số 1 Võ Văn Ngân, phường Thủ Đức, TPHCM</li>
+                    <li><i class="bi bi-envelope-fill text-primary me-2"></i>fit@hcmute.edu.vn</li>
+                    <li><i class="bi bi-telephone-fill text-primary me-2"></i>(028) 3896 8641 — (028) 3722 1223</li>
+                </ul>
+            </div>
+
+            <!-- Quick Navigation -->
+            <div class="col-lg-3 col-md-6">
+                <h5 class="footer-heading">ĐIỀU HƯỚNG NHANH</h5>
+                <ul class="footer-links">
+                    <li><a th:href="@{/home}"><i class="bi bi-chevron-right me-1"></i>Trang chủ công khai</a></li>
+                    <li><a th:href="@{/announcements}"><i class="bi bi-chevron-right me-1"></i>Bảng tin thông báo</a></li>
+                    <li><a th:href="@{/topics}"><i class="bi bi-chevron-right me-1"></i>Danh sách đề tài</a></li>
+                    <li><a th:href="@{/notifications}"><i class="bi bi-chevron-right me-1"></i>Thông báo cá nhân</a></li>
+                </ul>
+            </div>
+
+            <!-- Academic Info & Portal Status (NO LOGIN BUTTON) -->
+            <div class="col-lg-4 col-md-6">
+                <h5 class="footer-heading">CỔNG THÔNG TIN ĐÀO TẠO</h5>
+                <p class="footer-portal-desc">Nền tảng quản trị và số hóa toàn bộ đề tài Môn học, Nghiên cứu khoa học (NCKH), Tiểu luận chuyên ngành (TLCN) và Khóa luận tốt nghiệp (KLTN).</p>
+                <div class="d-flex align-items-center gap-2 text-white-50 small mt-2">
+                    <i class="bi bi-patch-check-fill text-info fs-5"></i>
+                    <span>Cổng làm việc nội bộ: <strong>Khoa CNTT • HCMUTE</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="portal-footer-bottom">
+            <div class="row align-items-center">
+                <div class="col-md-8 text-center text-md-start mb-2 mb-md-0">
+                    &copy; 2026 Khoa Công nghệ Thông tin — Trường Đại học Công nghệ Kỹ thuật TP.HCM. Bảo lưu mọi quyền.
+                </div>
+                <div class="col-md-4 text-center text-md-end">
+                    <span class="text-white-50 small">Phiên bản 2.0 • Hệ thống Quản lý Đề tài</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+<!-- ============================================================== -->
+<!-- PORTAL SCRIPTS                                                 -->
+<!-- ============================================================== -->
+<th:block th:fragment="portal-scripts">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/carousel-config.js}"></script>
+    <script th:src="@{/js/portal.js}"></script>
+</th:block>
+
+</body>
+</html>
