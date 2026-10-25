@@ -29,3 +29,6 @@ EXPOSE 8080
 
 # Chạy ứng dụng Spring Boot và nhận PORT từ môi trường (Render tự cấp biến PORT)
 ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -jar app.jar"]
+
+# Cấu hình thời gian cho khỏi lệch giờ
+ENV TZ="Asia/Ho_Chi_Minh"
