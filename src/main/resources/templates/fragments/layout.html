@@ -6,7 +6,7 @@
 <!-- ============================================================== -->
 <!-- PORTAL HEADER (Crisp White Toolbar with Context Breadcrumbs)   -->
 <!-- ============================================================== -->
-<header th:fragment="portal-header" class="portal-header">
+<header th:fragment="portal-header" class="portal-header"><style>.portal-sidebar{top:0!important;bottom:0!important;left:0!important;height:100vh!important;border-radius:0!important;border:none!important;border-right:1px solid rgba(255,255,255,0.08)!important;width:260px!important}.portal-header{background:rgba(237,242,247,0.98)!important;left:260px!important;border-bottom:1px solid rgba(203,213,225,0.8)!important;color:#0F172A!important}.portal-user-btn{background:#FFFFFF!important;border:1px solid #E2E8F0!important;color:#1E293B!important}.portal-user-btn span:not(.portal-user-avatar){color:#1E293B!important}.portal-user-avatar{background:#EBF3FF!important;color:#1D4ED8!important;border:1px solid #BFDBFE!important;box-shadow:none!important}.btn-header-action,.header-icon-btn,.btn-mobile-sidebar{background:#FFFFFF!important;border:1px solid #E2E8F0!important;color:#334155!important}.portal-system-title{color:#1E293B!important}.portal-header-divider{color:#94A3B8!important}.portal-main,.portal-footer{margin-left:260px!important}@media (max-width:991.98px){.portal-header{left:0!important}.portal-main,.portal-footer{margin-left:0!important}.portal-sidebar{transform:translateX(-100%)!important;border-radius:0!important;top:0!important;left:0!important}.portal-sidebar.show{transform:translateX(0)!important}}</style>
     <div class="d-flex align-items-center gap-3">
         <!-- Mobile Toggle Button -->
         <button id="btnMobileSidebar" class="btn-mobile-sidebar" type="button" aria-label="Mở menu điều hướng">
@@ -294,12 +294,17 @@
     <!-- Spring Security param alerts -->
     <div th:if="${param.logout}" class="hcmute-alert hcmute-alert-success" role="alert">
         <i class="bi bi-check-circle-fill fs-5 flex-shrink-0"></i>
-        <div class="flex-grow-1">Bạn đã đăng xuất khỏi hệ thống thành công.</div>
+        <div class="flex-grow-1">Bạn đã đăng xuất khỏi hệ thống thành công.</div><script>if(window.history.replaceState){const cleanUrl=window.location.pathname+window.location.search.replace(/[?&]logout(=[^&]*)?/,'').replace(/^&/,'?').replace(/\?$/,'');window.history.replaceState({},document.title,cleanUrl);}</script>
     </div>
 
     <div th:if="${param.error}" class="hcmute-alert hcmute-alert-danger" role="alert">
         <i class="bi bi-x-circle-fill fs-5 flex-shrink-0"></i>
-        <div class="flex-grow-1">Sai tên đăng nhập hoặc mật khẩu. Vui lòng thử lại.</div>
+        <div class="flex-grow-1" th:if="${session.SPRING_SECURITY_LAST_EXCEPTION != null and (session.SPRING_SECURITY_LAST_EXCEPTION.class.simpleName == 'DisabledException' or session.SPRING_SECURITY_LAST_EXCEPTION.class.simpleName == 'LockedException')}">
+            Tài khoản của bạn đã bị khóa hoặc vô hiệu hóa. Vui lòng liên hệ quản trị viên!
+        </div>
+        <div class="flex-grow-1" th:unless="${session.SPRING_SECURITY_LAST_EXCEPTION != null and (session.SPRING_SECURITY_LAST_EXCEPTION.class.simpleName == 'DisabledException' or session.SPRING_SECURITY_LAST_EXCEPTION.class.simpleName == 'LockedException')}">
+            Sai tên đăng nhập hoặc mật khẩu. Vui lòng thử lại.
+        </div>
     </div>
 </div>
 
@@ -314,7 +319,7 @@
             <div class="col-lg-5 col-md-12">
                 <div class="footer-brand-identity mb-3">
                     <div class="footer-emblem-badge">
-                        <img th:src="@{/images/fit-logo.png}"
+                        <img th:src="@{/images/hcmute-logo-vertical.png}"
                              onerror="this.onerror=null; this.src='/images/hcmute-logo-vertical.png';"
                              alt="Logo Khoa Công nghệ Thông tin - HCMUTE" class="footer-emblem-img">
                     </div>

@@ -31,7 +31,8 @@
                     <th style="width: 140px;" class="text-center">Chức vụ</th>
                     <th style="width: 120px;" class="text-center">Khóa / Mở</th>
                     <th style="width: 140px;" class="text-center">Trưởng khoa</th>
-                    <th style="width: 250px;">Đặt lại mật khẩu</th>
+                    <th style="width: 230px;">Đặt lại mật khẩu</th>
+                    <th style="width: 90px;" class="text-center">Xóa</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -107,10 +108,20 @@
                             </button>
                         </form>
                     </td>
+                    <td class="text-center">
+                        <form th:if="${acc.username != #authentication.name}"
+                              th:action="@{/admin/accounts/{id}/delete(id=${acc.id})}" method="post" class="m-0"
+                              data-confirm="Bạn có chắc chắn muốn xóa tài khoản này? Hành động này không thể hoàn tác!">
+                            <button type="submit" class="btn-hcmute-danger btn-hcmute-sm" title="Xóa tài khoản">
+                                <i class="bi bi-trash3-fill"></i> Xóa
+                            </button>
+                        </form>
+                        <span th:if="${acc.username == #authentication.name}" class="text-muted" title="Không thể tự xóa tài khoản đang đăng nhập">—</span>
+                    </td>
                 </tr>
 
                 <tr th:if="${#lists.isEmpty(accounts)}" class="empty-row">
-                    <td colspan="9">
+                    <td colspan="10">
                         <div class="empty-state">
                             <i class="bi bi-people empty-state-icon"></i>
                             <div class="empty-state-title">Chưa có tài khoản nào</div>

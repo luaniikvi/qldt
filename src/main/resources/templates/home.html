@@ -21,7 +21,7 @@
 
     <!-- CSS System -->
     <link rel="stylesheet" th:href="@{/css/design-tokens.css}">
-    <link rel="stylesheet" th:href="@{/css/public.css}">
+    <link rel="stylesheet" th:href="@{/css/public.css(v='2.0')}">
 </head>
 
 <body>
@@ -77,11 +77,31 @@
     </header>
 
     <!-- Alert for logout if present -->
-    <div class="container mt-3" th:if="${param.logout}">
-        <div class="hcmute-alert hcmute-alert-success">
-            <i class="bi bi-check-circle-fill fs-5"></i>
-            <div>Bạn đã đăng xuất khỏi hệ thống thành công.</div>
+    <div class="container mt-3" th:if="${param.logout}" id="logoutAlertBox">
+        <div class="hcmute-alert hcmute-alert-success d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-check-circle-fill fs-5"></i>
+                <div>Bạn đã đăng xuất khỏi hệ thống thành công.</div>
+            </div>
+            <button type="button" class="btn-close ms-3" aria-label="Đóng" onclick="document.getElementById('logoutAlertBox').remove();"></button>
         </div>
+        <script>
+            // Xóa query ?logout trên URL trình duyệt để khi F5 / reload không còn hiện lại
+            if (window.history.replaceState) {
+                const cleanUrl = window.location.pathname + window.location.search.replace(/[?&]logout(=[^&]*)?/, '').replace(/^&/, '?').replace(/\?$/, '');
+                window.history.replaceState({}, document.title, cleanUrl);
+            }
+            // Tự động mờ dần và ẩn thông báo sau 5 giây
+            setTimeout(function() {
+                const alertBox = document.getElementById('logoutAlertBox');
+                if (alertBox) {
+                    alertBox.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                    alertBox.style.opacity = '0';
+                    alertBox.style.transform = 'translateY(-10px)';
+                    setTimeout(function() { alertBox.remove(); }, 600);
+                }
+            }, 5000);
+        </script>
     </div>
 
     <!-- ============================================================== -->
@@ -359,7 +379,6 @@
     <section id="gioi-thieu" class="public-section">
         <div class="container">
             <div class="section-header">
-                <span class="section-subtitle"><i class="bi bi-info-circle-fill"></i> GIỚI THIỆU HỆ THỐNG</span>
                 <h2 class="section-title">Hệ thống đồng hành cùng giảng viên &amp; sinh viên</h2>
             </div>
 
@@ -389,15 +408,14 @@
                         <div class="pillar-icon-box pillar-icon-emerald">
                             <i class="bi bi-people-fill"></i>
                         </div>
-                        <h3 class="h4 fw-bold mb-3">Quản lý nhóm &amp; Giảng viên HD</h3>
+                        <h3 class="h4 fw-bold mb-3">Quản lý nhóm &amp; Đăng ký đề tài</h3>
                         <p class="text-muted small mb-4" style="line-height: 1.65;">
-                            Sinh viên tạo nhóm nghiên cứu, mời thành viên tham gia, phân công nhóm trưởng và chọn nguyện
-                            vọng đăng ký đề tài trực tiếp với giảng viên.
+                            Sinh viên ghép nhóm (có nhóm trưởng) và đăng ký đề tài từ danh sách đã công bố. Khi GVHD phê duyệt, nhóm sẽ thực hiện đề tài gắn liền dưới sự hướng dẫn của GV đó.
                         </p>
                         <div class="pillar-tags">
                             <span class="pillar-tag">Ghép nhóm trực tuyến</span>
-                            <span class="pillar-tag">Tối đa 3 SV</span>
-                            <span class="pillar-tag">Mời GVHD</span>
+                            <span class="pillar-tag">Tối đa 3 - 5 SV</span>
+                            <span class="pillar-tag">GVHD theo đề tài</span>
                         </div>
                     </div>
                 </div>
@@ -430,7 +448,6 @@
     <section id="quy-trinh" class="public-section public-process-section">
         <div class="container">
             <div class="section-header text-center">
-                <span class="section-subtitle"><i class="bi bi-diagram-3-fill me-1"></i> QUY TRÌNH THỰC HIỆN</span>
                 <h2 class="section-title">Quy trình 6 bước từ đăng ký đến bảo vệ đề tài</h2>
                 <p class="section-desc">Quy trình khép kín và minh bạch: từ khâu mở đợt, đăng ký nhóm, xét duyệt đề cương
                     cho đến nộp báo cáo tiến độ và chấm điểm bảo vệ trước hội đồng.</p>
@@ -497,9 +514,8 @@
                     <div class="process-icon-wrapper color-amber">
                         <i class="bi bi-people-fill"></i>
                     </div>
-                    <h3 class="process-card-title">Nhóm SV đăng ký</h3>
-                    <p class="process-card-text">Sinh viên ghép nhóm (có nhóm trưởng), chọn nguyện vọng đề tài và chờ
-                        GVHD phê duyệt.</p>
+                    <h3 class="process-card-title">Nhóm SV đăng ký đề tài</h3>
+                    <p class="process-card-text">Sinh viên ghép nhóm (có nhóm trưởng), đăng ký đề tài từ danh sách công bố; sau khi được GVHD của đề tài duyệt thì nhóm sẽ thực hiện cùng GVHD đó.</p>
                     <div class="process-card-meta">
                         <i class="bi bi-mortarboard-fill"></i> Phụ trách: <strong>Sinh viên &amp; GVHD</strong>
                     </div>
@@ -548,7 +564,6 @@
     <section id="huong-dan" class="public-section public-guide-section">
         <div class="container">
             <div class="section-header text-center">
-                <span class="section-subtitle"><i class="bi bi-compass-fill me-1"></i> HỖ TRỢ VÀ HƯỚNG DẪN</span>
                 <h2 class="section-title">Cẩm nang tác vụ dành cho từng vai trò</h2>
                 <p class="section-desc">Hệ thống tối ưu hóa giao diện và quy trình riêng biệt phù hợp với nhiệm vụ của
                     từng đối tượng sử dụng.</p>
@@ -556,7 +571,7 @@
 
             <div class="row g-4">
                 <!-- Sinh viên -->
-                <div class="col-lg-4 col-md-6">
+                <div class="col-xl-3 col-md-6">
                     <div class="role-hub-card student-card">
                         <div class="role-hub-banner student-banner">
                             <div class="role-hub-icon">
@@ -592,18 +607,12 @@
                                     <span>Tra cứu điểm bảo vệ và nhận xét của hội đồng tức thì</span>
                                 </div>
                             </div>
-                            <div class="role-hub-action">
-                                <a th:href="@{/login}" class="btn-role-action student-btn">
-                                    <span>Truy cập Cổng Sinh viên</span>
-                                    <i class="bi bi-arrow-right"></i>
-                                </a>
-                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Giảng viên -->
-                <div class="col-lg-4 col-md-6">
+                <div class="col-xl-3 col-md-6">
                     <div class="role-hub-card lecturer-card">
                         <div class="role-hub-banner lecturer-banner">
                             <div class="role-hub-icon">
@@ -639,31 +648,24 @@
                                     <span>Tham gia hội đồng phản biện và nhập điểm đánh giá chuẩn quy chế</span>
                                 </div>
                             </div>
-                            <div class="role-hub-action">
-                                <a th:href="@{/login}" class="btn-role-action lecturer-btn">
-                                    <span>Truy cập Cổng Giảng viên</span>
-                                    <i class="bi bi-arrow-right"></i>
-                                </a>
-                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Quản lý / Trưởng khoa -->
-                <div class="col-lg-4 col-md-6">
-                    <div class="role-hub-card admin-card">
-                        <div class="role-hub-banner admin-banner">
+                <!-- Trưởng khoa -->
+                <div class="col-xl-3 col-md-6">
+                    <div class="role-hub-card dean-card">
+                        <div class="role-hub-banner dean-banner">
                             <div class="role-hub-icon">
-                                <i class="bi bi-shield-lock-fill"></i>
+                                <i class="bi bi-person-fill-gear"></i>
                             </div>
                             <div>
-                                <span class="role-hub-tag">QUẢN TRỊ &amp; ĐIỀU HÀNH</span>
-                                <h3 class="role-hub-title">Trưởng khoa &amp; Quản trị</h3>
+                                <span class="role-hub-tag">QUẢN LÝ ĐÀO TẠO &amp; KHOA</span>
+                                <h3 class="role-hub-title">Dành cho Trưởng khoa</h3>
                             </div>
                         </div>
                         <div class="role-hub-body">
-                            <p class="role-hub-desc">Dành cho Ban chủ nhiệm Khoa CNTT và Ban quản trị hệ thống quản lý
-                                tổng thể đào tạo.</p>
+                            <p class="role-hub-desc">Dành cho Ban chủ nhiệm Khoa CNTT điều phối toàn bộ quy trình đào tạo và hội đồng chấm thi.</p>
                             <div class="role-checklist">
                                 <div class="role-check-item">
                                     <i class="bi bi-check-circle-fill"></i>
@@ -686,11 +688,45 @@
                                     <span>Xuất báo cáo thống kê kết quả toàn khóa ra tệp Excel chuẩn</span>
                                 </div>
                             </div>
-                            <div class="role-hub-action">
-                                <a th:href="@{/login}" class="btn-role-action admin-btn">
-                                    <span>Truy cập Cổng Quản lý</span>
-                                    <i class="bi bi-arrow-right"></i>
-                                </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quản trị viên (Admin) -->
+                <div class="col-xl-3 col-md-6">
+                    <div class="role-hub-card admin-card">
+                        <div class="role-hub-banner admin-banner">
+                            <div class="role-hub-icon">
+                                <i class="bi bi-shield-lock-fill"></i>
+                            </div>
+                            <div>
+                                <span class="role-hub-tag">HỆ THỐNG &amp; PHÂN QUYỀN</span>
+                                <h3 class="role-hub-title">Quản trị viên (Admin)</h3>
+                            </div>
+                        </div>
+                        <div class="role-hub-body">
+                            <p class="role-hub-desc">Dành cho quản trị viên kỹ thuật quản trị tài khoản người dùng và bảo mật hệ thống.</p>
+                            <div class="role-checklist">
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Khởi tạo và quản lý tài khoản người dùng (GV, SV)</span>
+                                </div>
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Cấp phân quyền vai trò Trưởng khoa cho giảng viên</span>
+                                </div>
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Quản lý trạng thái tài khoản, khóa hoặc cấp lại mật khẩu</span>
+                                </div>
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Quản lý danh mục bộ môn và thiết lập thông số hệ thống</span>
+                                </div>
+                                <div class="role-check-item">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                    <span>Cấu hình dịch vụ email thông báo tự động (SMTP Brevo)</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -709,9 +745,9 @@
                 <div class="col-lg-5 col-md-12">
                     <div class="footer-brand-identity mb-3">
                         <div class="footer-emblem-badge">
-                            <img th:src="@{/images/fit-logo.png}"
-                                onerror="this.onerror=null; this.src='/images/hcmute-logo-vertical.png';"
-                                alt="Logo Khoa Công nghệ Thông tin - HCMUTE" class="footer-emblem-img">
+                            <img th:src="@{/images/hcmute-logo-vertical.png}"
+                                onerror="this.onerror=null; this.src='/css/images/hcmute-logo-vertical.png';"
+                                alt="Logo Trường Đại học Sư phạm Kỹ thuật TP.HCM" class="footer-emblem-img">
                         </div>
                         <div class="footer-brand-text">
                             <span class="footer-uni-title">TRƯỜNG ĐẠI HỌC CÔNG NGHỆ KỸ THUẬT TP.HCM</span>

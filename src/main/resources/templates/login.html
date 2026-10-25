@@ -101,12 +101,23 @@
     <!-- Alert Messages -->
     <div th:if="${param.error}" class="hcmute-alert hcmute-alert-danger" role="alert">
         <i class="bi bi-x-circle-fill fs-5 flex-shrink-0"></i>
-        <div>Sai tên đăng nhập hoặc mật khẩu. Vui lòng kiểm tra lại.</div>
+        <div th:if="${session.SPRING_SECURITY_LAST_EXCEPTION != null and (session.SPRING_SECURITY_LAST_EXCEPTION.class.simpleName == 'DisabledException' or session.SPRING_SECURITY_LAST_EXCEPTION.class.simpleName == 'LockedException')}">
+            Tài khoản của bạn đã bị khóa hoặc vô hiệu hóa. Vui lòng liên hệ quản trị viên!
+        </div>
+        <div th:unless="${session.SPRING_SECURITY_LAST_EXCEPTION != null and (session.SPRING_SECURITY_LAST_EXCEPTION.class.simpleName == 'DisabledException' or session.SPRING_SECURITY_LAST_EXCEPTION.class.simpleName == 'LockedException')}">
+            Sai tên đăng nhập hoặc mật khẩu. Vui lòng kiểm tra lại.
+        </div>
     </div>
 
-    <div th:if="${param.logout}" class="hcmute-alert hcmute-alert-success" role="alert">
+    <div th:if="${param.logout}" class="hcmute-alert hcmute-alert-success" role="alert" id="loginLogoutAlert">
         <i class="bi bi-check-circle-fill fs-5 flex-shrink-0"></i>
         <div>Bạn đã đăng xuất khỏi hệ thống thành công.</div>
+        <script>
+            if (window.history.replaceState) {
+                const cleanUrl = window.location.pathname + window.location.search.replace(/[?&]logout(=[^&]*)?/, '').replace(/^&/, '?').replace(/\?$/, '');
+                window.history.replaceState({}, document.title, cleanUrl);
+            }
+        </script>
     </div>
 
     <!-- Login Form -->

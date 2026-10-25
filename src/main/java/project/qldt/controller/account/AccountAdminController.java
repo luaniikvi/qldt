@@ -3,6 +3,7 @@ package project.qldt.controller.account;
 import jakarta.validation.Valid;
 
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -93,6 +94,20 @@ public class AccountAdminController {
 		try {
 			accountService.resetPassword(id, password);
 			redirectAttributes.addFlashAttribute("message", "Đã đặt lại mật khẩu");
+		} catch (InvalidAccountException ex) {
+			redirectAttributes.addFlashAttribute("error", ex.getMessage());
+		}
+		return "redirect:/admin/accounts";
+	}
+
+	@PostMapping("/{id}/delete")
+	public String delete(@PathVariable Long id,
+			Authentication authentication,
+			RedirectAttributes redirectAttributes) {
+		try {
+			String currentUsername = authentication != null ? authentication.getName() : "";
+			accountService.deleteAccount(id, currentUsername);
+			redirectAttributes.addFlashAttribute("message", "Đã xóa tài khoản thành công");
 		} catch (InvalidAccountException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
 		}

@@ -17,6 +17,7 @@ import project.qldt.model.account.Student;
 import project.qldt.repository.account.AccountRepository;
 import project.qldt.repository.account.LecturerRepository;
 import project.qldt.repository.account.StudentRepository;
+import project.qldt.repository.notification.NotificationRepository;
 import project.qldt.service.department.DepartmentService;
 
 @Service
@@ -28,15 +29,17 @@ public class AccountService {
 	private final StudentRepository studentRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final DepartmentService departmentService;
+	private final NotificationRepository notificationRepository;
 
 	public AccountService(AccountRepository accountRepository, LecturerRepository lecturerRepository,
 			StudentRepository studentRepository, PasswordEncoder passwordEncoder,
-			DepartmentService departmentService) {
+			DepartmentService departmentService, NotificationRepository notificationRepository) {
 		this.accountRepository = accountRepository;
 		this.lecturerRepository = lecturerRepository;
 		this.studentRepository = studentRepository;
 		this.passwordEncoder = passwordEncoder;
 		this.departmentService = departmentService;
+		this.notificationRepository = notificationRepository;
 	}
 
 	@Transactional(readOnly = true)
@@ -175,7 +178,7 @@ public class AccountService {
 	public Lecturer setDean(Long id, boolean dean) {
 		Account account = findById(id);
 		if (!(account instanceof Lecturer lecturer)) {
-			throw new InvalidAccountException("Chỉ giảng viên mới được gán vai trò trưởng khoa");
+			throw new InvalidAccountException("Hệ thống chỉ cho phép gán vai trò Trưởng khoa cho tài khoản Giảng viên");
 		}
 		if (dean) {
 			List<Lecturer> currentDeans = lecturerRepository
@@ -193,6 +196,23 @@ public class AccountService {
 
 	public Lecturer assignDean(String lecturerCode, boolean dean) {
 		return setDean(findLecturerByCode(lecturerCode).getId(), dean);
+	}
+
+	public void deleteAccount(Long id, String currentUsername) {
+		Account account = findById(id);
+		if (account.getUsername().equalsIgnoreCase(currentUsername)) {
+			throw new InvalidAccountException("Không thể tự xóa tài khoản quản trị đang đăng nhập");
+		}
+		try {
+			var notifications = notificationRepository.findByRecipientIdOrderByCreatedAtDesc(id);
+			if (notifications != null && !notifications.isEmpty()) {
+				notificationRepository.deleteAll(notifications);
+			}
+			accountRepository.delete(account);
+			accountRepository.flush();
+		} catch (Exception ex) {
+			throw new InvalidAccountException("Không thể xóa tài khoản này do đã có dữ liệu liên quan (đề tài, nhóm sinh viên hoặc hội đồng). Bạn có thể sử dụng chức năng Khóa tài khoản.");
+		}
 	}
 
 	private void applyCommon(Account account, String username, String rawPassword, String fullName, String email) {

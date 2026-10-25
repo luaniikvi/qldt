@@ -46,7 +46,7 @@ public class SecurityConfig {
 				accountService.createAdmin("admin", "123456", "Quản trị hệ thống", "admin@qldt.local");
 			}
 			seedLecturer(accountService, "Lê Văn Vinh", "GV001", "Công nghệ phần mềm");
-			accountService.setDean(accountService.findLecturerByCode("GV001").getId(),true);
+			// accountService.setDean(accountService.findLecturerByCode("GV001").getId(),true);
 			seedLecturer(accountService, "Nguyễn Minh Đạo", "GV002","Công nghệ phần mềm");
 			seedLecturer(accountService, "Nguyễn Trần Thi Văn", "GV003","Công nghệ phần mềm");
 			seedLecturer(accountService, "Hoàng Thái Xuân Khoa", "GV004","Công nghệ phần mềm");

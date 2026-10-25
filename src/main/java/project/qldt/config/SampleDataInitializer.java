@@ -77,7 +77,7 @@ public class SampleDataInitializer implements CommandLineRunner {
 		Department ai = departmentService.createIfMissing("AI", "Trí tuệ nhân tạo");
 
 		Lecturer gv1 = getOrCreateLecturer("GV001", "Lê Văn Vinh", "Công nghệ phần mềm");
-		accountService.setDean(gv1.getId(), true);
+		// accountService.setDean(gv1.getId(), true);
 		Lecturer gv2 = getOrCreateLecturer("GV002", "Nguyễn Minh Đạo", "Công nghệ phần mềm");
 		Lecturer gv3 = getOrCreateLecturer("GV003", "Nguyễn Trần Thi Văn", "Công nghệ phần mềm");
 		Lecturer gv4 = getOrCreateLecturer("GV004", "Hoàng Thái Xuân Khoa", "Công nghệ phần mềm");

@@ -127,6 +127,13 @@ html {
 }
 
 body {
+  background-color: #FFFFFF;
+  background-image: 
+    linear-gradient(to right, rgba(20, 90, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(20, 90, 255, 0.055) 1px, transparent 1px),
+    radial-gradient(circle at 85% 15%, rgba(20, 90, 255, 0.06) 0%, transparent 45%);
+  background-size: 32px 32px, 32px 32px, 100% 100%;
+  background-attachment: fixed;
   animation: publicPageFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -507,8 +514,10 @@ body {
 /* ACADEMIC HIGHLIGHT STATS STRIP                                  */
 /* ============================================================== */
 .academic-stats-strip {
-  background: #FFFFFF;
-  border-bottom: 1px solid #E2E8F0;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   padding: 34px 0;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
   position: relative;
@@ -729,9 +738,11 @@ body {
 /* 3. PROCESS TIMELINE ROADMAP (Interactive 6 Steps)              */
 /* ============================================================== */
 .public-process-section {
-  background: linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%);
-  border-top: 1px solid #E2E8F0;
-  border-bottom: 1px solid #E2E8F0;
+  background: rgba(248, 250, 252, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
 }
 
 .process-journey-grid {
@@ -903,7 +914,7 @@ body {
 /* 4. USER ROLE HUBS (Modern High-Contrast Cards)                 */
 /* ============================================================== */
 .public-guide-section {
-  background: #FFFFFF;
+  background: transparent;
 }
 
 .role-hub-card {
@@ -939,8 +950,12 @@ body {
   background: linear-gradient(135deg, #064E3B 0%, #059669 50%, #10B981 100%);
 }
 
-.admin-banner {
+.dean-banner {
   background: linear-gradient(135deg, #3B0764 0%, #6D28D9 50%, #8B5CF6 100%);
+}
+
+.admin-banner {
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #334155 100%);
 }
 
 .role-hub-icon {
@@ -1020,8 +1035,15 @@ body {
   flex-shrink: 0;
 }
 
-.admin-card .role-check-item i {
+.dean-card .role-check-item i {
   color: #7C3AED;
+  font-size: 15px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.admin-card .role-check-item i {
+  color: #334155;
   font-size: 15px;
   margin-top: 2px;
   flex-shrink: 0;
