@@ -73,6 +73,8 @@ class DeanRegistrationControllerTest {
 		gv = accountService.createLecturer("123456", "GV DeanReg", "gvdr" + stamp + "@test.local", "GVDR" + stamp,
 				"CNPM");
 		sv = accountService.createStudent("123456", "SV DeanReg", "svdr" + stamp + "@test.local", "SVDR" + stamp);
+		Student sv2 = accountService.createStudent("123456", "SV DeanReg 2", "svdr2" + stamp + "@test.local", "SVDR2" + stamp);
+		Student sv3 = accountService.createStudent("123456", "SV DeanReg 3", "svdr3" + stamp + "@test.local", "SVDR3" + stamp);
 
 		LocalDateTime now = LocalDateTime.now();
 		RegistrationPeriodRequest req = new RegistrationPeriodRequest();
@@ -99,6 +101,10 @@ class DeanRegistrationControllerTest {
 		period.setStudentRegisterEnd(now.plusDays(1));
 
 		team = teamService.create(period.getId(), sv);
+		teamService.invite(team.getId(), sv2.getStudentCode(), sv);
+		teamService.respondInvitation(team.getId(), sv2, true, null);
+		teamService.invite(team.getId(), sv3.getStudentCode(), sv);
+		teamService.respondInvitation(team.getId(), sv3, true, null);
 		registrationService.register(team.getId(), topic.getId(), sv);
 	}
 

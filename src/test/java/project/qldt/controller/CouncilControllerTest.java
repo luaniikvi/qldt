@@ -79,6 +79,8 @@ class CouncilControllerTest {
 	void setUp() {
 		Lecturer gv1 = accountService.findLecturerByCode("GV001");
 		Student sv1 = accountService.findStudentByCode("SV001");
+		Student sv2 = accountService.findStudentByCode("SV002");
+		Student sv3 = accountService.findStudentByCode("SV003");
 
 		RegistrationPeriodRequest pReq = new RegistrationPeriodRequest();
 		pReq.setName("Đợt Council Controller Test");
@@ -104,6 +106,10 @@ class CouncilControllerTest {
 		period.setStudentRegisterEnd(LocalDateTime.now().plusDays(5));
 
 		Team team = teamService.create(period.getId(), sv1);
+		teamService.invite(team.getId(), "SV002", sv1);
+		teamService.respondInvitation(team.getId(), sv2, true, null);
+		teamService.invite(team.getId(), "SV003", sv1);
+		teamService.respondInvitation(team.getId(), sv3, true, null);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 		registrationService.approve(topic.getId(), gv1);
 

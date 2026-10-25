@@ -79,6 +79,8 @@ class ReviewerControllerTest {
 		gvReviewer = accountService.createLecturer("123456", "GV PB", "gvpb" + stamp + "@test.local", "GVPB_RC" + stamp,
 				"CNPM");
 		sv = accountService.createStudent("123456", "SV Test", "svt" + stamp + "@test.local", "SVT_RC" + stamp);
+		Student sv2 = accountService.createStudent("123456", "SV Test 2", "svt2" + stamp + "@test.local", "SVT_RC2" + stamp);
+		Student sv3 = accountService.createStudent("123456", "SV Test 3", "svt3" + stamp + "@test.local", "SVT_RC3" + stamp);
 
 		LocalDateTime now = LocalDateTime.now();
 		RegistrationPeriodRequest req = new RegistrationPeriodRequest();
@@ -107,6 +109,10 @@ class ReviewerControllerTest {
 		period.setStudentRegisterEnd(now.plusDays(1));
 
 		Team team = teamService.create(period.getId(), sv);
+		teamService.invite(team.getId(), sv2.getStudentCode(), sv);
+		teamService.respondInvitation(team.getId(), sv2, true, null);
+		teamService.invite(team.getId(), sv3.getStudentCode(), sv);
+		teamService.respondInvitation(team.getId(), sv3, true, null);
 		registrationService.register(team.getId(), topic.getId(), sv);
 		registrationService.approve(topic.getId(), gv1);
 

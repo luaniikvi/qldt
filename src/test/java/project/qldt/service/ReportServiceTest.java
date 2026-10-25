@@ -73,6 +73,8 @@ class ReportServiceTest {
 		team = teamService.create(period.getId(), sv1);
 		teamService.invite(team.getId(), "SV902", sv1);
 		teamService.respondInvitation(team.getId(), sv2, true, null);
+		teamService.invite(team.getId(), "SV903", sv1);
+		teamService.respondInvitation(team.getId(), sv3, true, null);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 		registrationService.approve(topic.getId(), gv1);
 	}
@@ -105,10 +107,11 @@ class ReportServiceTest {
 
 	@Test
 	void chuaDuyetDeTaiThiKhongNopDuoc() {
-		Team other = teamService.create(team.getPeriod().getId(), sv3);
+		Student sv4 = accountService.createStudent("123456", "SV 4", "sv4@qldt.local", "SV904");
+		Team other = teamService.create(team.getPeriod().getId(), sv4);
 
 		assertThrows(InvalidReportException.class,
-				() -> reportService.submit(other.getId(), sv3, file("baocao.pdf", "noi dung")));
+				() -> reportService.submit(other.getId(), sv4, file("baocao.pdf", "noi dung")));
 	}
 
 	@Test

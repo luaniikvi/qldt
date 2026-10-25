@@ -77,6 +77,8 @@ class CouncilServiceTest {
 		team = teamService.create(period.getId(), sv1);
 		teamService.invite(team.getId(), "SV902", sv1);
 		teamService.respondInvitation(team.getId(), sv2, true, null);
+		teamService.invite(team.getId(), "SV903", sv1);
+		teamService.respondInvitation(team.getId(), sv3, true, null);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 		registrationService.approve(topic.getId(), gv1);
 	}
@@ -229,7 +231,9 @@ class CouncilServiceTest {
 
 		assertEquals(1, councilService.findPublishedResultsFor(sv1).size());
 		assertEquals(1, councilService.findPublishedResultsFor(sv2).size());
-		assertEquals(0, councilService.findPublishedResultsFor(sv3).size());
+		assertEquals(1, councilService.findPublishedResultsFor(sv3).size());
+		Student svOutsider = accountService.createStudent("123456", "SV Outsider", "svout@qldt.local", "SV999OUT");
+		assertEquals(0, councilService.findPublishedResultsFor(svOutsider).size());
 		assertEquals(1, councilService.findPublishedResultsOfAdvisor(gv1).size());
 		assertEquals(0, councilService.findPublishedResultsOfAdvisor(gv2).size());
 	}

@@ -91,6 +91,10 @@ class NotificationServiceTest {
 		Lecturer member = accountService.createLecturer("123456", "GV 804", "gv804@qldt.local", "GV804", "CNPM");
 		sv801 = accountService.createStudent("123456", "SV 801", "sv801@qldt.local", "SV801");
 		sv802 = accountService.createStudent("123456", "SV 802", "sv802@qldt.local", "SV802");
+		Student sv803 = accountService.createStudent("123456", "SV 803", "sv803@qldt.local", "SV803");
+		Student sv804 = accountService.createStudent("123456", "SV 804", "sv804@qldt.local", "SV804");
+		accountService.createStudent("123456", "SV 805", "sv805@qldt.local", "SV805");
+		accountService.createStudent("123456", "SV 806", "sv806@qldt.local", "SV806");
 
 		period = periodService.create(periodRequest());
 		topicOne = topicService.create(topicRequest(period.getId(), "De tai thong bao"), advisor);
@@ -102,6 +106,10 @@ class NotificationServiceTest {
 		moveToStudentPhase(period);
 
 		teamOne = teamService.create(period.getId(), sv801);
+		teamService.invite(teamOne.getId(), "SV803", sv801);
+		teamService.respondInvitation(teamOne.getId(), sv803, true, null);
+		teamService.invite(teamOne.getId(), "SV804", sv801);
+		teamService.respondInvitation(teamOne.getId(), sv804, true, null);
 		registrationService.register(teamOne.getId(), topicOne.getId(), sv801);
 		registrationService.approve(topicOne.getId(), advisor);
 
@@ -179,6 +187,12 @@ class NotificationServiceTest {
 	@Test
 	void nhacHanChiGuiChoTenChuaNopBaoCao() {
 		Team teamTwo = teamService.create(period.getId(), sv802);
+		Student sv805 = accountService.findStudentByCode("SV805");
+		Student sv806 = accountService.findStudentByCode("SV806");
+		teamService.invite(teamTwo.getId(), "SV805", sv802);
+		teamService.respondInvitation(teamTwo.getId(), sv805, true, null);
+		teamService.invite(teamTwo.getId(), "SV806", sv802);
+		teamService.respondInvitation(teamTwo.getId(), sv806, true, null);
 		registrationService.register(teamTwo.getId(), topicTwo.getId(), sv802);
 		registrationService.approve(topicTwo.getId(), advisor);
 		reportService.submit(teamOne.getId(), sv801,
@@ -186,7 +200,7 @@ class NotificationServiceTest {
 
 		int sent = reminderService.remindReportDeadline(period.getId());
 
-		assertEquals(1, sent);
+		assertEquals(3, sent);
 		assertTrue(hasNotification(sv802, NotificationType.REMINDER, "Nhắc hạn nộp báo cáo"));
 		assertFalse(hasNotification(sv801, NotificationType.REMINDER, "Nhắc hạn nộp báo cáo"));
 		assertEquals(0, reminderService.remindReportDeadline(period.getId()));

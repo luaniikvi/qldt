@@ -45,6 +45,9 @@ class TopicRegistrationServiceTest {
 	private Student sv1;
 	private Student sv2;
 	private Student sv3;
+	private Student sv4;
+	private Student sv5;
+	private Student sv6;
 	private RegistrationPeriod period;
 	private Topic topic;
 	private Topic draft;
@@ -57,6 +60,9 @@ class TopicRegistrationServiceTest {
 		sv1 = accountService.createStudent("123456", "SV 1", "sv1@qldt.local", "SV901");
 		sv2 = accountService.createStudent("123456", "SV 2", "sv2@qldt.local", "SV902");
 		sv3 = accountService.createStudent("123456", "SV 3", "sv3@qldt.local", "SV903");
+		sv4 = accountService.createStudent("123456", "SV 4", "sv4@qldt.local", "SV904");
+		sv5 = accountService.createStudent("123456", "SV 5", "sv5@qldt.local", "SV905");
+		sv6 = accountService.createStudent("123456", "SV 6", "sv6@qldt.local", "SV906");
 		period = periodService.create(periodRequest());
 		draft = topicService.create(topicRequest(period.getId()), gv1);
 		topic = topicService.create(topicRequest(period.getId()), gv1);
@@ -64,6 +70,10 @@ class TopicRegistrationServiceTest {
 		topicService.publish(period.getId());
 		moveToStudentPhase(period);
 		team = teamService.create(period.getId(), sv1);
+		teamService.invite(team.getId(), "SV902", sv1);
+		teamService.respondInvitation(team.getId(), sv2, true, null);
+		teamService.invite(team.getId(), "SV903", sv1);
+		teamService.respondInvitation(team.getId(), sv3, true, null);
 	}
 
 	@Test
@@ -97,10 +107,14 @@ class TopicRegistrationServiceTest {
 	@Test
 	void deTaiDaCoNhomDangKyThiNhomKhacKhongDangKyDuoc() {
 		registrationService.register(team.getId(), topic.getId(), sv1);
-		Team other = teamService.create(period.getId(), sv3);
+		Team other = teamService.create(period.getId(), sv4);
+		teamService.invite(other.getId(), "SV905", sv4);
+		teamService.respondInvitation(other.getId(), sv5, true, null);
+		teamService.invite(other.getId(), "SV906", sv4);
+		teamService.respondInvitation(other.getId(), sv6, true, null);
 
 		assertThrows(InvalidRegistrationException.class,
-				() -> registrationService.register(other.getId(), topic.getId(), sv3));
+				() -> registrationService.register(other.getId(), topic.getId(), sv4));
 	}
 
 	@Test
@@ -179,10 +193,22 @@ class TopicRegistrationServiceTest {
 	void dangKyKhiDeTaiDaBiGianhThiBaoLoi() {
 		assertEquals(1, topicService.claimForRegistration(topic.getId()));
 
-		Team other = teamService.create(period.getId(), sv2);
+		Team other = teamService.create(period.getId(), sv4);
+		teamService.invite(other.getId(), "SV905", sv4);
+		teamService.respondInvitation(other.getId(), sv5, true, null);
+		teamService.invite(other.getId(), "SV906", sv4);
+		teamService.respondInvitation(other.getId(), sv6, true, null);
 		InvalidRegistrationException ex = assertThrows(InvalidRegistrationException.class,
-				() -> registrationService.register(other.getId(), topic.getId(), sv2));
+				() -> registrationService.register(other.getId(), topic.getId(), sv4));
 		assertEquals("Đề tài đã có nhóm đăng ký", ex.getMessage());
+	}
+
+	@Test
+	void nhomDuoiBaThanhVienKhongDuocDangKy() {
+		Student svX = accountService.createStudent("123456", "SV X", "svx@qldt.local", "SV999X");
+		Team understaffed = teamService.create(period.getId(), svX);
+		assertThrows(InvalidRegistrationException.class,
+				() -> registrationService.register(understaffed.getId(), topic.getId(), svX));
 	}
 
 	private void moveToStudentPhase(RegistrationPeriod period) {

@@ -15,7 +15,7 @@
         <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
             <div>
                 <h2 class="h2 mb-1"><i class="bi bi-people text-primary me-2"></i>Danh sách nhóm học thuật của bạn</h2>
-                <div class="small text-muted">Quy định: Nhóm có tối đa 3 thành viên. Mỗi sinh viên chỉ tham gia 1 nhóm trong một đợt thực hiện.</div>
+                <div class="small text-muted">Quy định: Nhóm phải có từ 3 đến 5 thành viên. Mỗi sinh viên chỉ tham gia 1 nhóm trong một đợt thực hiện.</div>
             </div>
             <a th:href="@{/teams/new}" class="btn-hcmute-primary btn-hcmute-sm">
                 <i class="bi bi-plus-lg"></i> Tạo nhóm mới
@@ -84,14 +84,20 @@
                         <!-- When no topic is registered -->
                         <div th:if="${v.team.topic == null}">
                             <div class="text-muted small fst-italic mb-2">Chưa đăng ký đề tài nghiên cứu</div>
+                            <div th:if="${#lists.size(v.team.members) lt 3}" class="badge-status badge-status-warning mb-2 d-inline-flex align-items-center gap-1">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                <span th:text="|Cần tối thiểu 3 thành viên để đăng ký đề tài (hiện có ${#lists.size(v.team.members)} thành viên)|">Cần tối thiểu 3 thành viên để đăng ký đề tài</span>
+                            </div>
                             <div class="hcmute-alert hcmute-alert-danger py-1 px-2 small mb-2" th:if="${v.team.registrationRejectionReason != null}">
                                 <i class="bi bi-x-circle me-1"></i>
                                 <span th:text="|Lý do từ chối: ${v.team.registrationRejectionReason}|"></span>
                             </div>
-                            <a th:if="${v.leader}" th:href="@{/teams/{id}/register(id=${v.team.id})}" class="btn-hcmute-primary btn-hcmute-sm">
-                                <i class="bi bi-bookmark-plus"></i> Đăng ký đề tài
-                            </a>
-                            <span th:unless="${v.leader}" class="text-muted small">Chỉ nhóm trưởng có quyền đăng ký đề tài</span>
+                            <div>
+                                <a th:if="${v.leader}" th:href="@{/teams/{id}/register(id=${v.team.id})}" class="btn-hcmute-primary btn-hcmute-sm">
+                                    <i class="bi bi-bookmark-plus"></i> Đăng ký đề tài
+                                </a>
+                                <span th:unless="${v.leader}" class="text-muted small">Chỉ nhóm trưởng có quyền đăng ký đề tài</span>
+                            </div>
                         </div>
 
                         <!-- When topic is registered -->
@@ -168,10 +174,10 @@
 
                             <!-- Leader Controls: Invite student & Transfer leader -->
                             <th:block th:if="${v.leader}">
-                                <form th:if="${#lists.size(v.team.members) lt 3}"
+                                <form th:if="${#lists.size(v.team.members) lt 5}"
                                       th:action="@{/teams/{id}/invite(id=${v.team.id})}" method="post" class="d-flex gap-1 m-0">
                                     <input type="text" name="studentCode" class="form-control form-control-sm"
-                                           placeholder="Mã SV mời (tối đa 3)" required style="width: 140px;" />
+                                           placeholder="Mã SV mời (tối đa 5)" required style="width: 140px;" />
                                     <button type="submit" class="btn-hcmute-primary btn-hcmute-sm text-nowrap">
                                         <i class="bi bi-person-plus"></i> Mời
                                     </button>

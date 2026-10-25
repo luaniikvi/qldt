@@ -43,6 +43,14 @@ public class TopicRegistrationService {
 	public Team register(Long teamId, Long topicId, Student actor) {
 		Team team = teamService.findById(teamId);
 		requireLeader(team, actor);
+		if (team.getMembers().size() < TeamService.MIN_MEMBERS) {
+			throw new InvalidRegistrationException(
+					"Nhóm phải có tối thiểu " + TeamService.MIN_MEMBERS + " thành viên mới được đăng ký đề tài");
+		}
+		if (team.getMembers().size() > TeamService.MAX_MEMBERS) {
+			throw new InvalidRegistrationException(
+					"Nhóm chỉ được có tối đa " + TeamService.MAX_MEMBERS + " thành viên");
+		}
 		if (team.getTopic() != null) {
 			throw new InvalidRegistrationException("Nhóm đã đăng ký một đề tài");
 		}

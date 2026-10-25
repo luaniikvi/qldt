@@ -154,6 +154,12 @@ class TeamControllerTest {
 	@Test
 	@WithMockUser(username = "SV001", roles = "STUDENT")
 	void dangKyDeTaiVaHuyDangKy() throws Exception {
+		Student sv3 = accountService.findStudentByCode("SV003");
+		teamService.invite(team.getId(), "SV002", sv1);
+		teamService.respondInvitation(team.getId(), sv2, true, null);
+		teamService.invite(team.getId(), "SV003", sv1);
+		teamService.respondInvitation(team.getId(), sv3, true, null);
+
 		mockMvc.perform(get("/teams/" + team.getId() + "/register"))
 				.andExpect(status().isOk())
 				.andExpect(view().name("teams/register"))
@@ -177,6 +183,11 @@ class TeamControllerTest {
 	@Test
 	@WithMockUser(username = "GV001", roles = "LECTURER")
 	void giangVienDuyetDangKyDeTai() throws Exception {
+		Student sv3 = accountService.findStudentByCode("SV003");
+		teamService.invite(team.getId(), "SV002", sv1);
+		teamService.respondInvitation(team.getId(), sv2, true, null);
+		teamService.invite(team.getId(), "SV003", sv1);
+		teamService.respondInvitation(team.getId(), sv3, true, null);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 
 		mockMvc.perform(get("/registrations"))
@@ -194,6 +205,11 @@ class TeamControllerTest {
 	@Test
 	@WithMockUser(username = "SV001", roles = "STUDENT")
 	void nopBaoCaoDeTai() throws Exception {
+		Student sv3 = accountService.findStudentByCode("SV003");
+		teamService.invite(team.getId(), "SV002", sv1);
+		teamService.respondInvitation(team.getId(), sv2, true, null);
+		teamService.invite(team.getId(), "SV003", sv1);
+		teamService.respondInvitation(team.getId(), sv3, true, null);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 		registrationService.approve(topic.getId(), gv1);
 

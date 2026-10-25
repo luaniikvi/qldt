@@ -49,6 +49,7 @@ class TopicRegistrationServiceExtraTest {
 	private Lecturer gvOther;
 	private Student sv1;
 	private Student sv2;
+	private Student sv3;
 	private RegistrationPeriod period;
 	private Topic topic;
 	private Team team;
@@ -66,6 +67,7 @@ class TopicRegistrationServiceExtraTest {
 		gvOther = accountService.createLecturer("123456", "GV Khac", "other@qldt.local", "GV999", "Hệ thống thông tin");
 		sv1 = accountService.createStudent("123456", "SV 1", "sv1@qldt.local", "SV901");
 		sv2 = accountService.createStudent("123456", "SV 2", "sv2@qldt.local", "SV902");
+		sv3 = accountService.createStudent("123456", "SV 3", "sv3@qldt.local", "SV903");
 
 		RegistrationPeriodRequest pReq = new RegistrationPeriodRequest();
 		pReq.setName("Đợt test");
@@ -90,6 +92,8 @@ class TopicRegistrationServiceExtraTest {
 		team = teamService.create(period.getId(), sv1);
 		teamService.invite(team.getId(), "SV902", sv1);
 		teamService.respondInvitation(team.getId(), sv2, true, null);
+		teamService.invite(team.getId(), "SV903", sv1);
+		teamService.respondInvitation(team.getId(), sv3, true, null);
 	}
 
 	@Test
@@ -200,6 +204,14 @@ class TopicRegistrationServiceExtraTest {
 
 		List<RegistrationView> otherPending = registrationService.findPendingForAdvisor(gvOther);
 		assertEquals(0, otherPending.size());
+	}
+
+	@Test
+	void dangKyKhiChuaDuBaThanhVienBiChan() {
+		Student svX = accountService.createStudent("123456", "SV X", "svx@qldt.local", "SV999EXTRA");
+		Team understaffed = teamService.create(period.getId(), svX);
+		assertThrows(InvalidRegistrationException.class,
+				() -> registrationService.register(understaffed.getId(), topic.getId(), svX));
 	}
 
 	private TopicRequest createTopicRequest(String name, Long periodId) {

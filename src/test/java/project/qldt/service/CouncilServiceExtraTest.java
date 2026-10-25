@@ -54,6 +54,8 @@ class CouncilServiceExtraTest {
 	private Lecturer gv4;
 	private Lecturer gv5;
 	private Student sv1;
+	private Student sv2;
+	private Student sv3;
 	private RegistrationPeriod period;
 	private Topic topic;
 	private Topic draft;
@@ -73,6 +75,8 @@ class CouncilServiceExtraTest {
 		gv4 = accountService.createLecturer("123456", "GV 4", "gv4@qldt.local", "GV904", "Công nghệ phần mềm");
 		gv5 = accountService.createLecturer("123456", "GV 5", "gv5@qldt.local", "GV905", "Công nghệ phần mềm");
 		sv1 = accountService.createStudent("123456", "SV 1", "sv1@qldt.local", "SV901");
+		sv2 = accountService.createStudent("123456", "SV 2", "sv2@qldt.local", "SV902");
+		sv3 = accountService.createStudent("123456", "SV 3", "sv3@qldt.local", "SV903");
 
 		RegistrationPeriodRequest pReq = new RegistrationPeriodRequest();
 		pReq.setName("Đợt test");
@@ -95,6 +99,10 @@ class CouncilServiceExtraTest {
 		period.setStudentRegisterEnd(LocalDateTime.now().plusDays(2));
 
 		Team team = teamService.create(period.getId(), sv1);
+		teamService.invite(team.getId(), "SV902", sv1);
+		teamService.respondInvitation(team.getId(), sv2, true, null);
+		teamService.invite(team.getId(), "SV903", sv1);
+		teamService.respondInvitation(team.getId(), sv3, true, null);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 		registrationService.approve(topic.getId(), gv1);
 	}

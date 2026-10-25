@@ -32,7 +32,8 @@ import project.qldt.repository.team.TeamRepository;
 @Transactional
 public class TeamService {
 
-	private static final int MAX_MEMBERS = 3;
+	public static final int MIN_MEMBERS = 3;
+	public static final int MAX_MEMBERS = 5;
 
 	private final TeamRepository teamRepository;
 	private final AccountService accountService;
@@ -152,7 +153,7 @@ public class TeamService {
 			throw new InvalidTeamException("Sinh viên này đã được mời và đang chờ phản hồi");
 		}
 		if (team.getMembers().size() + team.pendingInvitationCount() >= MAX_MEMBERS) {
-			throw new InvalidTeamException("Nhóm đã đủ " + MAX_MEMBERS + " thành viên (kể cả lời mời đang chờ)");
+			throw new InvalidTeamException("Nhóm đã đạt sĩ số tối đa " + MAX_MEMBERS + " người (bao gồm lời mời đang chờ)");
 		}
 		ensureNotInTeam(team.getPeriod(), invited);
 		TeamInvitation invitation = new TeamInvitation();
@@ -246,7 +247,7 @@ public class TeamService {
 
 	private Team lockTeam(Long id) {
 		return teamRepository.findByIdForUpdate(id)
-				.orElseThrow(() -> new TeamNotFoundException("KhÃ´ng tÃ¬m tháº¥y nhÃ³m cÃ³ id: " + id));
+				.orElseThrow(() -> new TeamNotFoundException("Không tìm thấy id: " + id));
 	}
 
 	private void ensureNotInTeam(RegistrationPeriod period, Student student) {

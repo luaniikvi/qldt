@@ -57,6 +57,8 @@ class RegistrationCancelTest {
 
 	private Lecturer advisor;
 	private Student sv1;
+	private Student sv2;
+	private Student sv3;
 	private RegistrationPeriod period;
 	private Topic topic;
 	private Topic topicNoTeam;
@@ -66,6 +68,8 @@ class RegistrationCancelTest {
 	void setUp() {
 		advisor = accountService.createLecturer("123456", "GV 811", "gv811@qldt.local", "GV811", "CNPM");
 		sv1 = accountService.createStudent("123456", "SV 811", "sv811@qldt.local", "SV811");
+		sv2 = accountService.createStudent("123456", "SV 812", "sv812@qldt.local", "SV812");
+		sv3 = accountService.createStudent("123456", "SV 813", "sv813@qldt.local", "SV813");
 
 		RegistrationPeriodRequest periodRequest = new RegistrationPeriodRequest();
 		periodRequest.setName("Đợt hủy đăng ký");
@@ -93,6 +97,10 @@ class RegistrationCancelTest {
 		period.setStudentRegisterEnd(now.plusDays(1));
 
 		team = teamService.create(period.getId(), sv1);
+		teamService.invite(team.getId(), "SV812", sv1);
+		teamService.respondInvitation(team.getId(), sv2, true, null);
+		teamService.invite(team.getId(), "SV813", sv1);
+		teamService.respondInvitation(team.getId(), sv3, true, null);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 	}
 

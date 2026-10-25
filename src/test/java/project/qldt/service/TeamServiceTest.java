@@ -36,6 +36,8 @@ class TeamServiceTest {
 	private Student sv2;
 	private Student sv3;
 	private Student sv4;
+	private Student sv5;
+	private Student sv6;
 	private RegistrationPeriod period;
 
 	@BeforeEach
@@ -44,6 +46,8 @@ class TeamServiceTest {
 		sv2 = createStudent("SV902");
 		sv3 = createStudent("SV903");
 		sv4 = createStudent("SV904");
+		sv5 = createStudent("SV905");
+		sv6 = createStudent("SV906");
 		period = createPeriod(LocalDateTime.now().minusDays(1), LocalDateTime.now().plusDays(1));
 	}
 
@@ -90,12 +94,14 @@ class TeamServiceTest {
 	}
 
 	@Test
-	void toiDaBaThanhVien() {
+	void toiDaNamThanhVien() {
 		Team team = teamService.create(period.getId(), sv1);
 		teamService.invite(team.getId(), "SV902", sv1);
 		teamService.invite(team.getId(), "SV903", sv1);
+		teamService.invite(team.getId(), "SV904", sv1);
+		teamService.invite(team.getId(), "SV905", sv1);
 
-		assertThrows(InvalidTeamException.class, () -> teamService.invite(team.getId(), "SV904", sv1));
+		assertThrows(InvalidTeamException.class, () -> teamService.invite(team.getId(), "SV906", sv1));
 	}
 
 	@Test

@@ -83,6 +83,8 @@ class StatisticsServiceTest {
 		Lecturer secretary = accountService.createLecturer("123456", "GV 803", "gv803@qldt.local", "GV803", "CNPM");
 		Lecturer member = accountService.createLecturer("123456", "GV 804", "gv804@qldt.local", "GV804", "CNPM");
 		Student sv801 = accountService.createStudent("123456", "SV 801", "sv801@qldt.local", "SV801");
+		Student sv802 = accountService.createStudent("123456", "SV 802", "sv802@qldt.local", "SV802");
+		Student sv803 = accountService.createStudent("123456", "SV 803", "sv803@qldt.local", "SV803");
 
 		period = periodService.create(periodRequest());
 		topicOne = topicService.create(topicRequest(period.getId(), "De tai mot"), advisor);
@@ -92,6 +94,10 @@ class StatisticsServiceTest {
 		moveToStudentPhase(period);
 
 		Team team = teamService.create(period.getId(), sv801);
+		teamService.invite(team.getId(), "SV802", sv801);
+		teamService.respondInvitation(team.getId(), sv802, true, null);
+		teamService.invite(team.getId(), "SV803", sv801);
+		teamService.respondInvitation(team.getId(), sv803, true, null);
 		registrationService.register(team.getId(), topicOne.getId(), sv801);
 		registrationService.approve(topicOne.getId(), advisor);
 		reportService.submit(team.getId(), sv801, new MockMultipartFile("file", "bao-cao.pdf", "application/pdf",
@@ -134,7 +140,7 @@ class StatisticsServiceTest {
 		TopicStatisticsRow registered = rows.stream()
 				.filter(row -> row.topic().getId().equals(topicOne.getId())).findFirst().orElseThrow();
 		assertEquals("SV 801", registered.teamLeader());
-		assertEquals(1, registered.memberCount());
+		assertEquals(3, registered.memberCount());
 		assertEquals("bao-cao.pdf", registered.reportFileName());
 		assertEquals("Hoi dong thong ke", registered.councilName());
 		assertEquals(8.0, registered.score());

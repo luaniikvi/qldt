@@ -58,6 +58,8 @@ class ReviewerServiceTest {
 	private Lecturer gv4;
 	private Lecturer gv5;
 	private Student sv1;
+	private Student sv2;
+	private Student sv3;
 	private Topic topic;
 
 	@BeforeEach
@@ -68,12 +70,18 @@ class ReviewerServiceTest {
 		gv4 = accountService.createLecturer("123456", "GV 4", "gv4@qldt.local", "GV804", "Công nghệ phần mềm");
 		gv5 = accountService.createLecturer("123456", "GV 5", "gv5@qldt.local", "GV805", "Công nghệ phần mềm");
 		sv1 = accountService.createStudent("123456", "SV 1", "sv1@qldt.local", "SV801");
+		sv2 = accountService.createStudent("123456", "SV 2", "sv2@qldt.local", "SV802");
+		sv3 = accountService.createStudent("123456", "SV 3", "sv3@qldt.local", "SV803");
 		RegistrationPeriod period = periodService.create(periodRequest());
 		topic = topicService.create(topicRequest(period.getId()), gvhd);
 		topicService.approve(topic.getId());
 		topicService.publish(period.getId());
 		moveToStudentPhase(period);
 		Team team = teamService.create(period.getId(), sv1);
+		teamService.invite(team.getId(), "SV802", sv1);
+		teamService.respondInvitation(team.getId(), sv2, true, null);
+		teamService.invite(team.getId(), "SV803", sv1);
+		teamService.respondInvitation(team.getId(), sv3, true, null);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 		registrationService.approve(topic.getId(), gvhd);
 	}

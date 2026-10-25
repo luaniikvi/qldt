@@ -62,6 +62,8 @@ class ReminderServiceTest {
 	private Lecturer gv4;
 	private Student sv1;
 	private Student sv2;
+	private Student sv3;
+	private Student sv4;
 
 	@BeforeEach
 	void setUp() {
@@ -86,6 +88,8 @@ class ReminderServiceTest {
 				"CNPM");
 		sv1 = accountService.createStudent("123456", "SV 1 " + stamp, "sv1" + stamp + "@test.local", "SVREM1" + stamp);
 		sv2 = accountService.createStudent("123456", "SV 2 " + stamp, "sv2" + stamp + "@test.local", "SVREM2" + stamp);
+		sv3 = accountService.createStudent("123456", "SV 3 " + stamp, "sv3" + stamp + "@test.local", "SVREM3" + stamp);
+		sv4 = accountService.createStudent("123456", "SV 4 " + stamp, "sv4" + stamp + "@test.local", "SVREM4" + stamp);
 
 		LocalDateTime now = LocalDateTime.now();
 		RegistrationPeriodRequest request = new RegistrationPeriodRequest();
@@ -107,6 +111,15 @@ class ReminderServiceTest {
 		period.setTeacherRegisterEnd(now.minusDays(9));
 		period.setStudentRegisterStart(now.minusDays(1));
 		period.setStudentRegisterEnd(now.plusDays(1));
+	}
+
+	private Team createTeamWithThreeMembers(RegistrationPeriod period, Student leader, Student m1, Student m2) {
+		Team team = teamService.create(period.getId(), leader);
+		teamService.invite(team.getId(), m1.getStudentCode(), leader);
+		teamService.respondInvitation(team.getId(), m1, true, null);
+		teamService.invite(team.getId(), m2.getStudentCode(), leader);
+		teamService.respondInvitation(team.getId(), m2, true, null);
+		return team;
 	}
 
 	@Test
@@ -131,17 +144,14 @@ class ReminderServiceTest {
 
 		moveToStudentPhase(period);
 
-		// Nhóm 1: Có đề tài, CHƯA nộp báo cáo
-		Team team1 = teamService.create(period.getId(), sv1);
+		Team team1 = createTeamWithThreeMembers(period, sv1, sv2, sv3);
 		registrationService.register(team1.getId(), topic.getId(), sv1);
 		registrationService.approve(topic.getId(), gv1);
 
-		// Nhắc hạn nộp báo cáo
 		int sent1 = reminderService.remindReportDeadline(period.getId());
 		assertTrue(sent1 >= 1);
-		assertEquals(2, notificationService.countUnread(sv1));
+		assertEquals(4, notificationService.countUnread(sv1));
 
-		// Gọi lần 2: Không gửi trùng lặp
 		int sent2 = reminderService.remindReportDeadline(period.getId());
 		assertEquals(0, sent2);
 	}
@@ -159,7 +169,7 @@ class ReminderServiceTest {
 
 		moveToStudentPhase(period);
 
-		Team team = teamService.create(period.getId(), sv1);
+		Team team = createTeamWithThreeMembers(period, sv1, sv2, sv3);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 		registrationService.approve(topic.getId(), gv1);
 
@@ -185,7 +195,7 @@ class ReminderServiceTest {
 
 		moveToStudentPhase(period);
 
-		Team team = teamService.create(period.getId(), sv1);
+		Team team = createTeamWithThreeMembers(period, sv1, sv2, sv3);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 		registrationService.approve(topic.getId(), gv1);
 

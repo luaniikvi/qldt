@@ -118,8 +118,12 @@ class TeamServiceExtraTest {
 		teamService.respondInvitation(team.getId(), sv2, true, null);
 
 		Student sv5 = accountService.createStudent("123456", "SV 5", "sv5@qldt.local", "SV905");
+		Student sv6 = accountService.createStudent("123456", "SV 6", "sv6@qldt.local", "SV906");
+		Student sv7 = accountService.createStudent("123456", "SV 7", "sv7@qldt.local", "SV907");
 		team.getMembers().add(sv5);
-		assertEquals(3, team.getMembers().size());
+		team.getMembers().add(sv6);
+		team.getMembers().add(sv7);
+		assertEquals(5, team.getMembers().size());
 
 		assertThrows(InvalidTeamException.class, () -> teamService.respondInvitation(team.getId(), sv3, true, null));
 	}

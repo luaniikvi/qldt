@@ -76,6 +76,8 @@ class ComprehensiveBusinessRuleEdgeCasesTest {
 	private Student sv2;
 	private Student sv3;
 	private Student sv4;
+	private Student sv5;
+	private Student sv6;
 
 	@BeforeEach
 	void setUp() {
@@ -100,6 +102,8 @@ class ComprehensiveBusinessRuleEdgeCasesTest {
 		sv2 = accountService.createStudent("123456", "SV 2 " + stamp, "sv2" + stamp + "@test.local", "SVEDGE2" + stamp);
 		sv3 = accountService.createStudent("123456", "SV 3 " + stamp, "sv3" + stamp + "@test.local", "SVEDGE3" + stamp);
 		sv4 = accountService.createStudent("123456", "SV 4 " + stamp, "sv4" + stamp + "@test.local", "SVEDGE4" + stamp);
+		sv5 = accountService.createStudent("123456", "SV 5 " + stamp, "sv5" + stamp + "@test.local", "SVEDGE5" + stamp);
+		sv6 = accountService.createStudent("123456", "SV 6 " + stamp, "sv6" + stamp + "@test.local", "SVEDGE6" + stamp);
 
 		LocalDateTime now = LocalDateTime.now();
 		RegistrationPeriodRequest req = new RegistrationPeriodRequest();
@@ -121,6 +125,15 @@ class ComprehensiveBusinessRuleEdgeCasesTest {
 		period.setTeacherRegisterEnd(now.minusDays(9));
 		period.setStudentRegisterStart(now.minusDays(1));
 		period.setStudentRegisterEnd(now.plusDays(1));
+	}
+
+	private Team createTeamWithThreeMembers(RegistrationPeriod period, Student leader, Student m1, Student m2) {
+		Team team = teamService.create(period.getId(), leader);
+		teamService.invite(team.getId(), m1.getStudentCode(), leader);
+		teamService.respondInvitation(team.getId(), m1, true, null);
+		teamService.invite(team.getId(), m2.getStudentCode(), leader);
+		teamService.respondInvitation(team.getId(), m2, true, null);
+		return team;
 	}
 
 	// ==================== 1. TEAM SERVICE EDGE CASES ====================
@@ -162,15 +175,16 @@ class ComprehensiveBusinessRuleEdgeCasesTest {
 	}
 
 	@Test
-	@DisplayName("Team: Không thể mời quá sĩ số tối đa 3 người (bao gồm cả lời mời đang chờ)")
+	@DisplayName("Team: Không thể mời quá sĩ số tối đa 5 người (bao gồm cả lời mời đang chờ)")
 	void team_CannotExceedMaxMembersWithInvitations() {
 		moveToStudentPhase(thesisPeriod);
 		Team team = teamService.create(thesisPeriod.getId(), sv1);
 		teamService.invite(team.getId(), sv2.getStudentCode(), sv1);
 		teamService.invite(team.getId(), sv3.getStudentCode(), sv1);
+		teamService.invite(team.getId(), sv4.getStudentCode(), sv1);
+		teamService.invite(team.getId(), sv5.getStudentCode(), sv1);
 
-		// Tổng 1 leader + 2 pending = 3 => Không được mời thêm sv4
-		assertThrows(InvalidTeamException.class, () -> teamService.invite(team.getId(), sv4.getStudentCode(), sv1));
+		assertThrows(InvalidTeamException.class, () -> teamService.invite(team.getId(), sv6.getStudentCode(), sv1));
 	}
 
 	@Test
@@ -384,7 +398,7 @@ class ComprehensiveBusinessRuleEdgeCasesTest {
 		topicService.publish(thesisPeriod.getId());
 
 		moveToStudentPhase(thesisPeriod);
-		Team team = teamService.create(thesisPeriod.getId(), sv1);
+		Team team = createTeamWithThreeMembers(thesisPeriod, sv1, sv2, sv3);
 		registrationService.register(team.getId(), topic1.getId(), sv1);
 
 		assertThrows(InvalidRegistrationException.class,
@@ -403,7 +417,7 @@ class ComprehensiveBusinessRuleEdgeCasesTest {
 		// Không publish
 
 		moveToStudentPhase(thesisPeriod);
-		Team team = teamService.create(thesisPeriod.getId(), sv1);
+		Team team = createTeamWithThreeMembers(thesisPeriod, sv1, sv2, sv3);
 		assertThrows(InvalidRegistrationException.class,
 				() -> registrationService.register(team.getId(), topic.getId(), sv1));
 	}
@@ -420,12 +434,27 @@ class ComprehensiveBusinessRuleEdgeCasesTest {
 		topicService.publish(thesisPeriod.getId());
 
 		moveToStudentPhase(thesisPeriod);
-		Team team = teamService.create(thesisPeriod.getId(), sv1);
-		teamService.invite(team.getId(), sv2.getStudentCode(), sv1);
-		teamService.respondInvitation(team.getId(), sv2, true, null);
+		Team team = createTeamWithThreeMembers(thesisPeriod, sv1, sv2, sv3);
 
 		assertThrows(InvalidRegistrationException.class,
 				() -> registrationService.register(team.getId(), topic.getId(), sv2));
+	}
+
+	@Test
+	@DisplayName("Registration: Đăng ký đề tài khi nhóm có dưới 3 thành viên ném ngoại lệ")
+	void registration_UnderThreeMembers_Fails() {
+		TopicRequest tr = new TopicRequest();
+		tr.setName("Đề tài dưới 3 SV");
+		tr.setDescription("Mô tả");
+		tr.setPeriodId(thesisPeriod.getId());
+		Topic topic = topicService.create(tr, gvCnpm1);
+		topicService.approve(topic.getId());
+		topicService.publish(thesisPeriod.getId());
+
+		moveToStudentPhase(thesisPeriod);
+		Team team = teamService.create(thesisPeriod.getId(), sv1);
+		assertThrows(InvalidRegistrationException.class,
+				() -> registrationService.register(team.getId(), topic.getId(), sv1));
 	}
 
 	@Test
@@ -440,7 +469,7 @@ class ComprehensiveBusinessRuleEdgeCasesTest {
 		topicService.publish(thesisPeriod.getId());
 
 		moveToStudentPhase(thesisPeriod);
-		Team team = teamService.create(thesisPeriod.getId(), sv1);
+		Team team = createTeamWithThreeMembers(thesisPeriod, sv1, sv2, sv3);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 		registrationService.approve(topic.getId(), gvCnpm1);
 
@@ -460,7 +489,7 @@ class ComprehensiveBusinessRuleEdgeCasesTest {
 		topicService.publish(thesisPeriod.getId());
 
 		moveToStudentPhase(thesisPeriod);
-		Team team = teamService.create(thesisPeriod.getId(), sv1);
+		Team team = createTeamWithThreeMembers(thesisPeriod, sv1, sv2, sv3);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 
 		assertThrows(InvalidRegistrationException.class,
@@ -479,7 +508,7 @@ class ComprehensiveBusinessRuleEdgeCasesTest {
 		topicService.publish(thesisPeriod.getId());
 
 		moveToStudentPhase(thesisPeriod);
-		Team team = teamService.create(thesisPeriod.getId(), sv1);
+		Team team = createTeamWithThreeMembers(thesisPeriod, sv1, sv2, sv3);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 
 		assertThrows(InvalidRegistrationException.class,
@@ -516,7 +545,7 @@ class ComprehensiveBusinessRuleEdgeCasesTest {
 		topicService.publish(thesisPeriod.getId());
 
 		moveToStudentPhase(thesisPeriod);
-		Team team = teamService.create(thesisPeriod.getId(), sv1);
+		Team team = createTeamWithThreeMembers(thesisPeriod, sv1, sv2, sv3);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 		registrationService.approve(topic.getId(), gvCnpm1);
 
@@ -537,7 +566,7 @@ class ComprehensiveBusinessRuleEdgeCasesTest {
 		topicService.publish(thesisPeriod.getId());
 
 		moveToStudentPhase(thesisPeriod);
-		Team team = teamService.create(thesisPeriod.getId(), sv1);
+		Team team = createTeamWithThreeMembers(thesisPeriod, sv1, sv2, sv3);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 		registrationService.approve(topic.getId(), gvCnpm1);
 
@@ -559,7 +588,7 @@ class ComprehensiveBusinessRuleEdgeCasesTest {
 		topicService.publish(thesisPeriod.getId());
 
 		moveToStudentPhase(thesisPeriod);
-		Team team = teamService.create(thesisPeriod.getId(), sv1);
+		Team team = createTeamWithThreeMembers(thesisPeriod, sv1, sv2, sv3);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 		registrationService.approve(topic.getId(), gvCnpm1);
 
@@ -592,7 +621,7 @@ class ComprehensiveBusinessRuleEdgeCasesTest {
 		topicService.publish(thesisPeriod.getId());
 
 		moveToStudentPhase(thesisPeriod);
-		Team team = teamService.create(thesisPeriod.getId(), sv1);
+		Team team = createTeamWithThreeMembers(thesisPeriod, sv1, sv2, sv3);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 		registrationService.approve(topic.getId(), gvCnpm1);
 
@@ -613,7 +642,7 @@ class ComprehensiveBusinessRuleEdgeCasesTest {
 		topicService.publish(thesisPeriod.getId());
 
 		moveToStudentPhase(thesisPeriod);
-		Team team = teamService.create(thesisPeriod.getId(), sv1);
+		Team team = createTeamWithThreeMembers(thesisPeriod, sv1, sv2, sv3);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 		registrationService.approve(topic.getId(), gvCnpm1);
 
@@ -634,7 +663,7 @@ class ComprehensiveBusinessRuleEdgeCasesTest {
 		topicService.publish(thesisPeriod.getId());
 
 		moveToStudentPhase(thesisPeriod);
-		Team team = teamService.create(thesisPeriod.getId(), sv1);
+		Team team = createTeamWithThreeMembers(thesisPeriod, sv1, sv2, sv3);
 		registrationService.register(team.getId(), topic.getId(), sv1);
 		registrationService.approve(topic.getId(), gvCnpm1);
 
