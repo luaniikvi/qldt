@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(title='Thông báo cá nhân')}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='notifications')}"></aside>
+
+<main class="portal-main">
+    <!-- Page Header Banner (Image 2 Parity) -->
+    <div th:replace="~{fragments/layout :: portal-page-header(title='THÔNG BÁO', icon='bi-bell-fill', actionUrl=null, actionText=null, actionIcon=null)}"></div>
+
+    <!-- Dual Tab System (Image 2 Parity) -->
+    <div th:replace="~{fragments/layout :: portal-notice-tabs(activeTab='notifications')}"></div>
+
+    <!-- Flash Messages -->
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <!-- Control & Action Bar -->
+    <div class="hcmute-card p-4">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <div>
+                <span class="fs-6 text-muted">Số thông báo chưa đọc: </span>
+                <span class="badge bg-danger rounded-pill fs-6 px-3 py-2" th:text="${unreadCount != null ? unreadCount : 0}">0</span>
+            </div>
+
+            <form th:if="${unreadCount != null and unreadCount > 0}" th:action="@{/notifications/read-all}" method="post" class="m-0">
+                <button type="submit" class="btn-hcmute-secondary btn-hcmute-sm">
+                    <i class="bi bi-check2-all me-1"></i> Đánh dấu tất cả đã đọc
+                </button>
+            </form>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-bar-box">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" id="tableSearchInput" class="form-control search-bar-input"
+                   placeholder="Tìm kiếm thông báo cá nhân theo tiêu đề hoặc nội dung..." aria-label="Tìm kiếm thông báo">
+        </div>
+
+        <!-- Notifications Table -->
+        <div class="table-responsive">
+            <table class="hcmute-table">
+                <thead>
+                <tr>
+                    <th style="width: 140px;">Loại</th>
+                    <th>Tiêu đề</th>
+                    <th>Nội dung</th>
+                    <th style="width: 160px;">Thời điểm</th>
+                    <th style="width: 90px;" class="text-center">Liên kết</th>
+                    <th style="width: 120px;" class="text-center">Trạng thái</th>
+                    <th style="width: 120px;" class="text-center">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="n : ${notifications}" th:classappend="${n.read ? '' : 'table-light fw-medium'}">
+                    <td>
+                        <span class="badge-status badge-status-info" th:text="${n.type.label}">Nhắc hạn</span>
+                    </td>
+                    <td>
+                        <span th:class="${n.read ? 'text-muted' : 'text-dark fw-bold'}" th:text="${n.title}">Tiêu đề</span>
+                    </td>
+                    <td class="small text-secondary" style="max-width: 300px;" th:text="${n.content}">Nội dung thông báo</td>
+                    <td class="text-muted small">
+                        <i class="bi bi-clock me-1"></i>
+                        <span th:text="${#temporals.format(n.createdAt, 'dd/MM/yyyy HH:mm')}">01/01/2026 08:00</span>
+                    </td>
+                    <td class="text-center">
+                        <a th:if="${n.link != null}" th:href="@{${n.link}}" class="btn-hcmute-outline btn-hcmute-sm">
+                            <i class="bi bi-box-arrow-up-right"></i> Mở
+                        </a>
+                        <span th:if="${n.link == null}" class="text-muted small">-</span>
+                    </td>
+                    <td class="text-center">
+                        <span th:if="${n.read}" class="badge-status badge-status-neutral">
+                            <i class="bi bi-check-circle"></i> Đã đọc
+                        </span>
+                        <span th:if="${!n.read}" class="badge-status badge-status-warning">
+                            <i class="bi bi-circle-fill" style="font-size: 8px;"></i> Chưa đọc
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <form th:if="${!n.read}" th:action="@{/notifications/{id}/read(id=${n.id})}" method="post" class="m-0">
+                            <button type="submit" class="btn-hcmute-primary btn-hcmute-sm" title="Đánh dấu đã đọc">
+                                <i class="bi bi-check2"></i> Đã đọc
+                            </button>
+                        </form>
+                        <span th:if="${n.read}" class="text-muted small">-</span>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(notifications)}" class="empty-row">
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <i class="bi bi-bell-slash empty-state-icon"></i>
+                            <div class="empty-state-title">Bạn chưa có thông báo cá nhân nào</div>
+                            <div class="empty-state-desc">Khi có nhắc hạn, phê duyệt đề tài hoặc điểm hội đồng, thông báo sẽ xuất hiện tại đây.</div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
+</body>
+</html>

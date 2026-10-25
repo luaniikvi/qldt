@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400">
+  <defs>
+    <linearGradient id="bgGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0E38B1"/>
+      <stop offset="45%" stop-color="#145AFF"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+    <linearGradient id="overlayGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(2, 5, 32, 0.85)"/>
+      <stop offset="50%" stop-color="rgba(2, 5, 32, 0.5)"/>
+      <stop offset="100%" stop-color="rgba(2, 5, 32, 0.1)"/>
+    </linearGradient>
+    <pattern id="grid1" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <!-- Background -->
+  <rect width="1200" height="400" fill="url(#bgGrad1)"/>
+  <rect width="1200" height="400" fill="url(#grid1)"/>
+  
+  <!-- Abstract Graphic Elements -->
+  <circle cx="1050" cy="80" r="180" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
+  <circle cx="1050" cy="80" r="120" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2" stroke-dasharray="8 6"/>
+  <circle cx="1050" cy="80" r="60" fill="rgba(255,255,255,0.1)"/>
+
+  <!-- University Architectural Skyline Illustration -->
+  <g transform="translate(760, 110)" opacity="0.95">
+    <!-- Main University Tower -->
+    <rect x="140" y="20" width="110" height="270" rx="6" fill="#FFFFFF" opacity="0.95"/>
+    <rect x="155" y="40" width="80" height="15" rx="3" fill="#145AFF" opacity="0.2"/>
+    <rect x="155" y="65" width="80" height="15" rx="3" fill="#145AFF" opacity="0.2"/>
+    <rect x="155" y="90" width="80" height="15" rx="3" fill="#145AFF" opacity="0.2"/>
+    <rect x="155" y="115" width="80" height="15" rx="3" fill="#145AFF" opacity="0.2"/>
+    <rect x="155" y="140" width="80" height="15" rx="3" fill="#145AFF" opacity="0.2"/>
+    <rect x="155" y="165" width="80" height="15" rx="3" fill="#145AFF" opacity="0.2"/>
+    <rect x="155" y="190" width="80" height="15" rx="3" fill="#145AFF" opacity="0.2"/>
+    <rect x="155" y="215" width="80" height="15" rx="3" fill="#145AFF" opacity="0.2"/>
+    <!-- Central clock / emblem -->
+    <circle cx="195" cy="5" r="14" fill="#FDE047"/>
+    <!-- Modern Library Wing -->
+    <path d="M 40 120 L 140 80 L 140 290 L 40 290 Z" fill="#E0F2FE" opacity="0.85"/>
+    <line x1="60" y1="135" x2="120" y2="110" stroke="#0284C7" stroke-width="3"/>
+    <line x1="60" y1="165" x2="120" y2="140" stroke="#0284C7" stroke-width="3"/>
+    <line x1="60" y1="195" x2="120" y2="170" stroke="#0284C7" stroke-width="3"/>
+    <line x1="60" y1="225" x2="120" y2="200" stroke="#0284C7" stroke-width="3"/>
+    <!-- Technology Building -->
+    <rect x="250" y="90" width="130" height="200" rx="6" fill="#DBEAFE" opacity="0.9"/>
+    <rect x="270" y="115" width="40" height="30" rx="4" fill="#3B82F6" opacity="0.4"/>
+    <rect x="325" y="115" width="40" height="30" rx="4" fill="#3B82F6" opacity="0.4"/>
+    <rect x="270" y="160" width="40" height="30" rx="4" fill="#3B82F6" opacity="0.4"/>
+    <rect x="325" y="160" width="40" height="30" rx="4" fill="#3B82F6" opacity="0.4"/>
+    <rect x="270" y="205" width="40" height="30" rx="4" fill="#3B82F6" opacity="0.4"/>
+    <rect x="325" y="205" width="40" height="30" rx="4" fill="#3B82F6" opacity="0.4"/>
+    <!-- Ground Line -->
+    <rect x="0" y="280" width="420" height="15" rx="4" fill="#1E293B"/>
+  </g>
+
+  <!-- Left Shading Gradient for High-Contrast Text Readability -->
+  <rect width="700" height="400" fill="url(#overlayGrad1)"/>
+</svg>

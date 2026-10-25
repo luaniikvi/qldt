@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(title='Chấm điểm phản biện')}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='reviewer-topics')}"></aside>
+
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title='CHẤM ĐIỂM PHẢN BIỆN', icon='bi-person-check-fill', actionUrl=null, actionText=null, actionIcon=null)}"></div>
+
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <div th:each="t : ${topics}" class="hcmute-card p-4 mb-4">
+        <div class="hcmute-card-header">
+            <div>
+                <h2 class="h2 mb-1" th:text="${t.name}">Tên đề tài</h2>
+                <div class="small text-muted">
+                    <span th:text="|Đợt: ${t.period.name}|">Đợt</span>
+                    <span class="mx-2">•</span>
+                    <span th:text="|Bộ môn: ${t.department != null ? t.department.name : ''}|">Bộ môn</span>
+                </div>
+            </div>
+            <span th:if="${t.reviewerScore != null}" class="badge-status badge-status-success">
+                <i class="bi bi-check2-circle"></i> Đã chấm: <span th:text="${t.reviewerScore}">8.0</span>
+            </span>
+            <span th:if="${t.reviewerScore == null}" class="badge-status badge-status-warning">
+                <i class="bi bi-hourglass-split"></i> Chưa chấm
+            </span>
+        </div>
+
+        <div class="small text-muted mb-3">
+            <i class="bi bi-calendar-event me-1"></i>
+            <span th:text="${t.period.reviewerScoreDeadline != null ? 'Hạn nộp điểm phản biện: ' + #temporals.format(t.period.reviewerScoreDeadline, 'dd/MM/yyyy') : 'Đợt này không đặt hạn nộp điểm phản biện'}">Hạn nộp</span>
+        </div>
+
+        <div class="p-3 bg-light rounded-3 mb-3 border">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-file-earmark-text text-primary fs-5"></i>
+                    <strong class="text-primary-dark">Báo cáo nghiệm thu:</strong>
+                    <div th:if="${reports != null and reports.containsKey(t.id)}" class="d-flex align-items-center gap-2">
+                        <span class="fw-semibold text-dark text-break" th:text="${reports.get(t.id).originalFileName}">baocao.pdf</span>
+                        <span class="badge-status badge-status-info" th:text="'v' + ${reports.get(t.id).version}">v1</span>
+                        <span class="small text-muted">
+                            (<i class="bi bi-clock me-1"></i><span th:text="${#temporals.format(reports.get(t.id).submittedAt, 'dd/MM/yyyy HH:mm')}"></span>)
+                        </span>
+                    </div>
+                    <span th:if="${reports == null or !reports.containsKey(t.id)}" class="badge-status badge-status-neutral">
+                        <i class="bi bi-hourglass-split"></i> Nhóm chưa nộp báo cáo
+                    </span>
+                </div>
+                <div th:if="${reports != null and reports.containsKey(t.id)}">
+                    <a th:href="@{/reports/{id}/download(id=${reports.get(t.id).id})}" class="btn-hcmute-primary btn-hcmute-sm">
+                        <i class="bi bi-download"></i> Tải về
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <form th:action="@{/reviewer/topics/{id}/score(id=${t.id})}" method="post">
+            <div class="row g-3 mb-3">
+                <div class="col-md-3">
+                    <label class="form-label required" th:for="'score-' + ${t.id}">Điểm phản biện (0 – 10)</label>
+                    <input type="number" th:id="'score-' + ${t.id}" name="score" min="0" max="10" step="0.1"
+                           class="form-control" th:value="${t.reviewerScore}" placeholder="VD: 8.5" required />
+                    <div class="form-hint">Tối đa 1 chữ số thập phân</div>
+                </div>
+                <div class="col-md-9">
+                    <label class="form-label" th:for="'comment-' + ${t.id}">Nhận xét phản biện</label>
+                    <input type="text" th:id="'comment-' + ${t.id}" name="comment" class="form-control"
+                           th:value="${t.reviewerComment}"
+                           placeholder="Nhận xét nội dung, phương pháp, kết quả..." />
+                </div>
+            </div>
+            <button type="submit" class="btn-hcmute-primary btn-hcmute-sm">
+                <i class="bi bi-send"></i> Gửi điểm phản biện
+            </button>
+        </form>
+    </div>
+
+    <div th:if="${#lists.isEmpty(topics)}" class="hcmute-card p-4">
+        <div class="empty-state">
+            <i class="bi bi-person-x empty-state-icon"></i>
+            <div class="empty-state-title">Bạn chưa được phân công phản biện đề tài nào</div>
+            <div class="empty-state-desc">Khi Trưởng khoa phân công, đề tài cần phản biện sẽ xuất hiện tại đây để bạn nhập điểm.</div>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
+</body>
+</html>

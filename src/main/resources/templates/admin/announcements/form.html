@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(title=${announcement.id == null ? 'Đăng thông báo mới' : 'Chỉnh sửa thông báo'})}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='admin-announcements')}"></aside>
+
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title=${announcement.id == null ? 'ĐĂNG THÔNG BÁO MỚI' : 'CHỈNH SỬA THÔNG BÁO'}, icon='bi-megaphone-fill', actionUrl='/admin/announcements', actionText='Quay lại danh sách', actionIcon='bi-arrow-left')}"></div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="hcmute-card p-4">
+                <div class="hcmute-alert hcmute-alert-danger" th:if="${error}" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                    <div th:text="${error}">Lỗi</div>
+                </div>
+
+                <form th:action="${announcement.id == null ? '/admin/announcements' : '/admin/announcements/' + announcement.id}" method="post">
+                    <div class="form-group mb-3">
+                        <label class="form-label required" for="title">Tiêu đề thông báo</label>
+                        <input type="text" id="title" name="title" class="form-control"
+                               th:value="${announcement.title}"
+                               placeholder="Nhập tiêu đề thông báo chính thức..." required autofocus />
+                        <div class="form-hint">Tiêu đề nên súc tích, bao hàm nội dung và đợt đào tạo nếu có.</div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label class="form-label required" for="content">Nội dung chi tiết thông báo</label>
+                        <textarea id="content" name="content" rows="10" class="form-control"
+                                  placeholder="Nhập nội dung đầy đủ của thông báo..." required
+                                  th:text="${announcement.content}"></textarea>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 pt-3 border-top">
+                        <button type="submit" class="btn-hcmute-primary">
+                            <i class="bi bi-send-check"></i> Lưu &amp; Xuất bản thông báo
+                        </button>
+                        <a th:href="@{/admin/announcements}" class="btn-hcmute-secondary">Hủy bỏ</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
+</body>
+</html>

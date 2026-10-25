@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head :: head(title='Danh sách đề tài đã công bố')}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='published-topics')}"></aside>
+
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title='DANH SÁCH ĐỀ TÀI ĐÃ CÔNG BỐ', icon='bi-journal-check', actionUrl=${#authorization.expression('hasRole(''STUDENT'')') ? '/teams' : null}, actionText='Vào nhóm để đăng ký', actionIcon='bi-people-fill')}"></div>
+
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <div class="hcmute-card p-4">
+        <!-- Search bar -->
+        <div class="search-bar-box">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" id="tableSearchInput" class="form-control search-bar-input"
+                   placeholder="Tìm kiếm theo tên đề tài, mô tả, bộ môn hoặc giảng viên hướng dẫn..." aria-label="Tìm kiếm đề tài">
+        </div>
+
+        <div class="table-responsive">
+            <table class="hcmute-table">
+                <thead>
+                <tr>
+                    <th style="width: 50px;" class="text-center">STT</th>
+                    <th>Tên đề tài &amp; Mô tả nội dung</th>
+                    <th style="width: 160px;">Đợt đăng ký</th>
+                    <th style="width: 180px;">Bộ môn</th>
+                    <th style="width: 220px;">Giảng viên hướng dẫn</th>
+                    <th style="width: 170px;" class="text-center">Tình trạng đăng ký</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="topic, stat : ${topics}">
+                    <td class="text-center text-muted fw-semibold" th:text="${stat.count}">1</td>
+                    <td>
+                        <div class="fw-bold text-primary-dark fs-6 mb-1" th:text="${topic.name}">Tên đề tài</div>
+                        <div class="small text-muted" style="line-height: 1.5;" th:text="${topic.description}">Mô tả nội dung nghiên cứu chi tiết...</div>
+                    </td>
+                    <td class="small">
+                        <span class="badge-period" th:text="${topic.period.name}">Đợt 1</span>
+                    </td>
+                    <td class="small fw-medium" th:text="${topic.department != null ? topic.department.name : ''}">Công nghệ phần mềm</td>
+                    <td class="small">
+                        <div th:each="advisor : ${topic.advisors}" class="d-flex align-items-center gap-1 mb-1">
+                            <i class="bi bi-person-fill text-muted"></i>
+                            <span class="fw-medium" th:text="${advisor.fullName}">ThS. Nguyễn Văn A</span>
+                            <span class="text-muted" th:text="'(' + ${advisor.lecturerCode} + ')'">(GV001)</span>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span th:if="${topic.availability.name() == 'AVAILABLE'}" class="badge-status badge-status-success">
+                            <i class="bi bi-check-circle-fill"></i> Chưa có nhóm đăng ký
+                        </span>
+                        <span th:if="${topic.availability.name() == 'PENDING'}" class="badge-status badge-status-warning">
+                            <i class="bi bi-hourglass-split"></i> Đã có nhóm đăng ký
+                        </span>
+                        <span th:if="${topic.availability.name() == 'REGISTERED'}" class="badge-status badge-status-neutral">
+                            <i class="bi bi-lock-fill"></i> Đã duyệt chính thức
+                        </span>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(topics)}" class="empty-row">
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <i class="bi bi-journal-x empty-state-icon"></i>
+                            <div class="empty-state-title">Chưa có đề tài nào được công bố</div>
+                            <div class="empty-state-desc">Danh sách đề tài sẽ hiển thị khi Trưởng khoa phê duyệt và mở công bố theo đợt.</div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
+</body>
+</html>

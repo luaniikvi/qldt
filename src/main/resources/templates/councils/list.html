@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(title='Hội đồng của tôi')}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='councils')}"></aside>
+
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title='HỘI ĐỒNG CỦA TÔI', icon='bi-clipboard2-check-fill', actionUrl=null, actionText=null, actionIcon=null)}"></div>
+
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <div th:each="v : ${councils}" class="hcmute-card p-4 mb-4">
+        <div class="hcmute-card-header">
+            <div>
+                <h2 class="h2 mb-1" th:text="${v.council.name}">Hội đồng 1</h2>
+                <div class="text-primary-dark fw-bold fs-6">
+                    <i class="bi bi-journal-text me-1"></i>
+                    <span th:text="${v.council.topic.name}">Đề tài nghiên cứu</span>
+                </div>
+            </div>
+            <div>
+                <span class="badge-status badge-status-info fs-6 px-3 py-2">
+                    <i class="bi bi-person-badge-fill me-1"></i>
+                    <span>Vai trò của bạn: </span>
+                    <strong th:text="${v.myMember.role.label}">Chủ tịch</strong>
+                </span>
+            </div>
+        </div>
+
+        <!-- Members and scores table -->
+        <div class="table-responsive mb-4">
+            <table class="hcmute-table">
+                <thead>
+                <tr>
+                    <th>Giảng viên thành viên</th>
+                    <th style="width: 140px;" class="text-center">Vai trò</th>
+                    <th style="width: 120px;" class="text-center">Điểm số</th>
+                    <th>Nhận xét &amp; Đánh giá chuyên môn</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="m : ${v.council.members}">
+                    <td>
+                        <div class="fw-bold text-dark" th:text="${m.lecturer.fullName}">ThS. Nguyễn Văn A</div>
+                        <div class="small text-muted" th:text="'Mã: ' + ${m.lecturer.lecturerCode}">GV001</div>
+                    </td>
+                    <td class="text-center">
+                        <span th:if="${m.role.name() == 'CHAIR'}" class="badge-status badge-status-warning">
+                            <i class="bi bi-star-fill"></i> Chủ tịch
+                        </span>
+                        <span th:if="${m.role.name() == 'SECRETARY'}" class="badge-status badge-status-info">
+                            <i class="bi bi-pencil-fill"></i> Thư ký
+                        </span>
+                        <span th:if="${m.role.name() == 'MEMBER'}" class="badge-status badge-status-neutral">
+                            <i class="bi bi-person"></i> Thành viên
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span th:if="${m.score != null}" class="fs-6 fw-bold text-primary" th:text="${m.score}">8.5</span>
+                        <span th:if="${m.score == null}" class="text-muted small fst-italic">Chưa chấm</span>
+                    </td>
+                    <td class="small text-secondary" th:text="${m.comment != null ? m.comment : '—'}">Nhận xét chi tiết</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Reviewer (GVPB) information -->
+        <div class="p-3 bg-light rounded-3 mb-4">
+            <div class="d-flex flex-wrap gap-3 align-items-center">
+                <span class="badge-status badge-status-info">
+                    <i class="bi bi-person-badge-fill"></i>
+                    GVPB:
+                    <strong th:text="${v.council.topic.reviewer != null ? v.council.topic.reviewer.fullName : 'Chưa phân công'}">Chưa phân công</strong>
+                </span>
+                <span class="badge-status badge-status-neutral">
+                    Điểm phản biện (40%):
+                    <strong th:text="${v.council.topic.reviewerScore != null ? v.council.topic.reviewerScore : 'chưa chấm'}">chưa chấm</strong>
+                </span>
+                <span th:if="${v.result != null and v.result.published and v.result.finalScore != null}" class="badge-status badge-status-success">
+                    Điểm tổng kết:
+                    <strong th:text="${v.result.finalScore}">8.2</strong>
+                </span>
+            </div>
+            <div th:if="${v.council.topic.period.type.requiresReviewerScoreDeadline() and v.council.topic.reviewerScore == null}"
+                 class="small text-danger mt-2">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                Giảng viên phản biện chưa chấm điểm nên hội đồng chưa thể nhập điểm.
+            </div>
+        </div>
+
+        <div class="p-3 bg-light rounded-3 mb-4 border">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-file-earmark-text text-primary fs-5"></i>
+                    <strong class="text-primary-dark">Tài liệu báo cáo đề tài:</strong>
+                    <div th:if="${v.report != null}" class="d-flex align-items-center gap-2">
+                        <span class="fw-semibold text-dark text-break" th:text="${v.report.originalFileName}">baocao.pdf</span>
+                        <span class="badge-status badge-status-info" th:text="'v' + ${v.report.version}">v1</span>
+                        <span class="small text-muted">
+                            (<i class="bi bi-clock me-1"></i><span th:text="${#temporals.format(v.report.submittedAt, 'dd/MM/yyyy HH:mm')}"></span>)
+                        </span>
+                    </div>
+                    <span th:if="${v.report == null}" class="badge-status badge-status-neutral">
+                        <i class="bi bi-hourglass-split"></i> Nhóm chưa nộp báo cáo
+                    </span>
+                </div>
+                <div th:if="${v.report != null}">
+                    <a th:href="@{/reports/{id}/download(id=${v.report.id})}" class="btn-hcmute-primary btn-hcmute-sm">
+                        <i class="bi bi-download"></i> Tải về
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-3 bg-light rounded-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-3 border">
+            <div>
+                <span class="text-muted">Kết quả tổng hợp: </span>
+                <span th:if="${v.result != null}">
+                    <span class="fs-5 fw-bold text-primary ms-1" th:text="${v.result.averageScore}">8.5</span> / 10
+                    <span th:if="${v.result.published}" class="badge-status badge-status-success ms-2">
+                        <i class="bi bi-check-circle-fill"></i> Đã công bố kết quả
+                    </span>
+                    <span th:unless="${v.result.published}" class="badge-status badge-status-warning ms-2">
+                        <i class="bi bi-hourglass-split"></i> Đã tổng hợp, chờ Trưởng khoa công bố
+                    </span>
+                </span>
+                <span th:if="${v.result == null}" class="badge-status badge-status-neutral ms-1">
+                    <i class="bi bi-clock"></i> Chưa tổng hợp điểm
+                </span>
+            </div>
+
+            <!-- Chair action: Confirm / Summarize scores -->
+            <div th:if="${v.myMember.role.name() == 'CHAIR'}">
+                <form th:if="${v.fullyScored and v.result == null}"
+                      th:action="@{/councils/{id}/confirm(id=${v.council.id})}" method="post" class="m-0"
+                      data-confirm="Bạn có chắc muốn tổng hợp điểm trung bình cho đề tài này?">
+                    <button type="submit" class="btn-hcmute-primary btn-hcmute-sm">
+                        <i class="bi bi-calculator"></i> Tổng hợp &amp; Chốt điểm
+                    </button>
+                </form>
+                <div th:if="${!v.fullyScored and v.result == null}" class="text-muted small fst-italic">
+                    <i class="bi bi-info-circle me-1"></i> Đang chờ tất cả thành viên nhập điểm để tổng hợp.
+                </div>
+            </div>
+        </div>
+
+        <!-- Scoring Form for Logged in Member (if not published) -->
+        <div th:if="${(v.result == null or !v.result.published) and (v.council.topic.reviewerScore != null or !v.council.topic.period.type.requiresReviewerScoreDeadline())}"
+             class="p-3 border rounded-3 bg-white">
+            <h4 class="h3 mb-3 text-primary-dark">
+                <i class="bi bi-pencil-square me-1"></i> Nhập điểm &amp; Nhận xét của bạn
+            </h4>
+            <form th:action="@{/councils/{id}/score(id=${v.council.id})}" method="post">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label required" for="score">Điểm số (0 – 10)</label>
+                        <input type="number" id="score" name="score" min="0" max="10" step="0.1"
+                               class="form-control" th:value="${v.myMember.score}"
+                               placeholder="VD: 8.5" required />
+                        <div class="form-hint">Tối đa 1 chữ số thập phân</div>
+                    </div>
+                    <div class="col-md-9">
+                        <label class="form-label" for="comment">Nhận xét chi tiết</label>
+                        <input type="text" id="comment" name="comment" class="form-control"
+                               th:value="${v.myMember.comment}"
+                               placeholder="Nhận xét về nội dung, kỹ năng thuyết trình, kết quả đạt được..." />
+                    </div>
+                </div>
+                <button type="submit" class="btn-hcmute-primary btn-hcmute-sm">
+                    <i class="bi bi-check2"></i> Lưu điểm đánh giá
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div th:if="${#lists.isEmpty(councils)}" class="hcmute-card p-4">
+        <div class="empty-state">
+            <i class="bi bi-clipboard2-x empty-state-icon"></i>
+            <div class="empty-state-title">Bạn chưa được phân công vào hội đồng nào</div>
+            <div class="empty-state-desc">Khi Trưởng khoa thành lập hội đồng phản biện và phân công bạn, danh sách chấm điểm sẽ xuất hiện tại đây.</div>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
+</body>
+</html>

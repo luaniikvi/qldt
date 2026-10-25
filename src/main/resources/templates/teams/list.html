@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(title='Nhóm & Đăng ký đề tài')}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='teams')}"></aside>
+
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title='NHÓM & ĐĂNG KÝ ĐỀ TÀI', icon='bi-people-fill', actionUrl='/teams/new', actionText='Tạo nhóm mới', actionIcon='bi-plus-circle-fill')}"></div>
+
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <div class="hcmute-card p-4">
+        <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+            <div>
+                <h2 class="h2 mb-1"><i class="bi bi-people text-primary me-2"></i>Danh sách nhóm học thuật của bạn</h2>
+                <div class="small text-muted">Quy định: Nhóm phải có từ 3 đến 5 thành viên. Mỗi sinh viên chỉ tham gia 1 nhóm trong một đợt thực hiện.</div>
+            </div>
+            <a th:href="@{/teams/new}" class="btn-hcmute-primary btn-hcmute-sm">
+                <i class="bi bi-plus-lg"></i> Tạo nhóm mới
+            </a>
+        </div>
+
+        <div class="table-responsive">
+            <table class="hcmute-table">
+                <thead>
+                <tr>
+                    <th style="width: 170px;">Nhóm &amp; Đợt</th>
+                    <th style="width: 180px;">Nhóm trưởng</th>
+                    <th style="width: 220px;">Thành viên nhóm</th>
+                    <th style="width: 200px;">Lời mời tham gia</th>
+                    <th>Đề tài &amp; Báo cáo</th>
+                    <th style="width: 220px;" class="text-center">Vai trò &amp; Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="v : ${teams}">
+                    <td>
+                        <div class="fw-bold text-primary-dark mb-1" th:text="|Nhóm của ${v.team.leader.fullName}|">Nhóm của A</div>
+                        <span class="badge-status badge-status-info" th:text="${v.team.period.name}">Đợt 1</span>
+                    </td>
+                    <td class="small">
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="bi bi-star-fill text-warning"></i>
+                            <span class="fw-bold text-dark" th:text="${v.team.leader.fullName}">A</span>
+                        </div>
+                        <div class="text-muted ms-3" th:text="'(' + ${v.team.leader.studentCode} + ')'">(SV001)</div>
+                    </td>
+                    <td class="small">
+                        <div th:each="member : ${v.team.members}" class="d-flex align-items-center justify-content-between py-1 border-bottom border-light">
+                            <div>
+                                <i class="bi bi-person me-1 text-muted"></i>
+                                <span th:class="${member.studentCode == v.team.leader.studentCode ? 'fw-bold' : ''}"
+                                      th:text="|${member.fullName} (${member.studentCode})|"></span>
+                            </div>
+                            <form th:if="${v.leader and member.studentCode != v.team.leader.studentCode}"
+                                  th:action="@{/teams/{id}/members/remove(id=${v.team.id})}" method="post" class="m-0"
+                                  data-confirm="Bạn có chắc muốn xóa thành viên này khỏi nhóm?">
+                                <input type="hidden" name="studentCode" th:value="${member.studentCode}" />
+                                <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-1" title="Xóa thành viên">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                    <td class="small">
+                        <div th:each="invitation : ${v.team.invitations}" class="p-1 mb-1 bg-light rounded border border-light">
+                            <div class="fw-medium" th:text="|${invitation.student.fullName} (${invitation.student.studentCode})|"></div>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <span class="badge-status badge-status-warning py-0" th:text="${invitation.status.label}">Chờ phản hồi</span>
+                                <form th:if="${v.leader and invitation.status.name() == 'PENDING'}"
+                                      th:action="@{/teams/{id}/invitation/cancel(id=${v.team.id})}" method="post" class="m-0">
+                                    <input type="hidden" name="studentCode" th:value="${invitation.student.studentCode}" />
+                                    <button type="submit" class="btn btn-link text-danger p-0 small text-decoration-none" title="Hủy lời mời">
+                                        <i class="bi bi-x-circle"></i> Hủy
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <div class="text-muted fst-italic" th:if="${#lists.isEmpty(v.team.invitations)}">Chưa có lời mời nào</div>
+                    </td>
+                    <td>
+                        <!-- When no topic is registered -->
+                        <div th:if="${v.team.topic == null}">
+                            <div class="text-muted small fst-italic mb-2">Chưa đăng ký đề tài nghiên cứu</div>
+                            <div th:if="${#lists.size(v.team.members) lt 3}" class="badge-status badge-status-warning mb-2 d-inline-flex align-items-center gap-1">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                <span th:text="|Cần tối thiểu 3 thành viên để đăng ký đề tài (hiện có ${#lists.size(v.team.members)} thành viên)|">Cần tối thiểu 3 thành viên để đăng ký đề tài</span>
+                            </div>
+                            <div class="hcmute-alert hcmute-alert-danger py-1 px-2 small mb-2" th:if="${v.team.registrationRejectionReason != null}">
+                                <i class="bi bi-x-circle me-1"></i>
+                                <span th:text="|Lý do từ chối: ${v.team.registrationRejectionReason}|"></span>
+                            </div>
+                            <div>
+                                <a th:if="${v.leader}" th:href="@{/teams/{id}/register(id=${v.team.id})}" class="btn-hcmute-primary btn-hcmute-sm">
+                                    <i class="bi bi-bookmark-plus"></i> Đăng ký đề tài
+                                </a>
+                                <span th:unless="${v.leader}" class="text-muted small">Chỉ nhóm trưởng có quyền đăng ký đề tài</span>
+                            </div>
+                        </div>
+
+                        <!-- When topic is registered -->
+                        <div th:if="${v.team.topic != null}">
+                            <div class="fw-bold text-primary-dark fs-6" th:text="${v.team.topic.name}">Tên đề tài</div>
+                            <div class="mb-2">
+                                <span class="badge-status badge-status-info" th:text="${v.team.topic.availability.label}">Chờ duyệt</span>
+                            </div>
+
+                            <!-- Submitted Report details -->
+                            <div th:if="${v.report != null}" class="p-2 mb-2 bg-light border rounded small">
+                                <div class="fw-semibold text-success d-flex align-items-center gap-1">
+                                    <i class="bi bi-file-earmark-check-fill"></i>
+                                    <span th:text="|Báo cáo: ${v.report.originalFileName} (v${v.report.version})|"></span>
+                                </div>
+                                <div class="text-muted" th:text="|Nộp lúc: ${#temporals.format(v.report.submittedAt, 'dd/MM/yyyy HH:mm')}|"></div>
+                                <form th:if="${v.leader}" th:action="@{/teams/{id}/report/download(id=${v.team.id})}" method="get" class="mt-1 m-0">
+                                    <button type="submit" class="btn-hcmute-outline btn-hcmute-sm py-0">
+                                        <i class="bi bi-download"></i> Tải tệp đã nộp
+                                    </button>
+                                </form>
+                            </div>
+
+                            <!-- Cancel registration button if pending -->
+                            <form th:if="${v.leader and v.team.topic.availability.name() == 'PENDING'}"
+                                  th:action="@{/teams/{id}/registration/cancel(id=${v.team.id})}" method="post" class="mt-2 m-0"
+                                  data-confirm="Bạn có chắc muốn hủy đăng ký đề tài này không?">
+                                <button type="submit" class="btn-hcmute-danger btn-hcmute-sm">
+                                    <i class="bi bi-x-circle"></i> Hủy đăng ký
+                                </button>
+                            </form>
+
+                            <!-- Submit Report Form if Accepted/Registered -->
+                            <div th:if="${v.team.topic.availability.name() == 'REGISTERED'}" class="mt-2 p-2 border rounded bg-white">
+                                <div class="small fw-semibold text-danger mb-2">
+                                    <i class="bi bi-calendar-event me-1"></i>
+                                    <span th:text="|Hạn nộp báo cáo: ${#temporals.format(v.team.period.reportDeadline, 'dd/MM/yyyy')}|"></span>
+                                </div>
+                                <form th:if="${v.leader}" th:action="@{/teams/{id}/report(id=${v.team.id})}" method="post"
+                                      enctype="multipart/form-data" class="d-flex flex-column gap-2 m-0">
+                                    <input type="file" name="file" class="form-control form-control-sm" required />
+                                    <div class="form-hint">Dung lượng tệp tối đa 10MB.</div>
+                                    <button type="submit" class="btn-hcmute-primary btn-hcmute-sm align-self-start">
+                                        <i class="bi bi-upload"></i>
+                                        <span th:text="${v.report != null} ? 'Nộp lại báo cáo' : 'Nộp báo cáo'">Nộp báo cáo</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column gap-2">
+                            <!-- Role Badge -->
+                            <div class="text-center">
+                                <span th:if="${v.leader}" class="badge bg-primary text-white px-2 py-1"><i class="bi bi-star me-1"></i>Nhóm trưởng</span>
+                                <span th:if="${v.member and not v.leader}" class="badge bg-secondary text-white px-2 py-1">Thành viên</span>
+                                <span th:if="${v.invited}" class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-envelope me-1"></i>Được mời</span>
+                            </div>
+
+                            <!-- If Invited: Accept or Reject -->
+                            <th:block th:if="${v.invited}">
+                                <div class="d-flex gap-1">
+                                    <form th:action="@{/teams/{id}/invitation(id=${v.team.id})}" method="post" class="w-50 m-0">
+                                        <input type="hidden" name="accept" value="true" />
+                                        <button type="submit" class="btn-hcmute-primary btn-hcmute-sm w-100">Đồng ý</button>
+                                    </form>
+                                </div>
+                                <form th:action="@{/teams/{id}/invitation(id=${v.team.id})}" method="post" class="mt-1 d-flex gap-1 m-0">
+                                    <input type="hidden" name="accept" value="false" />
+                                    <input type="text" name="reason" class="form-control form-control-sm" placeholder="Lý do từ chối" required />
+                                    <button type="submit" class="btn-hcmute-danger btn-hcmute-sm">Từ chối</button>
+                                </form>
+                            </th:block>
+
+                            <!-- Leader Controls: Invite student & Transfer leader -->
+                            <th:block th:if="${v.leader}">
+                                <form th:if="${#lists.size(v.team.members) lt 5}"
+                                      th:action="@{/teams/{id}/invite(id=${v.team.id})}" method="post" class="d-flex gap-1 m-0">
+                                    <input type="text" name="studentCode" class="form-control form-control-sm"
+                                           placeholder="Mã SV mời (tối đa 5)" required style="width: 140px;" />
+                                    <button type="submit" class="btn-hcmute-primary btn-hcmute-sm text-nowrap">
+                                        <i class="bi bi-person-plus"></i> Mời
+                                    </button>
+                                </form>
+
+                                <form th:if="${#lists.size(v.team.members) gt 1}"
+                                      th:action="@{/teams/{id}/leader(id=${v.team.id})}" method="post" class="d-flex gap-1 m-0"
+                                      data-confirm="Bạn có chắc muốn chuyển quyền nhóm trưởng cho thành viên này?">
+                                    <select name="studentCode" class="form-select form-select-sm" required>
+                                        <option value="">-- Chuyển quyền --</option>
+                                        <option th:each="member : ${v.team.members}"
+                                                th:if="${member.studentCode != v.team.leader.studentCode}"
+                                                th:value="${member.studentCode}"
+                                                th:text="|${member.fullName} (${member.studentCode})|"></option>
+                                    </select>
+                                    <button type="submit" class="btn-hcmute-secondary btn-hcmute-sm text-nowrap">Chuyển</button>
+                                </form>
+                            </th:block>
+
+                            <!-- Leave Team for regular member -->
+                            <form th:if="${v.member and not v.leader}" th:action="@{/teams/{id}/leave(id=${v.team.id})}" method="post" class="m-0"
+                                  data-confirm="Bạn có chắc chắn muốn rời nhóm này không?">
+                                <button type="submit" class="btn-hcmute-danger btn-hcmute-sm w-100">
+                                    <i class="bi bi-box-arrow-left"></i> Rời nhóm
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr th:if="${#lists.isEmpty(teams)}" class="empty-row">
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <i class="bi bi-people empty-state-icon"></i>
+                            <div class="empty-state-title">Bạn chưa tham gia nhóm nào</div>
+                            <div class="empty-state-desc">Hãy nhấn nút "Tạo nhóm mới" ở phía trên hoặc chờ lời mời từ nhóm trưởng.</div>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
+</body>
+</html>

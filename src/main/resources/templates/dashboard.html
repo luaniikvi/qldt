@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <!-- Favicon Khoa CNTT -->
+    <link rel="icon" type="image/png" th:href="@{/images/fit-logo.png}">
+    <link rel="shortcut icon" type="image/png" th:href="@{/images/fit-logo.png}">
+    <title>Tổng quan Dashboard - Hệ thống Quản lý Đề tài Sinh viên HCMUTE</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Design Tokens & Portal CSS -->
+    <link rel="stylesheet" th:href="@{/css/design-tokens.css}">
+    <link rel="stylesheet" th:href="@{/css/portal.css(v='2.3')}">
+</head>
+<body>
+
+<!-- Header Component -->
+<div th:replace="~{fragments/layout :: portal-header}"></div>
+
+<!-- Sidebar Component -->
+<div th:replace="~{fragments/layout :: portal-sidebar(active='dashboard')}"></div>
+
+<!-- Main Content -->
+<main class="portal-main">
+    <!-- Flash / Alert Messages -->
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <!-- Greeting Bar -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h2 mb-1 fw-bold text-dark">
+                Xin chào, <span th:text="${currentUserAccount != null ? currentUserAccount.fullName : #authentication.name}">Người dùng</span>!
+            </h1>
+            <p class="text-muted mb-0">
+                Chúc bạn một ngày học tập và làm việc hiệu quả tại Trường Đại học Công nghệ Kỹ thuật TP.HCM.
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge-status badge-status-info">
+                <i class="bi bi-shield-check"></i>
+                <span th:text="${currentUserRoleName}">Vai trò</span>
+            </span>
+            <span class="badge-status badge-status-neutral">
+                <i class="bi bi-person-badge"></i>
+                <span th:text="${currentUserCode}">Mã</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- DASHBOARD CAROUSEL BANNER (Image 1 & 2 Relate Synthesis)        -->
+    <!-- ============================================================== -->
+    <section class="dashboard-carousel-wrapper" aria-label="Banner thông tin học thuật và khuôn viên HCMUTE">
+        <div class="carousel-slides-track">
+            <!-- Slide 1: Khuôn viên & Không gian học tập -->
+            <div class="carousel-slide" aria-hidden="false">
+                <img th:src="@{/images/hcmute-slide-campus.svg}"
+                     alt="Khuôn viên và thư viện học tập Trường Đại học Công nghệ Kỹ thuật TP.HCM"
+                     class="carousel-slide-img" fetchpriority="high">
+                <div class="carousel-slide-content">
+                    <span class="carousel-slide-badge"><i class="bi bi-buildings"></i> Khuôn viên HCMUTE</span>
+                    <h2 class="carousel-slide-title">Không gian học tập &amp; nghiên cứu hiện đại</h2>
+                    <p class="carousel-slide-desc">Khuôn viên và thư viện trung tâm Trường Đại học Công nghệ Kỹ thuật TP.HCM hỗ trợ tối đa đồ án sinh viên và nhóm nghiên cứu.</p>
+                    <div>
+                        <a th:href="@{/published-topics}" class="btn-hcmute-primary btn-hcmute-sm">
+                            <i class="bi bi-journal-check"></i> Xem đề tài công bố
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2: Nghiên cứu khoa học & Đổi mới sáng tạo -->
+            <div class="carousel-slide" aria-hidden="true">
+                <img th:src="@{/images/hcmute-slide-research.svg}"
+                     alt="Hoạt động nghiên cứu khoa học và phát triển công nghệ tại Khoa CNTT"
+                     class="carousel-slide-img" loading="lazy">
+                <div class="carousel-slide-content">
+                    <span class="carousel-slide-badge"><i class="bi bi-lightbulb"></i> Khoa Công nghệ Thông tin</span>
+                    <h2 class="carousel-slide-title">Nghiên cứu khoa học &amp; Đổi mới sáng tạo</h2>
+                    <p class="carousel-slide-desc">Đề tài ứng dụng công nghệ mới: Trí tuệ nhân tạo (AI), IoT, Điện toán đám mây và Hệ thống thông tin thông minh.</p>
+                    <div>
+                        <a th:href="@{/announcements}" class="btn-hcmute-primary btn-hcmute-sm">
+                            <i class="bi bi-newspaper"></i> Xem thông báo khoa
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Hợp tác nhóm sinh viên -->
+            <div class="carousel-slide" aria-hidden="true">
+                <img th:src="@{/images/hcmute-slide-teams.svg}"
+                     alt="Sinh viên thực hiện đồ án môn học và nghiên cứu theo nhóm"
+                     class="carousel-slide-img" loading="lazy">
+                <div class="carousel-slide-content">
+                    <span class="carousel-slide-badge"><i class="bi bi-people"></i> Sinh viên CNTT</span>
+                    <h2 class="carousel-slide-title">Hợp tác nhóm &amp; Thực hiện đồ án</h2>
+                    <p class="carousel-slide-desc">Môi trường làm việc nhóm chuyên nghiệp, quy trình đăng ký đề tài và nộp báo cáo tiến độ trực tuyến thuận tiện.</p>
+                    <div>
+                        <th:block sec:authorize="hasRole('STUDENT')">
+                            <a th:href="@{/teams}" class="btn-hcmute-primary btn-hcmute-sm">
+                                <i class="bi bi-people-fill"></i> Nhóm của tôi
+                            </a>
+                        </th:block>
+                        <th:block sec:authorize="!hasRole('STUDENT')">
+                            <a th:href="@{/announcements}" class="btn-hcmute-primary btn-hcmute-sm">
+                                <i class="bi bi-info-circle"></i> Xem quy trình
+                            </a>
+                        </th:block>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: Báo cáo & Bảo vệ tốt nghiệp -->
+            <div class="carousel-slide" aria-hidden="true">
+                <img th:src="@{/images/hcmute-slide-defense.svg}"
+                     alt="Hoạt động báo cáo bảo vệ đề tài và khóa luận tốt nghiệp trước hội đồng"
+                     class="carousel-slide-img" loading="lazy">
+                <div class="carousel-slide-content">
+                    <span class="carousel-slide-badge"><i class="bi bi-award"></i> Hội đồng &amp; Đánh giá</span>
+                    <h2 class="carousel-slide-title">Báo cáo tiến độ &amp; Bảo vệ đề tài</h2>
+                    <p class="carousel-slide-desc">Quy trình đánh giá minh bạch từ hội đồng chuyên môn với hệ thống chấm điểm và công bố kết quả chính thức.</p>
+                    <div>
+                        <a th:href="@{/results}" class="btn-hcmute-primary btn-hcmute-sm">
+                            <i class="bi bi-check2-circle"></i> Kết quả đánh giá
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carousel Navigation Controls -->
+        <div class="carousel-controls">
+            <span class="carousel-counter">1/4</span>
+            <div class="carousel-dots"></div>
+            <button type="button" class="carousel-btn carousel-btn-prev" aria-label="Ảnh trước" title="Ảnh trước">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <button type="button" class="carousel-btn carousel-btn-next" aria-label="Ảnh sau" title="Ảnh sau">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+            <button type="button" class="carousel-btn carousel-btn-play" aria-label="Tạm dừng chạy tự động" title="Tạm dừng chạy">
+                <i class="bi bi-pause-fill"></i>
+            </button>
+        </div>
+    </section>
+
+    <!-- ============================================================== -->
+    <!-- ROLE-SPECIFIC KPI METRICS (Max 3-4 Direct Real Metrics)         -->
+    <!-- ============================================================== -->
+    <!-- 1. STUDENT METRICS -->
+    <th:block sec:authorize="hasRole('STUDENT')">
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon-box" th:classappend="${registeredTopic != null} ? 'success' : 'warning'">
+                    <i class="bi" th:classappend="${registeredTopic != null} ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'"></i>
+                </div>
+                <div class="kpi-info">
+                    <div class="kpi-value" th:text="${registeredTopic != null ? 'Đã có' : 'Chưa có'}">Chưa có</div>
+                    <div class="kpi-label">Đề tài đăng ký</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-box" th:classappend="${activeTeam != null} ? 'success' : 'warning'">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="kpi-info">
+                    <div class="kpi-value" th:text="${activeTeam != null ? activeTeam.name : 'Chưa có nhóm'}">Chưa có nhóm</div>
+                    <div class="kpi-label">Nhóm hiện tại</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-box">
+                    <i class="bi bi-journal-bookmark-fill"></i>
+                </div>
+                <div class="kpi-info">
+                    <div class="kpi-value" th:text="${availableTopicsCount != null ? availableTopicsCount : 0}">0</div>
+                    <div class="kpi-label">Đề tài đang mở đăng ký</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-box" th:classappend="${unreadNotifications > 0} ? 'danger' : ''">
+                    <i class="bi bi-bell-fill"></i>
+                </div>
+                <div class="kpi-info">
+                    <div class="kpi-value" th:text="${unreadNotifications != null ? unreadNotifications : 0}">0</div>
+                    <div class="kpi-label">Thông báo chưa đọc</div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+
+    <!-- 2. LECTURER METRICS -->
+    <th:block sec:authorize="hasRole('LECTURER') and !hasRole('DEAN')">
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon-box">
+                    <i class="bi bi-journal-text"></i>
+                </div>
+                <div class="kpi-info">
+                    <div class="kpi-value" th:text="${myTopics != null ? myTopics.size() : 0}">0</div>
+                    <div class="kpi-label">Đề tài hướng dẫn</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-box" th:classappend="${pendingRegistrations != null and !pendingRegistrations.isEmpty()} ? 'warning' : 'success'">
+                    <i class="bi bi-person-check-fill"></i>
+                </div>
+                <div class="kpi-info">
+                    <div class="kpi-value" th:text="${pendingRegistrations != null ? pendingRegistrations.size() : 0}">0</div>
+                    <div class="kpi-label">Đăng ký chờ duyệt</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-box">
+                    <i class="bi bi-clipboard2-check-fill"></i>
+                </div>
+                <div class="kpi-info">
+                    <div class="kpi-value" th:text="${myCouncils != null ? myCouncils.size() : 0}">0</div>
+                    <div class="kpi-label">Hội đồng tham gia</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-box" th:classappend="${unreadNotifications > 0} ? 'danger' : ''">
+                    <i class="bi bi-bell-fill"></i>
+                </div>
+                <div class="kpi-info">
+                    <div class="kpi-value" th:text="${unreadNotifications != null ? unreadNotifications : 0}">0</div>
+                    <div class="kpi-label">Thông báo chưa đọc</div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+
+    <!-- 3. DEAN METRICS -->
+    <th:block sec:authorize="hasRole('DEAN')">
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon-box">
+                    <i class="bi bi-calendar3-range-fill"></i>
+                </div>
+                <div class="kpi-info">
+                    <div class="kpi-value" th:text="${periods != null ? periods.size() : 0}">0</div>
+                    <div class="kpi-label">Đợt đăng ký</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-box" th:classappend="${deanPendingTopics != null and !deanPendingTopics.isEmpty()} ? 'warning' : 'success'">
+                    <i class="bi bi-patch-question-fill"></i>
+                </div>
+                <div class="kpi-info">
+                    <div class="kpi-value" th:text="${deanPendingTopics != null ? deanPendingTopics.size() : 0}">0</div>
+                    <div class="kpi-label">Đề tài chờ duyệt</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-box">
+                    <i class="bi bi-person-workspace"></i>
+                </div>
+                <div class="kpi-info">
+                    <div class="kpi-value" th:text="${allCouncilsCount != null ? allCouncilsCount : 0}">0</div>
+                    <div class="kpi-label">Hội đồng khoa</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-box">
+                    <i class="bi bi-journal-code"></i>
+                </div>
+                <div class="kpi-info">
+                    <div class="kpi-value" th:text="${allTopicsCount != null ? allTopicsCount : 0}">0</div>
+                    <div class="kpi-label">Tổng số đề tài</div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+
+    <!-- 4. ADMIN METRICS -->
+    <th:block sec:authorize="hasRole('ADMIN') and !hasRole('DEAN') and !hasRole('LECTURER') and !hasRole('STUDENT')">
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon-box">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+                <div class="kpi-info">
+                    <div class="kpi-value" th:text="${totalAccounts != null ? totalAccounts : 0}">0</div>
+                    <div class="kpi-label">Tổng tài khoản</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-box">
+                    <i class="bi bi-mortarboard-fill"></i>
+                </div>
+                <div class="kpi-info">
+                    <div class="kpi-value" th:text="${totalStudents != null ? totalStudents : 0}">0</div>
+                    <div class="kpi-label">Sinh viên</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-box">
+                    <i class="bi bi-person-video3"></i>
+                </div>
+                <div class="kpi-info">
+                    <div class="kpi-value" th:text="${totalLecturers != null ? totalLecturers : 0}">0</div>
+                    <div class="kpi-label">Giảng viên</div>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-icon-box">
+                    <i class="bi bi-newspaper"></i>
+                </div>
+                <div class="kpi-info">
+                    <div class="kpi-value" th:text="${totalAnnouncements != null ? totalAnnouncements : 0}">0</div>
+                    <div class="kpi-label">Bảng tin thông báo</div>
+                </div>
+            </div>
+        </div>
+    </th:block>
+
+    <!-- ============================================================== -->
+    <!-- WORKSPACE & SUMMARY SECTIONS                                   -->
+    <!-- ============================================================== -->
+    <div class="row g-4">
+        <!-- Main Work Area (Left 7 or 8 columns) -->
+        <div class="col-lg-8">
+            <!-- 1. STUDENT VIEW -->
+            <th:block sec:authorize="hasRole('STUDENT')">
+                <div class="hcmute-card">
+                    <div class="hcmute-card-header">
+                        <div class="fw-bold text-dark fs-6">
+                            <i class="bi bi-journal-check text-primary me-2"></i>Đề tài &amp; Nhóm của tôi
+                        </div>
+                        <a th:href="@{/teams}" class="btn-hcmute-outline btn-hcmute-sm">
+                            <i class="bi bi-gear"></i> Quản lý nhóm
+                        </a>
+                    </div>
+                    
+                    <div th:if="${activeTeam != null}">
+                        <div class="p-3 rounded-3 bg-light border mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold text-dark fs-6" th:text="${activeTeam.name}">Tên nhóm</span>
+                                <span class="badge-period" th:text="${activeTeam.period.name}">Đợt</span>
+                            </div>
+                            <div class="small text-muted mb-2">
+                                Trưởng nhóm: <strong th:text="${activeTeam.leader.fullName + ' (' + activeTeam.leader.studentCode + ')'}">Trưởng nhóm</strong>
+                            </div>
+                            <div class="small text-muted">
+                                Thành viên:
+                                <span th:each="m, iter : ${activeTeam.members}" class="me-2">
+                                    <span class="badge bg-white text-dark border" th:text="${m.fullName}">Thành viên</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div th:if="${registeredTopic != null}" class="p-3 rounded-3 bg-white border border-primary-subtle">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="fw-bold text-primary" th:text="${registeredTopic.name}">Tên đề tài</span>
+                                <span class="badge-status badge-status-success">Đã duyệt đăng ký</span>
+                            </div>
+                            <p class="small text-muted mb-2" th:text="${registeredTopic.description}">Mô tả đề tài</p>
+                            <div class="small text-secondary">
+                                <i class="bi bi-person-badge me-1"></i>GVHD: 
+                                <span th:text="${registeredTopic.primaryAdvisor != null ? registeredTopic.primaryAdvisor.fullName : 'Chưa phân công'}">GVHD</span>
+                            </div>
+                        </div>
+
+                        <div th:if="${registeredTopic == null}" class="empty-state py-4 text-center">
+                            <i class="bi bi-journal-plus empty-state-icon text-muted fs-3"></i>
+                            <div class="empty-state-title">Nhóm chưa đăng ký đề tài</div>
+                            <p class="empty-state-desc small">Trưởng nhóm có thể chọn đề tài đã công bố để đăng ký thực hiện.</p>
+                            <a th:href="@{/published-topics}" class="btn-hcmute-primary btn-hcmute-sm">
+                                <i class="bi bi-search"></i> Tìm đề tài phù hợp
+                            </a>
+                        </div>
+                    </div>
+
+                    <div th:if="${activeTeam == null}" class="empty-state py-4 text-center">
+                        <i class="bi bi-people empty-state-icon text-muted fs-3"></i>
+                        <div class="empty-state-title">Bạn chưa tham gia nhóm nào</div>
+                        <p class="empty-state-desc small">Hãy tạo nhóm mới hoặc chấp nhận lời mời tham gia nhóm để bắt đầu đăng ký đề tài.</p>
+                        <a th:href="@{/teams}" class="btn-hcmute-primary btn-hcmute-sm">
+                            <i class="bi bi-plus-circle"></i> Tạo hoặc xem lời mời nhóm
+                        </a>
+                    </div>
+                </div>
+            </th:block>
+
+            <!-- 2. LECTURER VIEW -->
+            <th:block sec:authorize="hasRole('LECTURER') and !hasRole('DEAN')">
+                <div class="hcmute-card">
+                    <div class="hcmute-card-header">
+                        <div class="fw-bold text-dark fs-6">
+                            <i class="bi bi-person-check text-primary me-2"></i>Đăng ký đề tài chờ duyệt
+                        </div>
+                        <a th:href="@{/registrations}" class="btn-hcmute-outline btn-hcmute-sm">
+                            Xem tất cả (<span th:text="${pendingRegistrations != null ? pendingRegistrations.size() : 0}">0</span>)
+                        </a>
+                    </div>
+
+                    <div class="table-responsive" th:if="${pendingRegistrations != null and !pendingRegistrations.isEmpty()}">
+                        <table class="hcmute-table">
+                            <thead>
+                                <tr>
+                                    <th>Đề tài</th>
+                                    <th>Nhóm đăng ký</th>
+                                    <th>Đợt</th>
+                                    <th class="text-end">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="reg : ${pendingRegistrations}">
+                                    <td>
+                                        <div class="fw-bold" th:text="${reg.topic.name}">Tên đề tài</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge-status badge-status-neutral" th:text="${reg.team != null ? reg.team.name : 'N/A'}">Nhóm</span>
+                                    </td>
+                                    <td>
+                                        <span class="small text-muted" th:text="${reg.topic.period.name}">Đợt</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <a th:href="@{/registrations}" class="btn-hcmute-primary btn-hcmute-sm">
+                                            Xét duyệt
+                                        </a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div th:if="${pendingRegistrations == null or pendingRegistrations.isEmpty()}" class="empty-state py-4 text-center">
+                        <i class="bi bi-check2-circle empty-state-icon text-success fs-3"></i>
+                        <div class="empty-state-title">Không có đăng ký nào đang chờ duyệt</div>
+                        <p class="empty-state-desc small">Tất cả yêu cầu đăng ký đề tài của sinh viên đã được xử lý xong.</p>
+                    </div>
+                </div>
+            </th:block>
+
+            <!-- 3. DEAN VIEW -->
+            <th:block sec:authorize="hasRole('DEAN')">
+                <div class="hcmute-card">
+                    <div class="hcmute-card-header">
+                        <div class="fw-bold text-dark fs-6">
+                            <i class="bi bi-patch-question text-primary me-2"></i>Đề tài giảng viên gửi chờ duyệt
+                        </div>
+                        <a th:href="@{/dean/topics}" class="btn-hcmute-outline btn-hcmute-sm">
+                            Quản lý duyệt đề tài
+                        </a>
+                    </div>
+
+                    <div class="table-responsive" th:if="${deanPendingTopics != null and !deanPendingTopics.isEmpty()}">
+                        <table class="hcmute-table">
+                            <thead>
+                                <tr>
+                                    <th>Tên đề tài</th>
+                                    <th>GVHD chính</th>
+                                    <th>Bộ môn</th>
+                                    <th>Đợt</th>
+                                    <th class="text-end">Xử lý</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="top : ${deanPendingTopics}">
+                                    <td class="fw-bold" th:text="${top.name}">Tên đề tài</td>
+                                    <td th:text="${top.primaryAdvisor != null ? top.primaryAdvisor.fullName : 'N/A'}">GVHD</td>
+                                    <td th:text="${top.department != null ? top.department.name : ''}">Bộ môn</td>
+                                    <td th:text="${top.period.name}">Đợt</td>
+                                    <td class="text-end">
+                                        <a th:href="@{/dean/topics}" class="btn-hcmute-primary btn-hcmute-sm">Duyệt</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div th:if="${deanPendingTopics == null or deanPendingTopics.isEmpty()}" class="empty-state py-4 text-center">
+                        <i class="bi bi-check2-circle empty-state-icon text-success fs-3"></i>
+                        <div class="empty-state-title">Không có đề tài nào đang chờ duyệt</div>
+                        <p class="empty-state-desc small">Tất cả đề tài của giảng viên trong các đợt đã được phê duyệt.</p>
+                    </div>
+                </div>
+            </th:block>
+
+            <!-- 4. ADMIN VIEW -->
+            <th:block sec:authorize="hasRole('ADMIN') and !hasRole('DEAN') and !hasRole('LECTURER') and !hasRole('STUDENT')">
+                <div class="hcmute-card">
+                    <div class="hcmute-card-header">
+                        <div class="fw-bold text-dark fs-6">
+                            <i class="bi bi-shield-check text-primary me-2"></i>Quản trị hệ thống nhanh
+                        </div>
+                        <a th:href="@{/admin/accounts}" class="btn-hcmute-outline btn-hcmute-sm">
+                            Xem tài khoản
+                        </a>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <div class="p-3 border rounded-3 bg-light">
+                                <div class="fw-bold text-dark mb-1">Quản trị người dùng</div>
+                                <p class="small text-muted mb-3">Tạo mới, phân quyền Giảng viên/Sinh viên, khóa hoặc đặt lại mật khẩu.</p>
+                                <a th:href="@{/admin/accounts}" class="btn-hcmute-primary btn-hcmute-sm">
+                                    <i class="bi bi-person-plus"></i> Quản lý tài khoản
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="p-3 border rounded-3 bg-light">
+                                <div class="fw-bold text-dark mb-1">Bảng tin thông báo chung</div>
+                                <p class="small text-muted mb-3">Đăng thông báo mới cho toàn trường hoặc khoa theo dõi.</p>
+                                <a th:href="@{/admin/announcements}" class="btn-hcmute-secondary btn-hcmute-sm">
+                                    <i class="bi bi-megaphone"></i> Quản lý thông báo
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </th:block>
+        </div>
+
+        <!-- Sidebar Widgets (Right 4 columns) -->
+        <div class="col-lg-4">
+            <!-- Active Registration Period Card -->
+            <div class="hcmute-card">
+                <div class="hcmute-card-header">
+                    <div class="fw-bold text-dark fs-6">
+                        <i class="bi bi-calendar-event text-primary me-2"></i>Đợt đăng ký hiện hành
+                    </div>
+                    <span class="badge-status badge-status-info">HCMUTE</span>
+                </div>
+
+                <div th:if="${activePeriod != null}">
+                    <div class="fw-bold text-dark mb-1" th:text="${activePeriod.name}">Đợt 1 - 2026</div>
+                    <div class="small text-muted mb-3">
+                        Loại đề tài: <span class="badge-status badge-status-neutral" th:text="${activePeriod.type}">KLTN</span>
+                    </div>
+
+                    <div class="d-flex flex-column gap-2 small">
+                        <div class="d-flex justify-content-between p-2 rounded bg-light">
+                            <span class="text-muted"><i class="bi bi-person-workspace me-1"></i>GV đăng đề tài:</span>
+                            <span class="fw-semibold text-dark" th:text="${activePeriod.teacherRegisterEnd != null ? #temporals.format(activePeriod.teacherRegisterEnd, 'dd/MM/yyyy HH:mm') : 'N/A'}">Hạn GV</span>
+                        </div>
+                        <div class="d-flex justify-content-between p-2 rounded bg-light">
+                            <span class="text-muted"><i class="bi bi-person-fill-check me-1"></i>SV đăng ký:</span>
+                            <span class="fw-semibold text-dark" th:text="${activePeriod.studentRegisterEnd != null ? #temporals.format(activePeriod.studentRegisterEnd, 'dd/MM/yyyy HH:mm') : 'N/A'}">Hạn SV</span>
+                        </div>
+                        <div class="d-flex justify-content-between p-2 rounded bg-light">
+                            <span class="text-muted"><i class="bi bi-file-earmark-arrow-up me-1"></i>Hạn nộp báo cáo:</span>
+                            <span class="fw-semibold text-danger" th:text="${activePeriod.reportDeadline != null ? #temporals.format(activePeriod.reportDeadline, 'dd/MM/yyyy') : 'N/A'}">Hạn báo cáo</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${activePeriod == null}" class="text-center py-3 text-muted small">
+                    <i class="bi bi-calendar-x fs-4 d-block mb-1 text-secondary"></i>
+                    Chưa có đợt đăng ký nào đang mở.
+                </div>
+            </div>
+
+            <!-- Recent Announcements Card -->
+            <div class="hcmute-card">
+                <div class="hcmute-card-header">
+                    <div class="fw-bold text-dark fs-6">
+                        <i class="bi bi-megaphone text-primary me-2"></i>Thông báo từ Khoa
+                    </div>
+                    <a th:href="@{/announcements}" class="small text-primary text-decoration-none fw-semibold">
+                        Tất cả
+                    </a>
+                </div>
+
+                <div th:if="${recentAnnouncements != null and !recentAnnouncements.isEmpty()}" class="d-flex flex-column gap-3">
+                    <div th:each="an : ${recentAnnouncements}" class="border-bottom pb-2">
+                        <a th:href="@{/announcements}" class="text-dark fw-semibold text-decoration-none d-block small mb-1 hover-primary" th:text="${an.title}">
+                            Tiêu đề thông báo
+                        </a>
+                        <div class="d-flex align-items-center gap-2 small text-muted">
+                            <i class="bi bi-clock"></i>
+                            <span th:text="${#temporals.format(an.createdAt, 'dd/MM/yyyy HH:mm')}">Thời gian</span>
+                            <span>•</span>
+                            <span class="text-secondary">Khoa CNTT</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div th:if="${recentAnnouncements == null or recentAnnouncements.isEmpty()}" class="text-center py-3 text-muted small">
+                    Chưa có thông báo nào mới.
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Scripts -->
+<div th:replace="~{fragments/layout :: portal-scripts}"></div>
+</body>
+</html>

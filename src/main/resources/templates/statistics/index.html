@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(title='Thống kê & Xuất kết quả')}"></head>
+<body>
+
+<header th:replace="~{fragments/layout :: portal-header}"></header>
+<aside th:replace="~{fragments/layout :: portal-sidebar(active='dean-statistics')}"></aside>
+
+<main class="portal-main">
+    <div th:replace="~{fragments/layout :: portal-page-header(title='THỐNG KÊ & XUẤT KẾT QUẢ', icon='bi-bar-chart-line-fill', actionUrl=null, actionText=null, actionIcon=null)}"></div>
+
+    <div th:replace="~{fragments/layout :: flash-messages}"></div>
+
+    <!-- Period Selection & Export Bar -->
+    <div class="hcmute-card p-4 mb-4">
+        <form method="get" th:action="@{/dean/statistics}" class="row g-3 align-items-center m-0">
+            <div class="col-md-6 d-flex align-items-center gap-2">
+                <label class="form-label mb-0 fw-bold text-nowrap d-flex align-items-center gap-1" for="periodIdSelect">
+                    <i class="bi bi-funnel-fill text-primary"></i> <span>Chọn đợt:</span>
+                </label>
+                <select id="periodIdSelect" name="periodId" class="form-select" onchange="this.form.submit()">
+                    <option th:each="p : ${periods}" th:value="${p.id}" th:text="|${p.name} (${p.type.label})|"
+                            th:selected="${selectedPeriodId != null and p.id == selectedPeriodId}"></option>
+                </select>
+            </div>
+
+            <div class="col-md-6 text-md-end" th:if="${selectedPeriodId != null}">
+                <div class="d-inline-flex gap-2">
+                    <a th:href="@{/dean/statistics/export(periodId=${selectedPeriodId})}" class="btn-hcmute-secondary btn-hcmute-sm">
+                        <i class="bi bi-file-earmark-text"></i> Xuất CSV
+                    </a>
+                    <a th:href="@{/dean/statistics/export-xlsx(periodId=${selectedPeriodId})}" class="btn-hcmute-primary btn-hcmute-sm">
+                        <i class="bi bi-file-earmark-spreadsheet-fill"></i> Xuất Excel (.xlsx)
+                    </a>
+                </div>
+            </div>
+        </form>
+
+        <div th:if="${#lists.isEmpty(periods)}" class="mt-3 text-muted">
+            <i class="bi bi-info-circle me-1"></i> Chưa có đợt đăng ký nào trong hệ thống.
+        </div>
+    </div>
+
+    <!-- Statistics Dashboard when period selected -->
+    <div th:if="${statistics != null}">
+        <!-- KPI Metrics Grid -->
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi-card mb-0 h-100">
+                    <div class="kpi-icon-box primary">
+                        <i class="bi bi-journal-text"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <div class="kpi-value text-primary-dark" th:text="${statistics.topicCount}">0</div>
+                        <div class="kpi-label">Tổng số đề tài</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi-card mb-0 h-100">
+                    <div class="kpi-icon-box success">
+                        <i class="bi bi-broadcast"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <div class="kpi-value text-success" th:text="${statistics.publishedTopicCount}">0</div>
+                        <div class="kpi-label">Đề tài đã công bố</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi-card mb-0 h-100">
+                    <div class="kpi-icon-box info">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <div class="kpi-value text-info" th:text="${statistics.teamCount}">0</div>
+                        <div class="kpi-label">Nhóm sinh viên</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6">
+                <div class="kpi-card mb-0 h-100">
+                    <div class="kpi-icon-box warning">
+                        <i class="bi bi-award-fill"></i>
+                    </div>
+                    <div class="kpi-info">
+                        <div class="kpi-value text-warning" th:text="${statistics.averageScore}">0.0</div>
+                        <div class="kpi-label">Điểm TB toàn đợt</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Breakdown (Visual Bars) -->
+        <div class="row g-4 mb-4">
+            <!-- Topic Status Bar Chart -->
+            <div class="col-lg-4">
+                <div class="hcmute-card p-4 h-100">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div class="card-title-icon-box bg-primary-subtle text-primary">
+                            <i class="bi bi-pie-chart-fill"></i>
+                        </div>
+                        <h3 class="h4 mb-0 fw-bold text-primary-dark">Đề tài theo trạng thái</h3>
+                    </div>
+                    <div th:each="bar : ${charts.statusBars}" class="mb-3">
+                        <div class="d-flex justify-content-between small fw-medium mb-1">
+                            <span th:text="${bar.label}">Trạng thái</span>
+                            <span class="fw-bold" th:text="${#numbers.formatDecimal(bar.value, 1, 0)}">0</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-primary" role="progressbar" th:style="|width: ${bar.percent}%|"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Progress in Period -->
+            <div class="col-lg-4">
+                <div class="hcmute-card p-4 h-100">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div class="card-title-icon-box bg-success-subtle text-success">
+                            <i class="bi bi-activity"></i>
+                        </div>
+                        <h3 class="h4 mb-0 fw-bold text-primary-dark">Tiến độ thực hiện đợt</h3>
+                    </div>
+                    <div th:each="bar : ${charts.progressBars}" class="mb-3">
+                        <div class="d-flex justify-content-between small fw-medium mb-1">
+                            <span th:text="${bar.label}">Hạng mục</span>
+                            <span class="fw-bold" th:text="${#numbers.formatDecimal(bar.value, 1, 0)}">0</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-success" role="progressbar" th:style="|width: ${bar.percent}%|"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Average Score by Council -->
+            <div class="col-lg-4">
+                <div class="hcmute-card p-4 h-100">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <div class="card-title-icon-box bg-warning-subtle text-warning">
+                            <i class="bi bi-bar-chart-fill"></i>
+                        </div>
+                        <h3 class="h4 mb-0 fw-bold text-primary-dark">Điểm TB theo Hội đồng</h3>
+                    </div>
+                    <div th:each="bar : ${charts.scoreBars}" class="mb-3">
+                        <div class="d-flex justify-content-between small fw-medium mb-1">
+                            <span th:text="${bar.label}">Hội đồng</span>
+                            <span class="fw-bold text-primary" th:text="${bar.value}">0.0</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-warning" role="progressbar" th:style="|width: ${bar.percent}%|"></div>
+                        </div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(charts.scoreBars)}" class="text-muted small fst-italic py-3 text-center">
+                        Chưa có hội đồng nào hoàn tất chấm điểm.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comprehensive Details Table -->
+        <div class="hcmute-card p-4">
+            <div class="hcmute-card-header">
+                <div>
+                    <h2 class="h2 mb-1 d-flex align-items-center gap-2">
+                        <i class="bi bi-table text-primary"></i>
+                        <span>Chi tiết toàn bộ đề tài &amp; kết quả bảo vệ</span>
+                    </h2>
+                    <div class="small text-muted">Dữ liệu tổng hợp chi tiết theo từng đề tài trong đợt được chọn.</div>
+                </div>
+            </div>
+
+            <!-- Search bar -->
+            <div class="search-bar-box">
+                <i class="bi bi-search search-icon"></i>
+                <input type="text" id="tableSearchInput" class="form-control search-bar-input"
+                       placeholder="Tìm kiếm theo tên đề tài, GVHD, nhóm trưởng hoặc hội đồng..." aria-label="Tìm kiếm">
+            </div>
+
+            <div class="table-responsive">
+                <table class="hcmute-table">
+                    <thead>
+                    <tr>
+                        <th style="width: 50px;" class="text-center">STT</th>
+                        <th>Tên đề tài</th>
+                        <th style="width: 100px;" class="text-center">Loại hình</th>
+                        <th style="width: 120px;" class="text-center">Trạng thái</th>
+                        <th>Cán bộ hướng dẫn</th>
+                        <th style="width: 150px;">GVPB</th>
+                        <th>Nhóm trưởng</th>
+                        <th style="width: 80px;" class="text-center">Số SV</th>
+                        <th>Tệp báo cáo</th>
+                        <th>Hội đồng</th>
+                        <th style="width: 90px;" class="text-center">Điểm TB</th>
+                        <th style="width: 110px;" class="text-center">Công bố</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r, stat : ${rows}">
+                        <td class="text-center text-muted fw-semibold" th:text="${stat.count}">1</td>
+                        <td>
+                            <strong class="text-primary-dark fs-6" th:text="${r.topic.name}">Đề tài</strong>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge-status"
+                                  th:classappend="${r.topic.period.type.name() == 'RESEARCH'} ? 'badge-status-info' : (${r.topic.period.type.name() == 'SPECIALIZED_PROJECT'} ? 'badge-status-warning' : 'badge-status-success')"
+                                  th:text="${r.topic.period.type.label}">KLTN</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge-status badge-status-info" th:text="${r.topic.status.label}">Đã duyệt</span>
+                        </td>
+                        <td class="small" th:text="${r.advisorNames}">GVHD</td>
+                        <td class="small">
+                            <!-- Nếu là NCKH: không có GVPB -->
+                            <span th:if="${r.topic.period.type.name() == 'RESEARCH' or !r.topic.period.type.requiresReviewerScoreDeadline()}"
+                                  class="badge-status badge-status-neutral text-muted">
+                                <i class="bi bi-dash-circle me-1"></i>Không có
+                            </span>
+                            <span th:unless="${r.topic.period.type.name() == 'RESEARCH' or !r.topic.period.type.requiresReviewerScoreDeadline()}">
+                                <span th:if="${r.topic.reviewer != null}" class="fw-medium text-dark" th:text="${r.topic.reviewer.fullName}">GV002</span>
+                                <span th:if="${r.topic.reviewer == null}" class="text-muted fst-italic">Chưa phân công</span>
+                            </span>
+                        </td>
+                        <td class="small fw-medium" th:text="${r.teamLeader != null ? r.teamLeader : '—'}">Nhóm trưởng</td>
+                        <td class="text-center small" th:text="${r.memberCount}">0</td>
+                        <td class="small text-muted" th:text="${r.reportFileName != null ? r.reportFileName : 'Chưa nộp'}">baocao.pdf</td>
+                        <td class="small" th:text="${r.councilName != null ? r.councilName : 'Chưa xếp'}">Hội đồng</td>
+                        <td class="text-center fw-bold text-primary" th:text="${r.score != null ? r.score : '—'}">8.5</td>
+                        <td class="text-center">
+                            <span th:if="${r.published}" class="badge-status badge-status-success">
+                                <i class="bi bi-check-circle"></i> Đã công bố
+                            </span>
+                            <span th:unless="${r.published}" class="badge-status badge-status-neutral">
+                                Chưa công bố
+                            </span>
+                        </td>
+                    </tr>
+
+                    <tr th:if="${#lists.isEmpty(rows)}" class="empty-row">
+                        <td colspan="12">
+                            <div class="empty-state">
+                                <i class="bi bi-inbox empty-state-icon"></i>
+                                <div class="empty-state-title">Đợt này chưa có đề tài nào</div>
+                                <div class="empty-state-desc">Khi giảng viên đăng ký đề tài vào đợt, số liệu sẽ được tự động tổng hợp tại đây.</div>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/layout :: portal-scripts}"></th:block>
+</body>
+</html>

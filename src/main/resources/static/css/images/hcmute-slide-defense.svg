@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400">
+  <defs>
+    <linearGradient id="bgGrad4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064E3B"/>
+      <stop offset="45%" stop-color="#047857"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+    <linearGradient id="overlayGrad4" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="rgba(2, 5, 32, 0.88)"/>
+      <stop offset="50%" stop-color="rgba(2, 5, 32, 0.5)"/>
+      <stop offset="100%" stop-color="rgba(2, 5, 32, 0.1)"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="1200" height="400" fill="url(#bgGrad4)"/>
+  
+  <!-- Academic Defense Council & Graduation Graphics Right -->
+  <g transform="translate(800, 70)">
+    <!-- Graduation Cap Motif -->
+    <path d="M 120 70 L 250 20 L 380 70 L 250 120 Z" fill="#1E293B"/>
+    <path d="M 250 120 L 250 160 C 250 175 340 175 340 160 L 340 120" fill="none" stroke="#1E293B" stroke-width="12"/>
+    <path d="M 380 70 L 390 140" stroke="#FDE047" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="390" cy="145" r="7" fill="#FDE047"/>
+
+    <!-- Score Card / Evaluation Certificate -->
+    <rect x="70" y="110" width="280" height="170" rx="14" fill="#FFFFFF" opacity="0.96" stroke="#D1FAE5" stroke-width="3"/>
+    
+    <!-- Ribbon Icon -->
+    <circle cx="110" cy="150" r="24" fill="#FEF3C7"/>
+    <path d="M 103 145 L 108 155 L 118 140" fill="none" stroke="#D97706" stroke-width="3.5" stroke-linecap="round"/>
+
+    <!-- Certificate Title -->
+    <text x="145" y="145" fill="#065F46" font-family="sans-serif" font-weight="bold" font-size="16">BẢO VỆ ĐỀ TÀI</text>
+    <text x="145" y="165" fill="#64748B" font-family="sans-serif" font-size="12">Hội đồng đánh giá KLTN / TLCN</text>
+
+    <!-- Score Display Bar -->
+    <rect x="95" y="195" width="230" height="38" rx="8" fill="#ECFDF5" stroke="#A7F3D0"/>
+    <text x="110" y="220" fill="#065F46" font-family="sans-serif" font-weight="bold" font-size="14">Điểm trung bình:</text>
+    <text x="260" y="222" fill="#059669" font-family="sans-serif" font-weight="900" font-size="20">9.5</text>
+    <text x="295" y="222" fill="#10B981" font-family="sans-serif" font-size="12">/10</text>
+    
+    <text x="95" y="258" fill="#10B981" font-family="sans-serif" font-size="11" font-weight="600">✓ Đạt kết quả xuất sắc và công bố</text>
+  </g>
+
+  <!-- Left Shading Gradient -->
+  <rect width="700" height="400" fill="url(#overlayGrad4)"/>
+</svg>
