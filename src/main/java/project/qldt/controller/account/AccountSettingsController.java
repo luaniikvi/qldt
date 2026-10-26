@@ -13,6 +13,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import project.qldt.dto.account.ChangePasswordRequest;
 import project.qldt.exception.InvalidAccountException;
+import project.qldt.security.CurrentAuthentication;
 import project.qldt.service.account.AccountService;
 
 @Controller
@@ -39,7 +40,7 @@ public class AccountSettingsController {
 			Authentication authentication,
 			RedirectAttributes redirectAttributes,
 			Model model) {
-		if (authentication == null || !authentication.isAuthenticated()) {
+		if (CurrentAuthentication.resolve(authentication) == null) {
 			return "redirect:/login";
 		}
 		if (bindingResult.hasErrors()) {

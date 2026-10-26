@@ -39,7 +39,7 @@ public class NotificationController {
 	public String markRead(@PathVariable Long id, Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			notificationService.markRead(id, currentAccount(authentication));
+			notificationService.markRead(id, accountService.findByUsername(authentication.getName()));
 			redirectAttributes.addFlashAttribute("message", "Đã đánh dấu đã đọc");
 		} catch (InvalidNotificationException | NotificationNotFoundException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -49,12 +49,9 @@ public class NotificationController {
 
 	@PostMapping("/read-all")
 	public String markAllRead(Authentication authentication, RedirectAttributes redirectAttributes) {
-		int count = notificationService.markAllRead(currentAccount(authentication));
+		int count = notificationService.markAllRead(accountService.findByUsername(authentication.getName()));
 		redirectAttributes.addFlashAttribute("message", "Đã đánh dấu đã đọc " + count + " thông báo");
 		return "redirect:/notifications";
 	}
 
-	private Account currentAccount(Authentication authentication) {
-		return accountService.findByUsername(authentication.getName());
-	}
 }

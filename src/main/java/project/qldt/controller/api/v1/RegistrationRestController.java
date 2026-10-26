@@ -82,9 +82,8 @@ public class RegistrationRestController extends ApiControllerSupport {
 	@PatchMapping("/topics/{topicId}/registration/approval")
 	public TeamResponse approval(@PathVariable Long topicId, @Valid @RequestBody ApprovalRequest request,
 			Authentication authentication) {
-		Team team = request.approved()
-				? registrationService.approve(topicId, currentLecturer(authentication))
-				: registrationService.reject(topicId, currentLecturer(authentication), request.reason());
+		Team team = registrationService.handleApproval(topicId, currentLecturer(authentication),
+				request.approved(), request.reason());
 		return toResponse(team);
 	}
 

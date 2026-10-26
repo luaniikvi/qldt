@@ -6,7 +6,6 @@ import project.qldt.model.period.RegistrationPeriod;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -86,40 +85,4 @@ public class Topic {
 	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
 	@JoinColumn(name = "co_advisor_invitation_id")
 	private AdvisorInvitation invitation;
-
-	public boolean isAdvisorOf(Long lecturerId) {
-		return advisors.stream().anyMatch(advisor -> advisor.getId().equals(lecturerId));
-	}
-
-	public boolean hasPendingAdvisorInvitation() {
-		return invitation != null && invitation.getStatus() == InvitationStatus.PENDING;
-	}
-
-	public boolean isPublished() {
-		return status == TopicStatus.PUBLISHED;
-	}
-
-	public boolean isAvailable() {
-		return availability == TopicAvailability.AVAILABLE;
-	}
-
-	public boolean isRegistered() {
-		return availability == TopicAvailability.REGISTERED;
-	}
-
-	public boolean isWaitingApproval() {
-		return availability == TopicAvailability.PENDING;
-	}
-
-	public boolean requiresReviewerScore() {
-		return period != null && period.getType().requiresReviewerScoreDeadline();
-	}
-
-	public boolean hasReviewerScore() {
-		return reviewerScore != null;
-	}
-
-	public String advisorNames() {
-		return advisors.stream().map(Lecturer::getFullName).collect(Collectors.joining(", "));
-	}
 }

@@ -1,6 +1,5 @@
 package project.qldt.controller.topic;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -15,8 +14,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import project.qldt.exception.InvalidRegistrationException;
 import project.qldt.exception.TopicNotFoundException;
-import project.qldt.model.account.Account;
-import project.qldt.model.account.Lecturer;
 import project.qldt.service.account.AccountService;
 import project.qldt.service.topic.TopicRegistrationService;
 
@@ -37,7 +34,7 @@ public class RegistrationReviewController {
 	@GetMapping
 	public String list(Authentication authentication, Model model) {
 		model.addAttribute("registrations",
-				registrationService.findPendingForAdvisor(currentLecturer(authentication)));
+				registrationService.findPendingForAdvisor(accountService.requireLecturer(authentication.getName())));
 		return "registrations/list";
 	}
 
@@ -46,7 +43,7 @@ public class RegistrationReviewController {
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			registrationService.approve(topicId, currentLecturer(authentication));
+			registrationService.approve(topicId, accountService.requireLecturer(authentication.getName()));
 			redirectAttributes.addFlashAttribute("message", "Đã duyệt đăng ký đề tài");
 		} catch (InvalidRegistrationException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -60,7 +57,7 @@ public class RegistrationReviewController {
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			registrationService.reject(topicId, currentLecturer(authentication), reason);
+			registrationService.reject(topicId, accountService.requireLecturer(authentication.getName()), reason);
 			redirectAttributes.addFlashAttribute("message", "Đã từ chối đăng ký đề tài");
 		} catch (InvalidRegistrationException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -74,11 +71,4 @@ public class RegistrationReviewController {
 		return "redirect:/registrations";
 	}
 
-	private Lecturer currentLecturer(Authentication authentication) {
-		Account account = accountService.findByUsername(authentication.getName());
-		if (account instanceof Lecturer lecturer) {
-			return lecturer;
-		}
-		throw new AccessDeniedException("Chỉ giảng viên mới sử dụng được chức năng này");
-	}
 }

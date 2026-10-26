@@ -62,10 +62,10 @@
                         </span>
                     </td>
                     <td class="text-center">
-                        <span th:if="${acc.baseRole.name() == 'LECTURER' and acc.dean}" class="badge-status badge-status-warning">
+                        <span th:if="${acc.baseRole.name() == 'LECTURER' and acc.roles.![name()].contains('DEAN')}" class="badge-status badge-status-warning">
                             <i class="bi bi-star-fill"></i> Trưởng khoa
                         </span>
-                        <span th:unless="${acc.baseRole.name() == 'LECTURER' and acc.dean}" class="text-muted">—</span>
+                        <span th:unless="${acc.baseRole.name() == 'LECTURER' and acc.roles.![name()].contains('DEAN')}" class="text-muted">—</span>
                     </td>
                     <td class="text-center">
                         <form th:if="${acc.enabled}" th:action="@{/admin/accounts/{id}/lock(id=${acc.id})}" method="post" class="m-0"
@@ -81,7 +81,7 @@
                         </form>
                     </td>
                     <td class="text-center">
-                        <form th:if="${acc.baseRole.name() == 'LECTURER' and acc.dean}"
+                        <form th:if="${acc.baseRole.name() == 'LECTURER' and acc.roles.![name()].contains('DEAN')}"
                               th:action="@{/admin/accounts/{id}/dean(id=${acc.id})}" method="post" class="m-0"
                               data-confirm="Bạn có chắc muốn bãi nhiệm chức danh Trưởng khoa của giảng viên này?">
                             <input type="hidden" name="dean" value="false"/>
@@ -89,7 +89,7 @@
                                 <i class="bi bi-person-dash"></i> Bãi nhiệm
                             </button>
                         </form>
-                        <form th:if="${acc.baseRole.name() == 'LECTURER' and !acc.dean}"
+                        <form th:if="${acc.baseRole.name() == 'LECTURER' and !acc.roles.![name()].contains('DEAN')}"
                               th:action="@{/admin/accounts/{id}/dean(id=${acc.id})}" method="post" class="m-0"
                               data-confirm="Bạn có chắc muốn bổ nhiệm giảng viên này làm Trưởng khoa?">
                             <input type="hidden" name="dean" value="true"/>

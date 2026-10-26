@@ -181,8 +181,9 @@ class StatisticsServiceTest {
 		try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(content))) {
 			Sheet sheet = workbook.getSheetAt(0);
 			assertEquals("Đề tài", sheet.getRow(0).getCell(0).getStringCellValue());
-			assertEquals("De tai mot", sheet.getRow(1).getCell(0).getStringCellValue());
-			assertEquals(8.0, sheet.getRow(1).getCell(6).getNumericCellValue());
+			assertEquals("De tai hai", sheet.getRow(1).getCell(0).getStringCellValue());
+			assertEquals("De tai mot", sheet.getRow(2).getCell(0).getStringCellValue());
+			assertEquals(8.0, sheet.getRow(2).getCell(6).getNumericCellValue());
 		}
 	}
 

@@ -63,8 +63,4 @@ public abstract class Account {
 		roles.addAll(extraRoles);
 		return roles;
 	}
-
-	public boolean isDean() {
-		return getRoles().contains(Role.DEAN);
-	}
 }

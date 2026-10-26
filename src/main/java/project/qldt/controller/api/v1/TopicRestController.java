@@ -122,7 +122,6 @@ public class TopicRestController extends ApiControllerSupport {
 	@PreAuthorize("hasRole('DEAN')")
 	@PatchMapping("/{id}/approval")
 	public TopicResponse approval(@PathVariable Long id, @Valid @RequestBody ApprovalRequest request) {
-		Topic topic = request.approved() ? topicService.approve(id) : topicService.reject(id, request.reason());
-		return TopicResponse.of(topic);
+		return TopicResponse.of(topicService.handleApproval(id, request.approved(), request.reason()));
 	}
 }

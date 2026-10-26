@@ -8,6 +8,7 @@ import project.qldt.service.topic.TopicService;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,6 +59,14 @@ public class StatisticsService {
 		return periodService.findAll();
 	}
 
+	public Long resolvePeriodId(Long requestedPeriodId) {
+		if (requestedPeriodId != null) {
+			return requestedPeriodId;
+		}
+		List<RegistrationPeriod> periods = periods();
+		return periods.isEmpty() ? null : periods.get(0).getId();
+	}
+
 	public PeriodStatistics summarize(Long periodId) {
 		RegistrationPeriod period = periodService.findById(periodId);
 		long totalTopics = topicService.countByPeriod(periodId);
@@ -84,11 +93,11 @@ public class StatisticsService {
 			Report report = team == null ? null : reports.get(team.getId());
 			Council council = councils.get(topic.getId());
 			TopicResult result = council == null ? null : results.get(council.getId());
-			rows.add(new TopicStatisticsRow(topic, topic.advisorNames(),
+			rows.add(new TopicStatisticsRow(topic, topicService.advisorNames(topic),
 					team == null ? "" : team.getLeader().getFullName(),
 					team == null ? 0 : team.getMembers().size(), report == null ? "" : report.getOriginalFileName(),
 					council == null ? "" : council.getName(), result == null ? null : result.getAverageScore(),
-					result != null && result.isPublished()));
+					result != null && result.isPublished(), topicService.requiresReviewerScore(topic)));
 		}
 		return rows;
 	}
@@ -125,6 +134,16 @@ public class StatisticsService {
 			map.put(result.getCouncil().getId(), result);
 		}
 		return map;
+	}
+
+	public byte[] exportCsvWithBom(Long periodId) {
+		byte[] content = exportCsv(periodId).getBytes(StandardCharsets.UTF_8);
+		byte[] body = new byte[content.length + 3];
+		body[0] = (byte) 0xEF;
+		body[1] = (byte) 0xBB;
+		body[2] = (byte) 0xBF;
+		System.arraycopy(content, 0, body, 3, content.length);
+		return body;
 	}
 
 	public String exportCsv(Long periodId) {

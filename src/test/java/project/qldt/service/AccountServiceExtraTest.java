@@ -107,10 +107,10 @@ class AccountServiceExtraTest {
 	void baiNhiemDeanChoGiangVien() {
 		accountService.createLecturer("123456", "GV 1", "gv1@qldt.local", "GV901", "Công nghệ phần mềm");
 		accountService.assignDean("GV901", true);
-		assertTrue(accountService.findLecturerByCode("GV901").isDean());
+		assertTrue(accountService.isDean(accountService.findLecturerByCode("GV901")));
 
 		accountService.assignDean("GV901", false);
-		assertFalse(accountService.findLecturerByCode("GV901").isDean());
+		assertFalse(accountService.isDean(accountService.findLecturerByCode("GV901")));
 		assertFalse(accountService.findLecturerByCode("GV901").getRoles().contains(Role.DEAN));
 	}
 

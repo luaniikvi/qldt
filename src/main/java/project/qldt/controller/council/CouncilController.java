@@ -17,8 +17,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import project.qldt.exception.CouncilNotFoundException;
 import project.qldt.exception.InvalidCouncilException;
-import project.qldt.model.account.Account;
-import project.qldt.model.account.Lecturer;
 import project.qldt.service.account.AccountService;
 import project.qldt.service.council.CouncilService;
 
@@ -37,7 +35,7 @@ public class CouncilController {
 
 	@GetMapping
 	public String list(Authentication authentication, Model model) {
-		model.addAttribute("councils", councilService.findViewsFor(currentLecturer(authentication)));
+		model.addAttribute("councils", councilService.findViewsFor(accountService.requireLecturer(authentication.getName())));
 		return "councils/list";
 	}
 
@@ -46,7 +44,7 @@ public class CouncilController {
 			@RequestParam(required = false) String comment,
 			Authentication authentication, RedirectAttributes redirectAttributes) {
 		try {
-			councilService.score(id, currentLecturer(authentication), score, comment);
+			councilService.score(id, accountService.requireLecturer(authentication.getName()), score, comment);
 			redirectAttributes.addFlashAttribute("message", "Đã lưu điểm của bạn");
 		} catch (InvalidCouncilException | CouncilNotFoundException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -57,7 +55,7 @@ public class CouncilController {
 	@PostMapping("/{id}/confirm")
 	public String confirm(@PathVariable Long id, Authentication authentication, RedirectAttributes redirectAttributes) {
 		try {
-			councilService.confirm(id, currentLecturer(authentication));
+			councilService.confirm(id, accountService.requireLecturer(authentication.getName()));
 			redirectAttributes.addFlashAttribute("message", "Đã tổng hợp điểm, chờ trưởng khoa công bố");
 		} catch (InvalidCouncilException | CouncilNotFoundException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -71,11 +69,4 @@ public class CouncilController {
 		return "redirect:/home";
 	}
 
-	private Lecturer currentLecturer(Authentication authentication) {
-		Account account = accountService.findByUsername(authentication.getName());
-		if (account instanceof Lecturer lecturer) {
-			return lecturer;
-		}
-		throw new AccessDeniedException("Chỉ giảng viên mới sử dụng được chức năng này");
-	}
 }

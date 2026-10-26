@@ -1,7 +1,9 @@
 package project.qldt.service.account;
 
 import java.util.List;
+import java.util.Set;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,7 +47,7 @@ public class AccountService {
 
 	@Transactional(readOnly = true)
 	public List<Account> findAll() {
-		return accountRepository.findAll();
+		return accountRepository.findAllByOrderByIdDesc();
 	}
 
 	@Transactional(readOnly = true)
@@ -89,6 +91,32 @@ public class AccountService {
 	}
 
 	@Transactional(readOnly = true)
+	public Lecturer requireLecturer(String username) {
+		return requireLecturer(findByUsername(username));
+	}
+
+	@Transactional(readOnly = true)
+	public Lecturer requireLecturer(Account account) {
+		if (account instanceof Lecturer lecturer) {
+			return lecturer;
+		}
+		throw new AccessDeniedException("Chỉ giảng viên mới sử dụng được chức năng này");
+	}
+
+	@Transactional(readOnly = true)
+	public Student requireStudent(String username) {
+		return requireStudent(findByUsername(username));
+	}
+
+	@Transactional(readOnly = true)
+	public Student requireStudent(Account account) {
+		if (account instanceof Student student) {
+			return student;
+		}
+		throw new AccessDeniedException("Chỉ sinh viên mới sử dụng được chức năng này");
+	}
+
+	@Transactional(readOnly = true)
 	public boolean existsByUsername(String username) {
 		return accountRepository.existsByUsername(username);
 	}
@@ -97,6 +125,52 @@ public class AccountService {
 	public Account findById(Long id) {
 		return accountRepository.findById(id)
 				.orElseThrow(() -> new AccountNotFoundException("Không tìm thấy tài khoản có id: " + id));
+	}
+
+	@Transactional(readOnly = true)
+	public boolean isDean(Account account) {
+		return account != null && account.getRoles().contains(Role.DEAN);
+	}
+
+	@Transactional(readOnly = true)
+	public String roleLabel(Account account) {
+		if (account == null) {
+			return "Khách";
+		}
+		Set<Role> roles = account.getRoles();
+		if (roles.contains(Role.ADMIN)) {
+			return roleLabel(Role.ADMIN);
+		}
+		if (roles.contains(Role.DEAN)) {
+			return roleLabel(Role.DEAN);
+		}
+		if (roles.contains(Role.LECTURER)) {
+			return roleLabel(Role.LECTURER);
+		}
+		if (roles.contains(Role.STUDENT)) {
+			return roleLabel(Role.STUDENT);
+		}
+		return "Thành viên";
+	}
+
+	public String roleLabel(Role role) {
+		return switch (role) {
+			case ADMIN -> "Quản trị viên";
+			case DEAN -> "Trưởng khoa";
+			case LECTURER -> "Giảng viên";
+			case STUDENT -> "Sinh viên";
+		};
+	}
+
+	@Transactional(readOnly = true)
+	public String loginCodeOf(Account account) {
+		if (account instanceof Student student) {
+			return student.getStudentCode();
+		}
+		if (account instanceof Lecturer lecturer) {
+			return lecturer.getLecturerCode();
+		}
+		return account == null || account.getUsername() == null ? "" : account.getUsername();
 	}
 
 	public Account setEnabled(Long id, boolean enabled) {

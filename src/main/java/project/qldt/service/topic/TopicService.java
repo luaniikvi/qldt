@@ -9,6 +9,7 @@ import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +26,7 @@ import project.qldt.model.topic.Topic;
 import project.qldt.model.topic.TopicAvailability;
 import project.qldt.model.topic.TopicStatus;
 import project.qldt.repository.topic.TopicRepository;
+import project.qldt.service.common.PeriodRules;
 
 @Service
 @Transactional
@@ -50,8 +52,48 @@ public class TopicService {
 	}
 
 	@Transactional(readOnly = true)
+	public boolean isPublished(Topic topic) {
+		return topic.getStatus() == TopicStatus.PUBLISHED;
+	}
+
+	@Transactional(readOnly = true)
+	public boolean isAvailable(Topic topic) {
+		return topic.getAvailability() == TopicAvailability.AVAILABLE;
+	}
+
+	@Transactional(readOnly = true)
+	public boolean isRegistered(Topic topic) {
+		return topic.getAvailability() == TopicAvailability.REGISTERED;
+	}
+
+	@Transactional(readOnly = true)
+	public boolean isWaitingApproval(Topic topic) {
+		return topic.getAvailability() == TopicAvailability.PENDING;
+	}
+
+	@Transactional(readOnly = true)
+	public boolean isAdvisorOf(Topic topic, Long lecturerId) {
+		return topic.getAdvisors().stream().anyMatch(advisor -> advisor.getId().equals(lecturerId));
+	}
+
+	@Transactional(readOnly = true)
+	public boolean hasPendingAdvisorInvitation(Topic topic) {
+		return topic.getInvitation() != null && topic.getInvitation().getStatus() == InvitationStatus.PENDING;
+	}
+
+	@Transactional(readOnly = true)
+	public boolean requiresReviewerScore(Topic topic) {
+		return topic.getPeriod() != null && PeriodRules.requiresReviewerScore(topic.getPeriod().getType());
+	}
+
+	@Transactional(readOnly = true)
+	public String advisorNames(Topic topic) {
+		return topic.getAdvisors().stream().map(Lecturer::getFullName).collect(Collectors.joining(", "));
+	}
+
+	@Transactional(readOnly = true)
 	public List<Topic> findByStatus(TopicStatus status) {
-		return topicRepository.findByStatus(status);
+		return topicRepository.findByStatusOrderByIdDesc(status);
 	}
 
 	@Transactional(readOnly = true)
@@ -70,7 +112,7 @@ public class TopicService {
 
 	@Transactional(readOnly = true)
 	public List<Topic> findByPeriod(Long periodId) {
-		return topicRepository.findByPeriodIdOrderByIdAsc(periodId);
+		return topicRepository.findByPeriodIdOrderByIdDesc(periodId);
 	}
 
 	@Transactional(readOnly = true)
@@ -81,7 +123,7 @@ public class TopicService {
 
 	@Transactional(readOnly = true)
 	public List<Topic> findAvailablePublishedFor(Long periodId) {
-		return topicRepository.findByStatusAndAvailabilityAndPeriodIdOrderByIdAsc(TopicStatus.PUBLISHED,
+		return topicRepository.findByStatusAndAvailabilityAndPeriodIdOrderByIdDesc(TopicStatus.PUBLISHED,
 				TopicAvailability.AVAILABLE, periodId);
 	}
 
@@ -139,6 +181,17 @@ public class TopicService {
 		return topicRepository.findPeriodsByStatus(TopicStatus.APPROVED);
 	}
 
+	@Transactional(readOnly = true)
+	public Map<Long, List<Topic>> findApprovedTopicsByPeriod() {
+		return findByStatus(TopicStatus.APPROVED).stream()
+				.collect(Collectors.groupingBy(topic -> topic.getPeriod().getId(), LinkedHashMap::new,
+						Collectors.toList()));
+	}
+
+	public Topic handleApproval(Long id, boolean approved, String reason) {
+		return approved ? approve(id) : reject(id, reason);
+	}
+
 	public Topic create(TopicRequest request, Lecturer primaryAdvisor) {
 		RegistrationPeriod period = periodService.findById(request.getPeriodId());
 		validateTeacherWindow(period);
@@ -180,7 +233,7 @@ public class TopicService {
 		if (topic.getAdvisors().size() >= 2) {
 			throw new InvalidTopicException("Đề tài đã có tối đa 2 giảng viên hướng dẫn");
 		}
-		if (topic.hasPendingAdvisorInvitation()) {
+		if (hasPendingAdvisorInvitation(topic)) {
 			throw new InvalidTopicException("Đang chờ phản hồi lời mời của giảng viên khác");
 		}
 		Lecturer invited = accountService.findLecturerByCode(lecturerCode);
@@ -280,7 +333,7 @@ public class TopicService {
 
 	public int publish(Long periodId) {
 		periodService.findById(periodId);
-		List<Topic> approved = topicRepository.findByStatusAndPeriodIdOrderByIdAsc(TopicStatus.APPROVED, periodId);
+		List<Topic> approved = topicRepository.findByStatusAndPeriodIdOrderByIdDesc(TopicStatus.APPROVED, periodId);
 		if (approved.isEmpty()) {
 			throw new InvalidTopicException("Đợt này không có đề tài nào đã duyệt để công bố");
 		}
@@ -296,7 +349,7 @@ public class TopicService {
 		if (reason == null || reason.isBlank()) {
 			throw new InvalidTopicException("Vui lòng nhập lý do từ chối công bố");
 		}
-		List<Topic> approved = topicRepository.findByStatusAndPeriodIdOrderByIdAsc(TopicStatus.APPROVED, periodId);
+		List<Topic> approved = topicRepository.findByStatusAndPeriodIdOrderByIdDesc(TopicStatus.APPROVED, periodId);
 		if (approved.isEmpty()) {
 			throw new InvalidTopicException("Đợt này không có đề tài nào đã duyệt để từ chối");
 		}

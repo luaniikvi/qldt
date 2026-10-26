@@ -2,7 +2,6 @@ package project.qldt.model.team;
 
 import project.qldt.model.account.Student;
 import project.qldt.model.period.RegistrationPeriod;
-import project.qldt.model.topic.InvitationStatus;
 import project.qldt.model.topic.Topic;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,28 +56,4 @@ public class Team {
 
 	@Column(name = "registration_rejection_reason", length = 500)
 	private String registrationRejectionReason;
-
-	public boolean isLeader(Long accountId) {
-		return leader != null && leader.getId().equals(accountId);
-	}
-
-	public boolean isMember(Long studentId) {
-		return members.stream().anyMatch(member -> member.getId().equals(studentId));
-	}
-
-	public TeamInvitation pendingInvitationOf(Long studentId) {
-		return invitations.stream()
-				.filter(invitation -> invitation.getStatus() == InvitationStatus.PENDING)
-				.filter(invitation -> invitation.getStudent().getId().equals(studentId))
-				.findFirst()
-				.orElse(null);
-	}
-
-	public boolean hasPendingInvitation(Long studentId) {
-		return pendingInvitationOf(studentId) != null;
-	}
-
-	public long pendingInvitationCount() {
-		return invitations.stream().filter(invitation -> invitation.getStatus() == InvitationStatus.PENDING).count();
-	}
 }

@@ -5,7 +5,6 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.core.io.Resource;
@@ -34,7 +33,6 @@ import project.qldt.exception.InvalidReportException;
 import project.qldt.exception.InvalidTeamException;
 import project.qldt.exception.TeamNotFoundException;
 import project.qldt.exception.TopicNotFoundException;
-import project.qldt.model.account.Account;
 import project.qldt.model.report.Report;
 import project.qldt.model.account.Student;
 import project.qldt.model.team.Team;
@@ -67,7 +65,7 @@ public class TeamController {
 
 	@GetMapping
 	public String list(Authentication authentication, Model model) {
-		Student student = currentStudent(authentication);
+		Student student = accountService.requireStudent(authentication.getName());
 		model.addAttribute("teams", teamService.findViewsFor(student));
 		return "teams/list";
 	}
@@ -86,7 +84,7 @@ public class TeamController {
 			return form(model, request);
 		}
 		try {
-			teamService.create(request.getPeriodId(), currentStudent(authentication));
+			teamService.create(request.getPeriodId(), accountService.requireStudent(authentication.getName()));
 		} catch (InvalidTeamException ex) {
 			result.reject("invalid", ex.getMessage());
 			return form(model, request);
@@ -100,7 +98,7 @@ public class TeamController {
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			teamService.invite(id, studentCode, currentStudent(authentication));
+			teamService.invite(id, studentCode, accountService.requireStudent(authentication.getName()));
 			redirectAttributes.addFlashAttribute("message", "Đã gửi lời mời vào nhóm");
 		} catch (InvalidTeamException | AccountNotFoundException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -115,7 +113,7 @@ public class TeamController {
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			teamService.respondInvitation(id, currentStudent(authentication), accept, reason);
+			teamService.respondInvitation(id, accountService.requireStudent(authentication.getName()), accept, reason);
 			redirectAttributes.addFlashAttribute("message",
 					accept ? "Đã tham gia nhóm" : "Đã từ chối lời mời");
 		} catch (InvalidTeamException ex) {
@@ -130,7 +128,7 @@ public class TeamController {
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			teamService.transferLeader(id, studentCode, currentStudent(authentication));
+			teamService.transferLeader(id, studentCode, accountService.requireStudent(authentication.getName()));
 			redirectAttributes.addFlashAttribute("message", "Đã chuyển quyền nhóm trưởng");
 		} catch (InvalidTeamException | AccountNotFoundException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -143,7 +141,7 @@ public class TeamController {
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			teamService.leave(id, currentStudent(authentication));
+			teamService.leave(id, accountService.requireStudent(authentication.getName()));
 			redirectAttributes.addFlashAttribute("message", "Đã rời nhóm");
 		} catch (InvalidTeamException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -157,7 +155,7 @@ public class TeamController {
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			teamService.cancelInvitation(id, studentCode, currentStudent(authentication));
+			teamService.cancelInvitation(id, studentCode, accountService.requireStudent(authentication.getName()));
 			redirectAttributes.addFlashAttribute("message", "Đã hủy lời mời vào nhóm");
 		} catch (InvalidTeamException | AccountNotFoundException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -171,7 +169,7 @@ public class TeamController {
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			teamService.removeMember(id, studentCode, currentStudent(authentication));
+			teamService.removeMember(id, studentCode, accountService.requireStudent(authentication.getName()));
 			redirectAttributes.addFlashAttribute("message", "Đã xóa thành viên khỏi nhóm");
 		} catch (InvalidTeamException | AccountNotFoundException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -182,7 +180,7 @@ public class TeamController {
 	@GetMapping("/{id}/register")
 	public String registerForm(@PathVariable Long id, Authentication authentication,
 			RedirectAttributes redirectAttributes, Model model) {
-		Team team = teamService.findForLeader(id, currentStudent(authentication));
+		Team team = teamService.findForLeader(id, accountService.requireStudent(authentication.getName()));
 		model.addAttribute("team", team);
 		model.addAttribute("topics", registrationService.findAvailableTopicsFor(team));
 		return "teams/register";
@@ -194,7 +192,7 @@ public class TeamController {
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			registrationService.register(id, topicId, currentStudent(authentication));
+			registrationService.register(id, topicId, accountService.requireStudent(authentication.getName()));
 			redirectAttributes.addFlashAttribute("message",
 					"Đã đăng ký đề tài, chờ giảng viên hướng dẫn duyệt");
 		} catch (InvalidRegistrationException | TopicNotFoundException ex) {
@@ -208,7 +206,7 @@ public class TeamController {
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			registrationService.cancel(id, currentStudent(authentication));
+			registrationService.cancel(id, accountService.requireStudent(authentication.getName()));
 			redirectAttributes.addFlashAttribute("message", "Đã hủy đăng ký đề tài");
 		} catch (InvalidRegistrationException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -241,21 +239,13 @@ public class TeamController {
 		return "teams/form";
 	}
 
-	private Student currentStudent(Authentication authentication) {
-		Account account = accountService.findByUsername(authentication.getName());
-		if (account instanceof Student student) {
-			return student;
-		}
-		throw new AccessDeniedException("Chỉ sinh viên mới sử dụng được chức năng này");
-	}
-
 	@PostMapping("/{id}/report")
 	public String submitReport(@PathVariable Long id,
 			@RequestParam("file") MultipartFile file,
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			Report report = reportService.submit(id, currentStudent(authentication), file);
+			Report report = reportService.submit(id, accountService.requireStudent(authentication.getName()), file);
 			redirectAttributes.addFlashAttribute("message",
 					"Đã nộp báo cáo: " + report.getOriginalFileName() + " (phiên bản " + report.getVersion() + ")");
 		} catch (InvalidReportException | TeamNotFoundException ex) {
@@ -267,7 +257,7 @@ public class TeamController {
 	@GetMapping("/{id}/report/download")
 	public ResponseEntity<Resource> downloadReport(@PathVariable Long id, Authentication authentication) {
 		ReportService.ReportFile file = reportService
-				.prepareDownload(reportService.findForTeamMember(id, currentStudent(authentication)));
+				.prepareDownload(reportService.findForTeamMember(id, accountService.requireStudent(authentication.getName())));
 		return ResponseEntity.ok()
 				.header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
 						.filename(file.fileName(), StandardCharsets.UTF_8).build().toString())

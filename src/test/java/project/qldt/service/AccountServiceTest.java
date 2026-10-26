@@ -95,7 +95,7 @@ class AccountServiceTest {
 
 		Lecturer lecturer = accountService.assignDean("GV901", true);
 
-		assertTrue(lecturer.isDean());
+		assertTrue(accountService.isDean(lecturer));
 		assertTrue(lecturer.getRoles().contains(Role.LECTURER));
 		assertTrue(lecturer.getRoles().contains(Role.DEAN));
 	}
@@ -107,8 +107,8 @@ class AccountServiceTest {
 
 		accountService.assignDean("GV901", true);
 
-		assertTrue(accountService.findLecturerByCode("GV901").isDean());
-		assertFalse(accountService.findLecturerByCode("GV902").isDean());
+		assertTrue(accountService.isDean(accountService.findLecturerByCode("GV901")));
+		assertFalse(accountService.isDean(accountService.findLecturerByCode("GV902")));
 	}
 
 	@Test

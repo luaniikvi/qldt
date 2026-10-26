@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import project.qldt.exception.TeamNotFoundException;
 import project.qldt.model.topic.InvitationStatus;
 import project.qldt.model.notification.NotificationType;
 import project.qldt.dto.team.TeamView;
+import project.qldt.model.account.Account;
 import project.qldt.model.period.RegistrationPeriod;
 import project.qldt.model.report.Report;
 import project.qldt.model.account.Student;
@@ -60,18 +62,49 @@ public class TeamService {
 	}
 
 	@Transactional(readOnly = true)
+	public boolean isLeader(Team team, Long studentId) {
+		return team.getLeader() != null && team.getLeader().getId().equals(studentId);
+	}
+
+	@Transactional(readOnly = true)
+	public boolean isMember(Team team, Long studentId) {
+		return team.getMembers().stream().anyMatch(member -> member.getId().equals(studentId));
+	}
+
+	@Transactional(readOnly = true)
+	public TeamInvitation pendingInvitationOf(Team team, Long studentId) {
+		return team.getInvitations().stream()
+				.filter(invitation -> invitation.getStatus() == InvitationStatus.PENDING)
+				.filter(invitation -> invitation.getStudent().getId().equals(studentId))
+				.findFirst()
+				.orElse(null);
+	}
+
+	@Transactional(readOnly = true)
+	public boolean hasPendingInvitation(Team team, Long studentId) {
+		return pendingInvitationOf(team, studentId) != null;
+	}
+
+	@Transactional(readOnly = true)
+	public long pendingInvitationCount(Team team) {
+		return team.getInvitations().stream()
+				.filter(invitation -> invitation.getStatus() == InvitationStatus.PENDING)
+				.count();
+	}
+
+	@Transactional(readOnly = true)
 	public List<Team> findByStudent(Student student) {
 		return teamRepository.findInvolvedOf(student.getId(), InvitationStatus.PENDING);
 	}
 
 	@Transactional(readOnly = true)
 	public List<Team> findByPeriod(Long periodId) {
-		return teamRepository.findByPeriodIdOrderByIdAsc(periodId);
+		return teamRepository.findByPeriodIdOrderByIdDesc(periodId);
 	}
 
 	@Transactional(readOnly = true)
 	public List<Team> findWithTopicByPeriod(Long periodId) {
-		return teamRepository.findByPeriodIdAndTopicIsNotNullOrderByIdAsc(periodId);
+		return teamRepository.findByPeriodIdAndTopicIsNotNullOrderByIdDesc(periodId);
 	}
 
 	@Transactional(readOnly = true)
@@ -109,7 +142,7 @@ public class TeamService {
 	@Transactional(readOnly = true)
 	public Team findForMember(Long teamId, Student actor) {
 		Team team = findById(teamId);
-		if (!team.isLeader(actor.getId()) && !team.isMember(actor.getId())) {
+		if (!isLeader(team, actor.getId()) && !isMember(team, actor.getId())) {
 			throw new InvalidTeamException("Bạn không thuộc nhóm này");
 		}
 		return team;
@@ -118,18 +151,41 @@ public class TeamService {
 	@Transactional(readOnly = true)
 	public List<TeamView> findViewsFor(Student student) {
 		List<Team> teams = teamRepository.findInvolvedOf(student.getId(), InvitationStatus.PENDING);
-		if (teams.isEmpty()) {
-			return List.of();
+		Map<Long, Report> reports = reportsOf(teams);
+		List<TeamView> views = new ArrayList<>();
+		for (Team team : teams) {
+			views.add(new TeamView(team, isLeader(team, student.getId()), isMember(team, student.getId()),
+					hasPendingInvitation(team, student.getId()), reports.get(team.getId())));
 		}
+		return views;
+	}
+
+	@Transactional(readOnly = true)
+	public List<TeamView> findViewsFor(Account account, Long periodId) {
+		if (periodId == null) {
+			return findViewsFor(accountService.requireStudent(account));
+		}
+		if (!accountService.isDean(account)) {
+			throw new AccessDeniedException("Chỉ trưởng khoa mới xem được nhóm theo đợt");
+		}
+		List<Team> teams = findByPeriod(periodId);
+		Map<Long, Report> reports = reportsOf(teams);
+		List<TeamView> views = new ArrayList<>();
+		for (Team team : teams) {
+			views.add(new TeamView(team, false, false, false, reports.get(team.getId())));
+		}
+		return views;
+	}
+
+	private Map<Long, Report> reportsOf(List<Team> teams) {
 		Map<Long, Report> reports = new HashMap<>();
+		if (teams.isEmpty()) {
+			return reports;
+		}
 		for (Report report : reportRepository.findByTeamIdIn(teams.stream().map(Team::getId).toList())) {
 			reports.put(report.getTeam().getId(), report);
 		}
-		List<TeamView> views = new ArrayList<>();
-		for (Team team : teams) {
-			views.add(TeamView.of(team, student, reports.get(team.getId())));
-		}
-		return views;
+		return reports;
 	}
 
 	@Transactional(readOnly = true)
@@ -160,13 +216,13 @@ public class TeamService {
 		if (invited.getId().equals(actor.getId())) {
 			throw new InvalidTeamException("Không thể mời chính mình");
 		}
-		if (team.isMember(invited.getId())) {
+		if (isMember(team, invited.getId())) {
 			throw new InvalidTeamException("Sinh viên này đã ở trong nhóm");
 		}
-		if (team.hasPendingInvitation(invited.getId())) {
+		if (hasPendingInvitation(team, invited.getId())) {
 			throw new InvalidTeamException("Sinh viên này đã được mời và đang chờ phản hồi");
 		}
-		if (team.getMembers().size() + team.pendingInvitationCount() >= MAX_MEMBERS) {
+		if (team.getMembers().size() + pendingInvitationCount(team) >= MAX_MEMBERS) {
 			throw new InvalidTeamException(
 					"Nhóm đã đạt sĩ số tối đa " + MAX_MEMBERS + " người (bao gồm lời mời đang chờ)");
 		}
@@ -182,7 +238,7 @@ public class TeamService {
 
 	public Team respondInvitation(Long id, Student actor, boolean accept, String reason) {
 		Team team = lockTeam(id);
-		TeamInvitation invitation = team.pendingInvitationOf(actor.getId());
+		TeamInvitation invitation = pendingInvitationOf(team, actor.getId());
 		if (invitation == null) {
 			throw new InvalidTeamException("Không có lời mời đang chờ phản hồi");
 		}
@@ -211,7 +267,7 @@ public class TeamService {
 		Team team = lockTeam(id);
 		requireLeader(team, actor);
 		Student newLeader = accountService.findStudentByCode(studentCode);
-		if (!team.isMember(newLeader.getId())) {
+		if (!isMember(team, newLeader.getId())) {
 			throw new InvalidTeamException("Chỉ có thể chuyển quyền cho thành viên trong nhóm");
 		}
 		team.setLeader(newLeader);
@@ -220,7 +276,7 @@ public class TeamService {
 
 	public Team leave(Long id, Student actor) {
 		Team team = lockTeam(id);
-		if (team.isLeader(actor.getId())) {
+		if (isLeader(team, actor.getId())) {
 			throw new InvalidTeamException("Nhóm trưởng phải chuyển quyền cho thành viên khác trước khi rời nhóm");
 		}
 		boolean removed = team.getMembers().removeIf(member -> member.getId().equals(actor.getId()));
@@ -234,7 +290,7 @@ public class TeamService {
 		Team team = lockTeam(id);
 		requireLeader(team, actor);
 		Student student = accountService.findStudentByCode(studentCode);
-		TeamInvitation invitation = team.pendingInvitationOf(student.getId());
+		TeamInvitation invitation = pendingInvitationOf(team, student.getId());
 		if (invitation == null) {
 			throw new InvalidTeamException("Không có lời mời đang chờ để hủy");
 		}
@@ -246,7 +302,7 @@ public class TeamService {
 		Team team = lockTeam(id);
 		requireLeader(team, actor);
 		Student member = accountService.findStudentByCode(studentCode);
-		if (team.isLeader(member.getId())) {
+		if (isLeader(team, member.getId())) {
 			throw new InvalidTeamException("Nhóm trưởng không thể tự xóa mình khỏi nhóm");
 		}
 		boolean removed = team.getMembers().removeIf(item -> item.getId().equals(member.getId()));
@@ -273,7 +329,7 @@ public class TeamService {
 	}
 
 	private void requireLeader(Team team, Student actor) {
-		if (!team.isLeader(actor.getId())) {
+		if (!isLeader(team, actor.getId())) {
 			throw new InvalidTeamException("Chỉ nhóm trưởng mới được thực hiện thao tác này");
 		}
 	}

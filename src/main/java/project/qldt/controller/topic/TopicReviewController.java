@@ -1,9 +1,5 @@
 package project.qldt.controller.topic;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,8 +13,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import project.qldt.exception.InvalidTopicException;
 import project.qldt.exception.TopicNotFoundException;
-import project.qldt.model.period.RegistrationPeriod;
-import project.qldt.model.topic.Topic;
 import project.qldt.model.topic.TopicStatus;
 import project.qldt.service.topic.TopicService;
 
@@ -36,14 +30,8 @@ public class TopicReviewController {
 	@GetMapping
 	public String list(Model model) {
 		model.addAttribute("topics", topicService.findByStatus(TopicStatus.PENDING));
-		List<RegistrationPeriod> periods = topicService.findPeriodsWithApprovedTopics();
-		model.addAttribute("periods", periods);
-
-		List<Topic> approvedTopics = topicService.findByStatus(TopicStatus.APPROVED);
-		Map<Long, List<Topic>> approvedTopicsByPeriod = approvedTopics.stream()
-				.collect(Collectors.groupingBy(t -> t.getPeriod().getId()));
-		model.addAttribute("approvedTopicsByPeriod", approvedTopicsByPeriod);
-
+		model.addAttribute("periods", topicService.findPeriodsWithApprovedTopics());
+		model.addAttribute("approvedTopicsByPeriod", topicService.findApprovedTopicsByPeriod());
 		return "topics/pending";
 	}
 

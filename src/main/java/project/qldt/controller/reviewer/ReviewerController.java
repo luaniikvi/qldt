@@ -1,6 +1,5 @@
 package project.qldt.controller.reviewer;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -37,7 +36,7 @@ public class ReviewerController {
 	@GetMapping("/reviewer/topics")
 	@PreAuthorize("hasRole('LECTURER')")
 	public String myTopics(Authentication authentication, Model model) {
-		Lecturer lecturer = currentLecturer(authentication);
+		Lecturer lecturer = accountService.requireLecturer(authentication.getName());
 		List<Topic> topics = reviewerService.findAssigned(lecturer);
 		model.addAttribute("topics", topics);
 		List<Long> topicIds = topics.stream().map(Topic::getId).toList();
@@ -51,7 +50,7 @@ public class ReviewerController {
 			@RequestParam(required = false) String comment, Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			reviewerService.score(id, currentLecturer(authentication), score, comment);
+			reviewerService.score(id, accountService.requireLecturer(authentication.getName()), score, comment);
 			redirectAttributes.addFlashAttribute("message", "Đã gửi điểm phản biện");
 		} catch (InvalidTopicException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -62,17 +61,9 @@ public class ReviewerController {
 	@GetMapping("/reviewer-scores")
 	public String scores(Authentication authentication, Model model) {
 		Account account = accountService.findByUsername(authentication.getName());
-		boolean dean = account instanceof Lecturer lecturer && lecturer.isDean();
 		model.addAttribute("topics", reviewerService.findVisibleScores(account));
-		model.addAttribute("isDean", dean);
+		model.addAttribute("isDean", reviewerService.canViewAllScores(account));
 		return "reviewer/scores";
 	}
 
-	private Lecturer currentLecturer(Authentication authentication) {
-		Account account = accountService.findByUsername(authentication.getName());
-		if (account instanceof Lecturer lecturer) {
-			return lecturer;
-		}
-		throw new AccessDeniedException("Chỉ giảng viên mới sử dụng được chức năng này");
-	}
 }

@@ -33,11 +33,7 @@ public class AnnouncementRestController {
 
 	@GetMapping
 	public List<AnnouncementResponse> list(@RequestParam(required = false) Integer limit) {
-		if (limit == null) {
-			return announcementService.findAll().stream().map(AnnouncementResponse::of).toList();
-		}
-		return announcementService.findRecent().stream().limit(Math.max(0, limit))
-				.map(AnnouncementResponse::of).toList();
+		return announcementService.findForList(limit).stream().map(AnnouncementResponse::of).toList();
 	}
 
 	@GetMapping("/{id}")

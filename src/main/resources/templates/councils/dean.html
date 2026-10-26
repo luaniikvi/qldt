@@ -144,13 +144,13 @@
                     </td>
                     <td class="small">
                         <!-- Nếu là NCKH: không có GVPB -->
-                        <div th:if="${v.council.topic.period.type.name() == 'RESEARCH' or !v.council.topic.period.type.requiresReviewerScoreDeadline()}">
+                        <div th:if="${!v.requiresReviewerScore}">
                             <span class="badge-status badge-status-neutral text-muted">
                                 <i class="bi bi-dash-circle me-1"></i>Không có
                             </span>
                         </div>
                         <!-- Nếu là TLCN hoặc KLTN: có GVPB -->
-                        <div th:unless="${v.council.topic.period.type.name() == 'RESEARCH' or !v.council.topic.period.type.requiresReviewerScoreDeadline()}">
+                        <div th:unless="${!v.requiresReviewerScore}">
                             <div class="fw-semibold" th:text="${v.council.topic.reviewer != null ? v.council.topic.reviewer.fullName : 'Chưa phân công'}">GVPB</div>
                             <div class="text-muted" th:text="${v.council.topic.reviewer != null ? v.council.topic.reviewer.lecturerCode : ''}">GV003</div>
                             <div th:if="${v.council.topic.reviewerScore != null}" class="fw-bold text-success"

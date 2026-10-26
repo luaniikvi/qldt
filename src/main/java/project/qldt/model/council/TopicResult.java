@@ -40,21 +40,4 @@ public class TopicResult {
 
 	@Column(name = "published_at")
 	private LocalDateTime publishedAt;
-
-	public static final double REVIEWER_WEIGHT = 0.4;
-	public static final double COUNCIL_WEIGHT = 0.6;
-
-	public void publish() {
-		this.published = true;
-		this.publishedAt = LocalDateTime.now();
-		this.finalScore = calculateFinalScore();
-	}
-
-	public double calculateFinalScore() {
-		Double reviewerScore = council.getTopic().getReviewerScore();
-		double value = reviewerScore == null
-				? averageScore
-				: reviewerScore * REVIEWER_WEIGHT + averageScore * COUNCIL_WEIGHT;
-		return Math.round(value * 100.0) / 100.0;
-	}
 }

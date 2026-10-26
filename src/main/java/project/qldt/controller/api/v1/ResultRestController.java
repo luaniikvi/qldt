@@ -2,7 +2,6 @@ package project.qldt.controller.api.v1;
 
 import java.util.List;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,8 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import project.qldt.dto.api.response.TopicResultResponse;
 import project.qldt.model.account.Account;
-import project.qldt.model.account.Lecturer;
-import project.qldt.model.account.Student;
 import project.qldt.service.account.AccountService;
 import project.qldt.service.council.CouncilService;
 
@@ -39,14 +36,7 @@ public class ResultRestController extends ApiControllerSupport {
 	@GetMapping("/mine")
 	public List<TopicResultResponse> mine(Authentication authentication) {
 		Account account = currentAccount(authentication);
-		if (account instanceof Student student) {
-			return councilService.findPublishedResultsFor(student).stream().map(TopicResultResponse::of).toList();
-		}
-		if (account instanceof Lecturer lecturer) {
-			return councilService.findPublishedResultsOfAdvisor(lecturer).stream().map(TopicResultResponse::of)
-					.toList();
-		}
-		throw new AccessDeniedException("Bạn không có quyền xem kết quả này");
+		return councilService.findPublishedResultsFor(account).stream().map(TopicResultResponse::of).toList();
 	}
 
 	@PreAuthorize("hasRole('DEAN')")

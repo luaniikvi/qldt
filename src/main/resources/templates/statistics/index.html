@@ -217,11 +217,11 @@
                         <td class="small" th:text="${r.advisorNames}">GVHD</td>
                         <td class="small">
                             <!-- Nếu là NCKH: không có GVPB -->
-                            <span th:if="${r.topic.period.type.name() == 'RESEARCH' or !r.topic.period.type.requiresReviewerScoreDeadline()}"
+                            <span th:if="${!r.requiresReviewerScore}"
                                   class="badge-status badge-status-neutral text-muted">
                                 <i class="bi bi-dash-circle me-1"></i>Không có
                             </span>
-                            <span th:unless="${r.topic.period.type.name() == 'RESEARCH' or !r.topic.period.type.requiresReviewerScoreDeadline()}">
+                            <span th:unless="${!r.requiresReviewerScore}">
                                 <span th:if="${r.topic.reviewer != null}" class="fw-medium text-dark" th:text="${r.topic.reviewer.fullName}">GV002</span>
                                 <span th:if="${r.topic.reviewer == null}" class="text-muted fst-italic">Chưa phân công</span>
                             </span>

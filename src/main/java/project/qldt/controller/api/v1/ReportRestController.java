@@ -6,9 +6,7 @@ import java.util.List;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,9 +19,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import project.qldt.dto.api.response.ReportResponse;
-import project.qldt.model.account.Account;
-import project.qldt.model.account.Lecturer;
-import project.qldt.model.account.Student;
 import project.qldt.model.report.Report;
 import project.qldt.service.account.AccountService;
 import project.qldt.service.report.ReportService;
@@ -68,28 +63,17 @@ public class ReportRestController extends ApiControllerSupport {
 
 	@GetMapping("/reports/{id}")
 	public ReportResponse getOne(@PathVariable Long id, Authentication authentication) {
-		return ReportResponse.of(visibleReport(id, authentication));
+		return ReportResponse.of(reportService.findVisible(id, currentAccount(authentication)));
 	}
 
 	@GetMapping("/reports/{id}/file")
 	public ResponseEntity<Resource> download(@PathVariable Long id, Authentication authentication) {
-		ReportService.ReportFile file = reportService.prepareDownload(visibleReport(id, authentication));
+		ReportService.ReportFile file = reportService
+				.prepareDownload(reportService.findVisible(id, currentAccount(authentication)));
 		return ResponseEntity.ok()
 				.header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
 						.filename(file.fileName(), StandardCharsets.UTF_8).build().toString())
-				.contentType(MediaType.APPLICATION_OCTET_STREAM)
+				.contentType(file.mediaType())
 				.body(file.resource());
-	}
-
-	private Report visibleReport(Long id, Authentication authentication) {
-		Account account = currentAccount(authentication);
-		if (account instanceof Lecturer lecturer) {
-			return reportService.findForLecturer(id, lecturer);
-		}
-		if (account instanceof Student student) {
-			Report report = reportService.findById(id);
-			return reportService.findForTeamMember(report.getTeam().getId(), student);
-		}
-		throw new AccessDeniedException("Bạn không có quyền xem báo cáo này");
 	}
 }

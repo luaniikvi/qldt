@@ -15,13 +15,15 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
 	boolean existsByUsername(String username);
 
+	List<Account> findAllByOrderByIdDesc();
+
 	@Query("""
 			select a from Account a
 			where (:type is null or type(a) = :type)
 			  and (:enabled is null or a.enabled = :enabled)
 			  and (:q is null or (lower(a.fullName) like lower(concat('%', :q, '%'))
 			       or lower(a.username) like lower(concat('%', :q, '%'))))
-			order by a.username
+			order by a.id desc
 			""")
 	List<Account> search(@Param("type") Class<? extends Account> type, @Param("enabled") Boolean enabled,
 			@Param("q") String q);

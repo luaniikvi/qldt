@@ -17,6 +17,7 @@ import java.util.Map;
 
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,16 +25,18 @@ import org.springframework.web.multipart.MultipartFile;
 import project.qldt.config.AppProperties;
 import project.qldt.exception.InvalidReportException;
 import project.qldt.exception.ReportNotFoundException;
+import project.qldt.model.account.Account;
 import project.qldt.model.account.Lecturer;
 import project.qldt.model.notification.NotificationType;
 import project.qldt.model.report.Report;
 import project.qldt.model.account.Student;
-import project.qldt.model.council.Council;
 import project.qldt.model.team.Team;
 import project.qldt.model.topic.Topic;
 import project.qldt.model.topic.TopicAvailability;
 import project.qldt.repository.report.ReportRepository;
+import project.qldt.service.account.AccountService;
 import project.qldt.service.council.CouncilService;
+import project.qldt.service.topic.TopicService;
 
 @Service
 @Transactional
@@ -46,14 +49,19 @@ public class ReportService {
 	private final TeamService teamService;
 	private final NotificationService notificationService;
 	private final CouncilService councilService;
+	private final AccountService accountService;
+	private final TopicService topicService;
 	private final Path uploadDir;
 
 	public ReportService(ReportRepository reportRepository, TeamService teamService,
-			NotificationService notificationService, CouncilService councilService, AppProperties appProperties) {
+			NotificationService notificationService, CouncilService councilService,
+			AccountService accountService, TopicService topicService, AppProperties appProperties) {
 		this.reportRepository = reportRepository;
 		this.teamService = teamService;
 		this.notificationService = notificationService;
 		this.councilService = councilService;
+		this.accountService = accountService;
+		this.topicService = topicService;
 		this.uploadDir = appProperties.uploadPath();
 	}
 
@@ -193,21 +201,37 @@ public class ReportService {
 			throw new InvalidReportException("Báo cáo chưa gắn với đề tài nào");
 		}
 		boolean reviewer = topic.getReviewer() != null && topic.getReviewer().getId().equals(lecturer.getId());
-		if (!lecturer.isDean() && !topic.isAdvisorOf(lecturer.getId()) && !reviewer && !isCouncilMember(topic.getId(), lecturer.getId())) {
+		if (!accountService.isDean(lecturer) && !topicService.isAdvisorOf(topic, lecturer.getId()) && !reviewer
+				&& !councilService.isCouncilMember(topic.getId(), lecturer.getId())) {
 			throw new InvalidReportException("Bạn không có quyền tải báo cáo của đề tài này");
 		}
 		return report;
 	}
 
-	private boolean isCouncilMember(Long topicId, Long lecturerId) {
-		Council council = councilService.findByTopicId(topicId);
-		return council != null && council.memberOf(lecturerId) != null;
+	@Transactional(readOnly = true)
+	public Report findForLecturerByTopic(Long topicId, Lecturer lecturer) {
+		Report report = findByTopicId(topicId);
+		if (report == null) {
+			throw new ReportNotFoundException("Nhóm chưa nộp báo cáo");
+		}
+		return findForLecturer(report.getId(), lecturer);
+	}
+
+	@Transactional(readOnly = true)
+	public Report findVisible(Long reportId, Account account) {
+		if (account instanceof Lecturer lecturer) {
+			return findForLecturer(reportId, lecturer);
+		}
+		if (account instanceof Student student) {
+			return findForTeamMember(findById(reportId).getTeam().getId(), student);
+		}
+		throw new InvalidReportException("Bạn không có quyền xem báo cáo này");
 	}
 
 	@Transactional(readOnly = true)
 	public Report findForTeamMember(Long teamId, Student student) {
 		Team team = teamService.findById(teamId);
-		if (!team.isMember(student.getId())) {
+		if (!teamService.isMember(team, student.getId())) {
 			throw new InvalidReportException("Bạn không phải thành viên của nhóm này");
 		}
 		Report report = findByTeam(team);
@@ -218,11 +242,27 @@ public class ReportService {
 	}
 
 	public ReportFile prepareDownload(Report report) {
+		Path path = resolveStoredFile(report);
+		return new ReportFile(downloadFileName(report), new FileSystemResource(path), MediaType.APPLICATION_OCTET_STREAM);
+	}
+
+	public ReportFile prepareInline(Report report) {
+		Path path = resolveStoredFile(report);
+		return new ReportFile(downloadFileName(report), new FileSystemResource(path), previewMediaType(report));
+	}
+
+	private Path resolveStoredFile(Report report) {
 		Path path = uploadDir.resolve(report.getStoredFileName());
 		if (!Files.exists(path)) {
 			throw new ReportNotFoundException("Tệp báo cáo không còn trên máy chủ");
 		}
-		return new ReportFile(downloadFileName(report), new FileSystemResource(path));
+		return path;
+	}
+
+	private MediaType previewMediaType(Report report) {
+		return "pdf".equals(extensionOf(report.getStoredFileName()))
+				? MediaType.APPLICATION_PDF
+				: MediaType.APPLICATION_OCTET_STREAM;
 	}
 
 	private String downloadFileName(Report report) {
@@ -234,11 +274,11 @@ public class ReportService {
 		return originalFileName;
 	}
 
-	public record ReportFile(String fileName, Resource resource) {
+	public record ReportFile(String fileName, Resource resource, MediaType mediaType) {
 	}
 
 	private void requireLeader(Team team, Student actor) {
-		if (!team.isLeader(actor.getId())) {
+		if (!teamService.isLeader(team, actor.getId())) {
 			throw new InvalidReportException("Chỉ nhóm trưởng mới được nộp báo cáo");
 		}
 	}

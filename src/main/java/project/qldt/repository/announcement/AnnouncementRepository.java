@@ -8,7 +8,7 @@ import project.qldt.model.announcement.Announcement;
 
 public interface AnnouncementRepository extends JpaRepository<Announcement, Long> {
 
-	List<Announcement> findAllByOrderByCreatedAtAsc();
+	List<Announcement> findAllByOrderByCreatedAtDesc();
 
 	List<Announcement> findTop5ByOrderByCreatedAtDesc();
 }

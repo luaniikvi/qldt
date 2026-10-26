@@ -26,14 +26,14 @@ public interface TopicResultRepository extends JpaRepository<TopicResult, Long> 
 	@Query("select r.council.name, r.averageScore from TopicResult r where r.council.topic.period.id = :periodId order by r.council.name")
 	List<Object[]> scoreRowsByPeriod(@Param("periodId") Long periodId);
 
-	@Query("select r from TopicResult r where r.council.topic.period.id = :periodId order by r.id")
+	@Query("select r from TopicResult r where r.council.topic.period.id = :periodId order by r.id desc")
 	List<TopicResult> findByPeriodId(@Param("periodId") Long periodId);
 
 	@Query("select r from TopicResult r where r.published = true and exists "
-			+ "(select t.id from Team t join t.members m where t.topic = r.council.topic and m.id = :studentId) order by r.id")
+			+ "(select t.id from Team t join t.members m where t.topic = r.council.topic and m.id = :studentId) order by r.id desc")
 	List<TopicResult> findPublishedForStudent(@Param("studentId") Long studentId);
 
 	@Query("select distinct r from TopicResult r join r.council.topic.advisors a "
-			+ "where r.published = true and a.id = :lecturerId order by r.id")
+			+ "where r.published = true and a.id = :lecturerId order by r.id desc")
 	List<TopicResult> findPublishedOfAdvisor(@Param("lecturerId") Long lecturerId);
 }

@@ -121,7 +121,7 @@ class AccountAdminControllerTest {
 				.andExpect(status().is3xxRedirection())
 				.andExpect(redirectedUrl("/admin/accounts"));
 
-		assertTrue(accountService.findLecturerByCode("GV_DEAN_2").isDean());
+		assertTrue(accountService.isDean(accountService.findLecturerByCode("GV_DEAN_2")));
 	}
 
 	@Test

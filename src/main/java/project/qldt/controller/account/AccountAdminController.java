@@ -2,7 +2,6 @@ package project.qldt.controller.account;
 
 import jakarta.validation.Valid;
 
-import org.aspectj.lang.annotation.RequiredTypes;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -21,6 +20,7 @@ import project.qldt.dto.account.AccountRequest;
 import project.qldt.exception.AccountNotFoundException;
 import project.qldt.exception.InvalidAccountException;
 import project.qldt.model.account.AccountType;
+import project.qldt.security.CurrentAuthentication;
 import project.qldt.service.account.AccountService;
 import project.qldt.service.department.DepartmentService;
 
@@ -106,7 +106,7 @@ public class AccountAdminController {
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			String currentUsername = authentication != null ? authentication.getName() : "";
+			String currentUsername = CurrentAuthentication.usernameOf(authentication);
 			accountService.deleteAccount(id, currentUsername);
 			redirectAttributes.addFlashAttribute("message", "Đã xóa tài khoản thành công");
 		} catch (InvalidAccountException ex) {

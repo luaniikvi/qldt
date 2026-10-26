@@ -2,7 +2,6 @@ package project.qldt.controller.topic;
 
 import jakarta.validation.Valid;
 
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -21,8 +20,6 @@ import project.qldt.dto.topic.TopicRequest;
 import project.qldt.exception.AccountNotFoundException;
 import project.qldt.exception.InvalidTopicException;
 import project.qldt.exception.TopicNotFoundException;
-import project.qldt.model.account.Account;
-import project.qldt.model.account.Lecturer;
 import project.qldt.service.account.AccountService;
 import project.qldt.service.period.RegistrationPeriodService;
 import project.qldt.service.topic.TopicService;
@@ -45,7 +42,7 @@ public class TopicController {
 
 	@GetMapping
 	public String list(Authentication authentication, Model model) {
-		model.addAttribute("topics", topicService.findByLecturer(currentLecturer(authentication)));
+		model.addAttribute("topics", topicService.findByLecturer(accountService.requireLecturer(authentication.getName())));
 		model.addAttribute("currentUser", authentication.getName());
 		return "topics/list";
 	}
@@ -64,7 +61,7 @@ public class TopicController {
 			return form(model, request, null);
 		}
 		try {
-			topicService.create(request, currentLecturer(authentication));
+			topicService.create(request, accountService.requireLecturer(authentication.getName()));
 		} catch (InvalidTopicException ex) {
 			result.reject("invalid", ex.getMessage());
 			return form(model, request, null);
@@ -74,7 +71,7 @@ public class TopicController {
 
 	@GetMapping("/{id}/edit")
 	public String editForm(@PathVariable Long id, Authentication authentication, Model model) {
-		return form(model, TopicRequest.from(topicService.findForEdit(id, currentLecturer(authentication))), id);
+		return form(model, TopicRequest.from(topicService.findForEdit(id, accountService.requireLecturer(authentication.getName()))), id);
 	}
 
 	@PostMapping("/{id}")
@@ -87,7 +84,7 @@ public class TopicController {
 			return form(model, request, id);
 		}
 		try {
-			topicService.update(id, request, currentLecturer(authentication));
+			topicService.update(id, request, accountService.requireLecturer(authentication.getName()));
 		} catch (InvalidTopicException ex) {
 			result.reject("invalid", ex.getMessage());
 			return form(model, request, id);
@@ -101,7 +98,7 @@ public class TopicController {
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			topicService.inviteAdvisor(id, lecturerCode, currentLecturer(authentication));
+			topicService.inviteAdvisor(id, lecturerCode, accountService.requireLecturer(authentication.getName()));
 			redirectAttributes.addFlashAttribute("message", "Đã gửi lời mời hướng dẫn");
 		} catch (InvalidTopicException | AccountNotFoundException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -116,7 +113,7 @@ public class TopicController {
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			topicService.respondInvitation(id, currentLecturer(authentication), accept, reason);
+			topicService.respondInvitation(id, accountService.requireLecturer(authentication.getName()), accept, reason);
 			redirectAttributes.addFlashAttribute("message",
 					accept ? "Đã đồng ý lời mời hướng dẫn" : "Đã từ chối lời mời hướng dẫn");
 		} catch (InvalidTopicException ex) {
@@ -130,7 +127,7 @@ public class TopicController {
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			topicService.cancelAdvisorInvitation(id, currentLecturer(authentication));
+			topicService.cancelAdvisorInvitation(id, accountService.requireLecturer(authentication.getName()));
 			redirectAttributes.addFlashAttribute("message", "Đã hủy lời mời hướng dẫn");
 		} catch (InvalidTopicException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -144,7 +141,7 @@ public class TopicController {
 			Authentication authentication,
 			RedirectAttributes redirectAttributes) {
 		try {
-			topicService.removeCoAdvisor(id, lecturerCode, currentLecturer(authentication));
+			topicService.removeCoAdvisor(id, lecturerCode, accountService.requireLecturer(authentication.getName()));
 			redirectAttributes.addFlashAttribute("message", "Đã xóa giảng viên hướng dẫn khỏi đề tài");
 		} catch (InvalidTopicException | AccountNotFoundException ex) {
 			redirectAttributes.addFlashAttribute("error", ex.getMessage());
@@ -165,11 +162,4 @@ public class TopicController {
 		return "topics/form";
 	}
 
-	private Lecturer currentLecturer(Authentication authentication) {
-		Account account = accountService.findByUsername(authentication.getName());
-		if (account instanceof Lecturer lecturer) {
-			return lecturer;
-		}
-		throw new AccessDeniedException("Chỉ giảng viên mới sử dụng được chức năng này");
-	}
 }

@@ -4,7 +4,6 @@ import java.net.URI;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,8 +22,6 @@ import project.qldt.dto.api.request.StudentCodeRequest;
 import project.qldt.dto.api.response.TeamResponse;
 import project.qldt.dto.team.TeamRequest;
 import project.qldt.dto.team.TeamView;
-import project.qldt.model.account.Account;
-import project.qldt.model.account.Student;
 import project.qldt.model.team.Team;
 import project.qldt.service.account.AccountService;
 import project.qldt.service.report.ReportService;
@@ -45,18 +42,8 @@ public class TeamRestController extends ApiControllerSupport {
 
 	@GetMapping
 	public List<TeamResponse> list(@RequestParam(required = false) Long periodId, Authentication authentication) {
-		Account account = currentAccount(authentication);
-		if (periodId != null) {
-			if (!account.isDean()) {
-				throw new AccessDeniedException("Chỉ trưởng khoa mới xem được nhóm theo đợt");
-			}
-			return teamService.findByPeriod(periodId).stream()
-					.map(team -> TeamResponse.of(team, reportService.findByTeam(team))).toList();
-		}
-		if (!(account instanceof Student student)) {
-			throw new AccessDeniedException("Chỉ sinh viên mới xem được nhóm của mình");
-		}
-		return teamService.findViewsFor(student).stream().map(this::toResponse).toList();
+		return teamService.findViewsFor(currentAccount(authentication), periodId).stream().map(this::toResponse)
+				.toList();
 	}
 
 	@PreAuthorize("hasRole('STUDENT')")

@@ -23,7 +23,7 @@ public class AnnouncementService {
 
 	@Transactional(readOnly = true)
 	public List<Announcement> findAll() {
-		return announcementRepository.findAllByOrderByCreatedAtAsc();
+		return announcementRepository.findAllByOrderByCreatedAtDesc();
 	}
 
 	@Transactional(readOnly = true)
@@ -40,6 +40,14 @@ public class AnnouncementService {
 	public Announcement findById(Long id) {
 		return announcementRepository.findById(id)
 				.orElseThrow(() -> new AnnouncementNotFoundException("Không tìm thấy thông báo có id: " + id));
+	}
+
+	@Transactional(readOnly = true)
+	public List<Announcement> findForList(Integer limit) {
+		if (limit == null) {
+			return findAll();
+		}
+		return findRecent().stream().limit(Math.max(0, limit)).toList();
 	}
 
 	public Announcement create(String title, String content) {

@@ -59,10 +59,10 @@ public class TopicRegistrationService {
 		if (!topic.getPeriod().getId().equals(team.getPeriod().getId())) {
 			throw new InvalidRegistrationException("Đề tài không thuộc đợt đăng ký của nhóm");
 		}
-		if (!topic.isPublished()) {
+		if (!topicService.isPublished(topic)) {
 			throw new InvalidRegistrationException("Đề tài chưa được công bố");
 		}
-		if (!topic.isAvailable()) {
+		if (!topicService.isAvailable(topic)) {
 			throw new InvalidRegistrationException("Đề tài đã có nhóm đăng ký");
 		}
 		if (topicService.claimForRegistration(topicId) == 0) {
@@ -86,7 +86,7 @@ public class TopicRegistrationService {
 		if (topic == null) {
 			throw new InvalidRegistrationException("Nhóm chưa đăng ký đề tài");
 		}
-		if (!topic.isWaitingApproval()) {
+		if (!topicService.isWaitingApproval(topic)) {
 			throw new InvalidRegistrationException("Đề tài đã được duyệt, không thể hủy đăng ký");
 		}
 		topic.setAvailability(TopicAvailability.AVAILABLE);
@@ -97,7 +97,7 @@ public class TopicRegistrationService {
 	public Team approve(Long topicId, Lecturer actor) {
 		Topic topic = topicService.findById(topicId);
 		requireAdvisor(topic, actor);
-		if (!topic.isWaitingApproval()) {
+		if (!topicService.isWaitingApproval(topic)) {
 			throw new InvalidRegistrationException("Không có đăng ký nào đang chờ duyệt");
 		}
 		Team team = teamService.findByTopicId(topicId);
@@ -112,7 +112,7 @@ public class TopicRegistrationService {
 	public Team reject(Long topicId, Lecturer actor, String reason) {
 		Topic topic = topicService.findById(topicId);
 		requireAdvisor(topic, actor);
-		if (!topic.isWaitingApproval()) {
+		if (!topicService.isWaitingApproval(topic)) {
 			throw new InvalidRegistrationException("Không có đăng ký nào đang chờ duyệt");
 		}
 		if (reason == null || reason.isBlank()) {
@@ -127,6 +127,10 @@ public class TopicRegistrationService {
 					"Đề tài \"" + topic.getName() + "\" bị từ chối: " + reason, "/teams");
 		}
 		return team;
+	}
+
+	public Team handleApproval(Long topicId, Lecturer actor, boolean approved, String reason) {
+		return approved ? approve(topicId, actor) : reject(topicId, actor, reason);
 	}
 
 	public Team cancelByDean(Long topicId, String reason) {
@@ -192,14 +196,14 @@ public class TopicRegistrationService {
 	}
 
 	private void requireLeader(Team team, Student actor) {
-		if (!team.isLeader(actor.getId())) {
+		if (!teamService.isLeader(team, actor.getId())) {
 			throw new InvalidRegistrationException(
 					"Chỉ nhóm trưởng mới được đăng ký hoặc hủy đăng ký đề tài");
 		}
 	}
 
 	private void requireAdvisor(Topic topic, Lecturer actor) {
-		if (!topic.isAdvisorOf(actor.getId())) {
+		if (!topicService.isAdvisorOf(topic, actor.getId())) {
 			throw new InvalidRegistrationException("Chỉ giảng viên hướng dẫn của đề tài mới được duyệt");
 		}
 	}

@@ -12,9 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import project.qldt.exception.InvalidTopicException;
 import project.qldt.model.account.Account;
+import project.qldt.model.account.Admin;
 import project.qldt.model.account.Lecturer;
 import project.qldt.model.account.Student;
-import project.qldt.model.common.ScoreRules;
+import project.qldt.service.common.ScoreRules;
 import project.qldt.model.council.Council;
 import project.qldt.model.council.TopicResult;
 import project.qldt.model.notification.NotificationType;
@@ -27,6 +28,7 @@ import project.qldt.service.account.AccountService;
 import project.qldt.service.council.CouncilService;
 import project.qldt.service.notification.NotificationService;
 import project.qldt.service.team.TeamService;
+import project.qldt.service.topic.TopicService;
 
 @Service
 @Transactional
@@ -37,14 +39,17 @@ public class ReviewerService {
 	private final CouncilService councilService;
 	private final TeamService teamService;
 	private final NotificationService notificationService;
+	private final TopicService topicService;
 
 	public ReviewerService(TopicRepository topicRepository, AccountService accountService,
-			CouncilService councilService, TeamService teamService, NotificationService notificationService) {
+			CouncilService councilService, TeamService teamService, NotificationService notificationService,
+			TopicService topicService) {
 		this.topicRepository = topicRepository;
 		this.accountService = accountService;
 		this.councilService = councilService;
 		this.teamService = teamService;
 		this.notificationService = notificationService;
+		this.topicService = topicService;
 	}
 
 	@Transactional(readOnly = true)
@@ -55,7 +60,7 @@ public class ReviewerService {
 
 	@Transactional(readOnly = true)
 	public List<Topic> findAssigned(Lecturer reviewer) {
-		return topicRepository.findByReviewerIdOrderByIdAsc(reviewer.getId());
+		return topicRepository.findByReviewerIdOrderByIdDesc(reviewer.getId());
 	}
 
 	@Transactional(readOnly = true)
@@ -66,17 +71,17 @@ public class ReviewerService {
 
 	public Topic assign(Long topicId, String lecturerCode) {
 		Topic topic = findTopic(topicId);
-		if (!topic.isRegistered()) {
+		if (!topicService.isRegistered(topic)) {
 			throw new InvalidTopicException("Chỉ phân công phản biện cho đề tài đã được duyệt đăng ký");
 		}
-		if (!topic.requiresReviewerScore()) {
+		if (!topicService.requiresReviewerScore(topic)) {
 			throw new InvalidTopicException("Đợt này không yêu cầu điểm giảng viên phản biện");
 		}
-		if (topic.hasReviewerScore()) {
+		if (topic.getReviewerScore() != null) {
 			throw new InvalidTopicException("Đề tài đã được phản biện chấm điểm, không thể đổi giảng viên phản biện");
 		}
 		Lecturer lecturer = accountService.findLecturerByCode(lecturerCode);
-		if (topic.isAdvisorOf(lecturer.getId())) {
+		if (topicService.isAdvisorOf(topic, lecturer.getId())) {
 			throw new InvalidTopicException("Giảng viên hướng dẫn không thể làm giảng viên phản biện");
 		}
 		topic.setReviewer(lecturer);
@@ -116,9 +121,14 @@ public class ReviewerService {
 	}
 
 	@Transactional(readOnly = true)
+	public boolean canViewAllScores(Account viewer) {
+		return viewer instanceof Admin || (viewer instanceof Lecturer lecturer && accountService.isDean(lecturer));
+	}
+
+	@Transactional(readOnly = true)
 	public List<Topic> findVisibleScores(Account viewer) {
-		if (viewer instanceof project.qldt.model.account.Admin || (viewer instanceof Lecturer l && l.isDean())) {
-			return topicRepository.findByReviewerScoreIsNotNullOrderByIdAsc();
+		if (canViewAllScores(viewer)) {
+			return topicRepository.findByReviewerScoreIsNotNullOrderByIdDesc();
 		}
 		if (viewer instanceof Lecturer lecturer) {
 			return topicRepository.findReviewedByReviewerId(lecturer.getId());

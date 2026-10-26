@@ -15,6 +15,7 @@ import project.qldt.repository.period.RegistrationPeriodRepository;
 
 import project.qldt.repository.team.TeamRepository;
 import project.qldt.repository.topic.TopicRepository;
+import project.qldt.service.common.PeriodRules;
 
 @Service
 @Transactional
@@ -33,7 +34,7 @@ public class RegistrationPeriodService {
 
 	@Transactional(readOnly = true)
 	public List<RegistrationPeriod> findAll() {
-		return periodRepository.findAll();
+		return periodRepository.findAllByOrderByIdDesc();
 	}
 
 	@Transactional(readOnly = true)
@@ -88,10 +89,10 @@ public class RegistrationPeriodService {
 		if (!request.getStudentRegisterEnd().isAfter(request.getStudentRegisterStart())) {
 			throw new InvalidRegistrationPeriodException("Thời điểm kết thúc SV đăng ký phải sau thời điểm bắt đầu");
 		}
-		if (request.getType().requiresReviewerScoreDeadline()) {
+		if (PeriodRules.requiresReviewerScore(request.getType())) {
 			validateReviewerScoreDeadline(request);
 		}
-		if (request.getType().requiresCouncilReportDate()) {
+		if (PeriodRules.requiresCouncilReportDate(request.getType())) {
 			validateCouncilReportDate(request);
 		}
 		if (request.getReportDeadline() != null) {
@@ -138,9 +139,9 @@ public class RegistrationPeriodService {
 		period.setStudentRegisterStart(request.getStudentRegisterStart());
 		period.setStudentRegisterEnd(request.getStudentRegisterEnd());
 		period.setReviewerScoreDeadline(
-				request.getType().requiresReviewerScoreDeadline() ? request.getReviewerScoreDeadline() : null);
+				PeriodRules.requiresReviewerScore(request.getType()) ? request.getReviewerScoreDeadline() : null);
 		period.setCouncilReportDate(
-				request.getType().requiresCouncilReportDate() ? request.getCouncilReportDate() : null);
+				PeriodRules.requiresCouncilReportDate(request.getType()) ? request.getCouncilReportDate() : null);
 		period.setReportDeadline(request.getReportDeadline());
 	}
 }

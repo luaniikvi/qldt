@@ -13,12 +13,4 @@ public enum PeriodType {
 	public String getLabel() {
 		return label;
 	}
-
-	public boolean requiresReviewerScoreDeadline() {
-		return this == SPECIALIZED_PROJECT || this == GRADUATION_THESIS;
-	}
-
-	public boolean requiresCouncilReportDate() {
-		return this == GRADUATION_THESIS;
-	}
 }

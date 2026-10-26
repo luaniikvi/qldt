@@ -1,6 +1,5 @@
 package project.qldt.controller.api.v1;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.springframework.http.ContentDisposition;
@@ -45,17 +44,11 @@ public class StatisticsRestController {
 
 	@GetMapping("/export.csv")
 	public ResponseEntity<byte[]> exportCsv(@RequestParam Long periodId) {
-		byte[] content = statisticsService.exportCsv(periodId).getBytes(StandardCharsets.UTF_8);
-		byte[] body = new byte[content.length + 3];
-		body[0] = (byte) 0xEF;
-		body[1] = (byte) 0xBB;
-		body[2] = (byte) 0xBF;
-		System.arraycopy(content, 0, body, 3, content.length);
 		return ResponseEntity.ok()
 				.header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
 						.filename("thong-ke-dot-" + periodId + ".csv").build().toString())
 				.contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
-				.body(body);
+				.body(statisticsService.exportCsvWithBom(periodId));
 	}
 
 	@GetMapping("/export.xlsx")

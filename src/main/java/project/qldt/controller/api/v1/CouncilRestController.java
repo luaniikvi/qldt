@@ -1,9 +1,7 @@
 package project.qldt.controller.api.v1;
 
 import java.net.URI;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,10 +20,8 @@ import project.qldt.dto.api.request.ScoreRequest;
 import project.qldt.dto.api.response.CouncilResponse;
 import project.qldt.dto.api.response.TopicResponse;
 import project.qldt.dto.api.response.TopicResultResponse;
-import project.qldt.exception.CouncilNotFoundException;
+import project.qldt.dto.council.CouncilView;
 import project.qldt.model.council.Council;
-import project.qldt.model.council.CouncilRole;
-import project.qldt.model.council.TopicResult;
 import project.qldt.service.account.AccountService;
 import project.qldt.service.council.CouncilService;
 
@@ -43,40 +39,29 @@ public class CouncilRestController extends ApiControllerSupport {
 	@PreAuthorize("hasRole('DEAN')")
 	@GetMapping
 	public List<CouncilResponse> list(@RequestParam(required = false) Long periodId) {
-		if (periodId == null) {
-			return councilService.findAllViews().stream()
-					.map(view -> CouncilResponse.of(view.council(), view.result())).toList();
-		}
-		Map<Long, TopicResult> results = new HashMap<>();
-		for (TopicResult result : councilService.findResultsByPeriod(periodId)) {
-			results.put(result.getCouncil().getId(), result);
-		}
-		return councilService.findByPeriod(periodId).stream()
-				.map(council -> CouncilResponse.of(council, results.get(council.getId()))).toList();
+		List<CouncilView> views = periodId == null
+				? councilService.findAllViews()
+				: councilService.findViewsByPeriod(periodId);
+		return views.stream().map(CouncilResponse::of).toList();
 	}
 
 	@PreAuthorize("hasRole('LECTURER')")
 	@GetMapping("/mine")
 	public List<CouncilResponse> mine(Authentication authentication) {
-		return councilService.findViewsFor(currentLecturer(authentication)).stream()
-				.map(view -> CouncilResponse.of(view.council(), view.result())).toList();
+		return councilService.findViewsFor(currentLecturer(authentication)).stream().map(CouncilResponse::of)
+				.toList();
 	}
 
 	@PreAuthorize("hasAnyRole('DEAN','LECTURER')")
 	@GetMapping("/{id}")
 	public CouncilResponse getOne(@PathVariable Long id) {
-		Council council = councilService.findById(id);
-		return CouncilResponse.of(council, councilService.findResultByCouncilId(id));
+		return CouncilResponse.of(councilService.findView(id));
 	}
 
 	@PreAuthorize("hasAnyRole('DEAN','LECTURER')")
 	@GetMapping("/by-topic/{topicId}")
 	public CouncilResponse byTopic(@PathVariable Long topicId) {
-		Council council = councilService.findByTopicId(topicId);
-		if (council == null) {
-			throw new CouncilNotFoundException("Đề tài chưa có hội đồng");
-		}
-		return CouncilResponse.of(council, councilService.findResultByCouncilId(council.getId()));
+		return CouncilResponse.of(councilService.findViewByTopicId(topicId));
 	}
 
 	@PreAuthorize("hasRole('DEAN')")
@@ -89,20 +74,18 @@ public class CouncilRestController extends ApiControllerSupport {
 	@PostMapping
 	public ResponseEntity<CouncilResponse> create(@Valid @RequestBody CouncilCreateRequest request) {
 		List<String> codes = request.members().stream().map(member -> member.lecturerCode().trim()).toList();
-		List<CouncilRole> roles = request.members().stream()
-				.map(member -> CouncilRole.parseOrMember(member.role())).toList();
-		Council council = councilService.create(request.topicId(), request.name(), codes, roles);
+		List<String> roles = request.members().stream().map(member -> member.role()).toList();
+		Council council = councilService.createFromInput(request.topicId(), request.name(), codes, roles);
 		return ResponseEntity.created(URI.create("/api/v1/councils/" + council.getId()))
-				.body(CouncilResponse.of(council, null));
+				.body(CouncilResponse.of(councilService.findView(council.getId())));
 	}
 
 	@PreAuthorize("hasRole('LECTURER')")
 	@PostMapping("/{id}/scores")
 	public CouncilResponse score(@PathVariable Long id, @Valid @RequestBody ScoreRequest request,
 			Authentication authentication) {
-		Council council = councilService.score(id, currentLecturer(authentication), request.score(),
-				request.comment());
-		return CouncilResponse.of(council, councilService.findResultByCouncilId(id));
+		councilService.score(id, currentLecturer(authentication), request.score(), request.comment());
+		return CouncilResponse.of(councilService.findView(id));
 	}
 
 	@PreAuthorize("hasRole('LECTURER')")

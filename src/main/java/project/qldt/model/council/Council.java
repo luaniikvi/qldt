@@ -40,31 +40,4 @@ public class Council {
 	@OneToMany(mappedBy = "council", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
 	@OrderBy("id")
 	private List<CouncilMember> members = new ArrayList<>();
-
-	public boolean isFullyScored() {
-		return members.stream().allMatch(member -> member.getScore() != null);
-	}
-
-	public double averageScore() {
-		long scored = members.stream().filter(member -> member.getScore() != null).count();
-		if (scored == 0) {
-			return 0;
-		}
-		double sum = members.stream().filter(member -> member.getScore() != null)
-				.mapToDouble(CouncilMember::getScore)
-				.sum();
-		return Math.round((sum / scored) * 100.0) / 100.0;
-	}
-
-	public CouncilMember memberOf(Long lecturerId) {
-		return members.stream()
-				.filter(member -> member.getLecturer().getId().equals(lecturerId))
-				.findFirst()
-				.orElse(null);
-	}
-
-	public boolean isChair(Long lecturerId) {
-		CouncilMember member = memberOf(lecturerId);
-		return member != null && member.getRole() == CouncilRole.CHAIR;
-	}
 }

@@ -16,13 +16,13 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
 
 	List<Report> findByTeamIdIn(Collection<Long> teamIds);
 
-	@Query("select r from Report r where r.team.period.id = :periodId order by r.id")
+	@Query("select r from Report r where r.team.period.id = :periodId order by r.submittedAt desc")
 	List<Report> findByPeriodId(@Param("periodId") Long periodId);
 
 	long countByTeamPeriodId(Long periodId);
 
 	@Query("select distinct r from Report r join r.team t join t.topic tp join tp.advisors a "
-			+ "where a.id = :lecturerId order by r.id")
+			+ "where a.id = :lecturerId order by r.submittedAt desc")
 	List<Report> findByAdvisorId(@Param("lecturerId") Long lecturerId);
 
 	Optional<Report> findByTeamTopicId(Long topicId);

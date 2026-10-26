@@ -84,7 +84,7 @@
                     <strong th:text="${v.result.finalScore}">8.2</strong>
                 </span>
             </div>
-            <div th:if="${v.council.topic.period.type.requiresReviewerScoreDeadline() and v.council.topic.reviewerScore == null}"
+            <div th:if="${v.requiresReviewerScore and v.council.topic.reviewerScore == null}"
                  class="small text-danger mt-2">
                 <i class="bi bi-exclamation-triangle me-1"></i>
                 Giảng viên phản biện chưa chấm điểm nên hội đồng chưa thể nhập điểm.
@@ -148,7 +148,7 @@
         </div>
 
         <!-- Scoring Form for Logged in Member (if not published) -->
-        <div th:if="${(v.result == null or !v.result.published) and (v.council.topic.reviewerScore != null or !v.council.topic.period.type.requiresReviewerScoreDeadline())}"
+        <div th:if="${(v.result == null or !v.result.published) and (v.council.topic.reviewerScore != null or !v.requiresReviewerScore)}"
              class="p-3 border rounded-3 bg-white">
             <h4 class="h3 mb-3 text-primary-dark">
                 <i class="bi bi-pencil-square me-1"></i> Nhập điểm &amp; Nhận xét của bạn

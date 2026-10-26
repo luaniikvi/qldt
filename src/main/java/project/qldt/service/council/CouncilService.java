@@ -22,12 +22,15 @@ import project.qldt.model.council.Council;
 import project.qldt.model.council.CouncilMember;
 import project.qldt.model.council.CouncilRole;
 import project.qldt.model.account.Lecturer;
-import project.qldt.model.common.ScoreRules;
+import project.qldt.service.common.PeriodRules;
+import project.qldt.service.common.ScoreRules;
 import project.qldt.model.notification.NotificationType;
 import project.qldt.model.report.Report;
+import project.qldt.model.account.Account;
 import project.qldt.model.account.Student;
 import project.qldt.model.team.Team;
 import project.qldt.model.topic.Topic;
+import project.qldt.model.topic.TopicAvailability;
 import project.qldt.model.council.TopicResult;
 import project.qldt.repository.council.CouncilRepository;
 import project.qldt.repository.council.TopicResultRepository;
@@ -120,29 +123,100 @@ public class CouncilService {
 
 	@Transactional(readOnly = true)
 	public List<CouncilView> findAllViews() {
-		List<Council> councils = councilRepository.findAllWithMembers();
-		Map<Long, TopicResult> results = resultsByCouncilId(councils);
-		Map<Long, Report> reports = reportsByTopicId(councils);
-		List<CouncilView> views = new ArrayList<>();
-		for (Council council : councils) {
-			Report report = council.getTopic() != null ? reports.get(council.getTopic().getId()) : null;
-			views.add(new CouncilView(council, null, results.get(council.getId()), council.isFullyScored(), report));
-		}
-		return views;
+		return viewsOf(councilRepository.findAllWithMembers(), null);
 	}
 
 	@Transactional(readOnly = true)
 	public List<CouncilView> findViewsFor(Lecturer lecturer) {
-		List<Council> councils = councilRepository.findWithMembersByMemberId(lecturer.getId());
+		return viewsOf(councilRepository.findWithMembersByMemberId(lecturer.getId()), lecturer.getId());
+	}
+
+	@Transactional(readOnly = true)
+	public List<CouncilView> findViewsByPeriod(Long periodId) {
+		return viewsOf(councilRepository.findByPeriodId(periodId), null);
+	}
+
+	@Transactional(readOnly = true)
+	public CouncilView findView(Long councilId) {
+		return viewOf(findById(councilId), null);
+	}
+
+	@Transactional(readOnly = true)
+	public CouncilView findViewByTopicId(Long topicId) {
+		Council council = findByTopicId(topicId);
+		if (council == null) {
+			throw new CouncilNotFoundException("Đề tài chưa có hội đồng");
+		}
+		return viewOf(council, null);
+	}
+
+	private List<CouncilView> viewsOf(List<Council> councils, Long lecturerId) {
 		Map<Long, TopicResult> results = resultsByCouncilId(councils);
 		Map<Long, Report> reports = reportsByTopicId(councils);
 		List<CouncilView> views = new ArrayList<>();
 		for (Council council : councils) {
-			CouncilMember mine = council.memberOf(lecturer.getId());
+			TopicResult result = results.get(council.getId());
 			Report report = council.getTopic() != null ? reports.get(council.getTopic().getId()) : null;
-			views.add(new CouncilView(council, mine, results.get(council.getId()), council.isFullyScored(), report));
+			CouncilMember mine = lecturerId == null ? null : memberOf(council, lecturerId);
+			views.add(new CouncilView(council, mine, result, isFullyScored(council), averageScore(council),
+					requiresReviewerScore(council.getTopic()), report));
 		}
 		return views;
+	}
+
+	private CouncilView viewOf(Council council, Long lecturerId) {
+		TopicResult result = findResultByCouncilId(council.getId());
+		Report report = council.getTopic() == null ? null : reportByTopicId(council.getTopic().getId());
+		CouncilMember mine = lecturerId == null ? null : memberOf(council, lecturerId);
+		return new CouncilView(council, mine, result, isFullyScored(council), averageScore(council),
+				requiresReviewerScore(council.getTopic()), report);
+	}
+
+	private Report reportByTopicId(Long topicId) {
+		return reportRepository.findByTeamTopicId(topicId).orElse(null);
+	}
+
+	@Transactional(readOnly = true)
+	public boolean isFullyScored(Council council) {
+		return council.getMembers().stream().allMatch(member -> member.getScore() != null);
+	}
+
+	@Transactional(readOnly = true)
+	public double averageScore(Council council) {
+		long scored = council.getMembers().stream().filter(member -> member.getScore() != null).count();
+		if (scored == 0) {
+			return 0;
+		}
+		double sum = council.getMembers().stream().filter(member -> member.getScore() != null)
+				.mapToDouble(CouncilMember::getScore)
+				.sum();
+		return Math.round((sum / scored) * 100.0) / 100.0;
+	}
+
+	@Transactional(readOnly = true)
+	public CouncilMember memberOf(Council council, Long lecturerId) {
+		return council.getMembers().stream()
+				.filter(member -> member.getLecturer().getId().equals(lecturerId))
+				.findFirst()
+				.orElse(null);
+	}
+
+	@Transactional(readOnly = true)
+	public boolean isChair(Council council, Long lecturerId) {
+		CouncilMember member = memberOf(council, lecturerId);
+		return member != null && member.getRole() == CouncilRole.CHAIR;
+	}
+
+	@Transactional(readOnly = true)
+	public boolean isCouncilMember(Long topicId, Long lecturerId) {
+		Council council = findByTopicId(topicId);
+		return council != null && memberOf(council, lecturerId) != null;
+	}
+
+	@Transactional(readOnly = true)
+	public boolean requiresReviewerScore(Topic topic) {
+		return topic != null && topic.getPeriod() != null
+				&& PeriodRules.requiresReviewerScore(topic.getPeriod().getType());
 	}
 
 	private Map<Long, Report> reportsByTopicId(List<Council> councils) {
@@ -188,7 +262,7 @@ public class CouncilService {
 					continue;
 				}
 				codes.add(code.trim());
-				roles.add(CouncilRole.parseOrMember(roleNames == null || roleNames.size() <= i
+				roles.add(parseRole(roleNames == null || roleNames.size() <= i
 						? null
 						: roleNames.get(i)));
 			}
@@ -196,9 +270,20 @@ public class CouncilService {
 		return create(topicId, name, codes, roles);
 	}
 
+	private CouncilRole parseRole(String name) {
+		if (name == null || name.isBlank()) {
+			return CouncilRole.MEMBER;
+		}
+		try {
+			return CouncilRole.valueOf(name.trim());
+		} catch (IllegalArgumentException ex) {
+			throw new InvalidCouncilException("Vai trò trong hội đồng không hợp lệ");
+		}
+	}
+
 	public Council create(Long topicId, String name, List<String> lecturerCodes, List<CouncilRole> roles) {
 		Topic topic = topicService.findById(topicId);
-		if (!topic.isRegistered()) {
+		if (topic.getAvailability() != TopicAvailability.REGISTERED) {
 			throw new InvalidCouncilException("Chỉ lập hội đồng cho đề tài đã được duyệt đăng ký");
 		}
 		if (findByTopicId(topicId) != null) {
@@ -226,7 +311,7 @@ public class CouncilService {
 			if (usedIds.contains(lecturer.getId())) {
 				throw new InvalidCouncilException("Giảng viên bị trùng trong hội đồng");
 			}
-			if (topic.isAdvisorOf(lecturer.getId())) {
+			if (topicService.isAdvisorOf(topic, lecturer.getId())) {
 				throw new InvalidCouncilException(
 						"Giảng viên " + lecturer.getFullName() + " (" + lecturer.getLecturerCode()
 								+ ") là cán bộ hướng dẫn của đề tài, không được tham gia hội đồng");
@@ -248,12 +333,12 @@ public class CouncilService {
 
 	public Council score(Long councilId, Lecturer actor, double score, String comment) {
 		Council council = findById(councilId);
-		CouncilMember member = council.memberOf(actor.getId());
+		CouncilMember member = memberOf(council, actor.getId());
 		if (member == null) {
 			throw new InvalidCouncilException("Bạn không phải thành viên của hội đồng này");
 		}
 		Topic topic = council.getTopic();
-		if (topic.requiresReviewerScore() && !topic.hasReviewerScore()) {
+		if (requiresReviewerScore(topic) && topic.getReviewerScore() == null) {
 			throw new InvalidCouncilException("Giảng viên phản biện chưa chấm điểm, hội đồng chưa thể chấm điểm");
 		}
 		ScoreRules.validate(score).ifPresent(message -> {
@@ -272,27 +357,24 @@ public class CouncilService {
 
 	public TopicResult confirm(Long councilId, Lecturer actor) {
 		Council council = findById(councilId);
-		boolean isChair = council.getMembers().stream()
-				.anyMatch(member -> member.getLecturer().getId().equals(actor.getId())
-						&& member.getRole() == CouncilRole.CHAIR);
-		if (!isChair) {
+		if (!isChair(council, actor.getId())) {
 			throw new InvalidCouncilException("Chỉ chủ tịch hội đồng mới được tổng hợp điểm");
 		}
-		if (council.getTopic().requiresReviewerScore() && !council.getTopic().hasReviewerScore()) {
+		if (requiresReviewerScore(council.getTopic()) && council.getTopic().getReviewerScore() == null) {
 			throw new InvalidCouncilException("Giảng viên phản biện chưa chấm điểm, chưa thể tổng hợp điểm");
 		}
 		TopicResult result = resultOf(council);
 		if (result != null && result.isPublished()) {
 			throw new InvalidCouncilException("Kết quả đã công bố, không thể tổng hợp lại");
 		}
-		if (!council.isFullyScored()) {
+		if (!isFullyScored(council)) {
 			throw new InvalidCouncilException("Còn thành viên chưa nhập điểm");
 		}
 		if (result == null) {
 			result = new TopicResult();
 			result.setCouncil(council);
 		}
-		result.setAverageScore(council.averageScore());
+		result.setAverageScore(averageScore(council));
 		return resultRepository.save(result);
 	}
 
@@ -302,8 +384,10 @@ public class CouncilService {
 		if (result.isPublished()) {
 			throw new InvalidCouncilException("Kết quả đã được công bố");
 		}
-		result.publish();
 		Council council = result.getCouncil();
+		result.setPublished(true);
+		result.setPublishedAt(LocalDateTime.now());
+		result.setFinalScore(ScoreRules.finalScore(council.getTopic().getReviewerScore(), result.getAverageScore()));
 		Team team = teamService.findByTopicId(council.getTopic().getId());
 		if (team != null) {
 			for (Student member : team.getMembers()) {
@@ -341,16 +425,27 @@ public class CouncilService {
 	}
 
 	@Transactional(readOnly = true)
+	public List<TopicResult> findPublishedResultsFor(Account account) {
+		if (account instanceof Student student) {
+			return findPublishedResultsFor(student);
+		}
+		if (account instanceof Lecturer lecturer) {
+			return findPublishedResultsOfAdvisor(lecturer);
+		}
+		return List.of();
+	}
+
+	@Transactional(readOnly = true)
 	public List<TopicResult> findPublishedResultsOfAdvisor(Lecturer lecturer) {
 		return resultRepository.findPublishedOfAdvisor(lecturer.getId());
 	}
 
 	private void refreshAverage(Council council) {
 		TopicResult result = resultOf(council);
-		if (result == null || result.isPublished() || !council.isFullyScored()) {
+		if (result == null || result.isPublished() || !isFullyScored(council)) {
 			return;
 		}
-		result.setAverageScore(council.averageScore());
+		result.setAverageScore(averageScore(council));
 		resultRepository.save(result);
 	}
 

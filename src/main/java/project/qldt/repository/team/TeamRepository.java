@@ -27,12 +27,12 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
 
 	@Query("select t from Team t where t.period.id = :periodId and t.topic is not null "
 			+ "and t.topic.availability = project.qldt.model.topic.TopicAvailability.REGISTERED "
-			+ "and not exists (select r.id from Report r where r.team = t) order by t.id")
+			+ "and not exists (select r.id from Report r where r.team = t) order by t.id desc")
 	List<Team> findUnreportedByPeriod(@Param("periodId") Long periodId);
 
 	List<Team> findByMembersId(Long studentId);
 
-	List<Team> findByPeriodIdOrderByIdAsc(Long periodId);
+	List<Team> findByPeriodIdOrderByIdDesc(Long periodId);
 
 	List<Team> findByTopicIdIn(Collection<Long> topicIds);
 
@@ -41,11 +41,11 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
 	boolean existsByPeriodIdAndMembersId(Long periodId, Long studentId);
 
 	@Query("select distinct t from Team t left join t.members m left join t.invitations i "
-			+ "where m.id = :studentId or (i.student.id = :studentId and i.status = :status) order by t.id")
+			+ "where m.id = :studentId or (i.student.id = :studentId and i.status = :status) order by t.id desc")
 	List<Team> findInvolvedOf(@Param("studentId") Long studentId, @Param("status") InvitationStatus status);
 
-	@Query("select t from Team t where t.topic is not null order by t.id")
+	@Query("select t from Team t where t.topic is not null order by t.id desc")
 	List<Team> findAllWithTopic();
 
-	List<Team> findByPeriodIdAndTopicIsNotNullOrderByIdAsc(Long periodId);
+	List<Team> findByPeriodIdAndTopicIsNotNullOrderByIdDesc(Long periodId);
 }
